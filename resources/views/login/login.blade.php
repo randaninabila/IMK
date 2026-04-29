@@ -34,8 +34,7 @@ border border-[#3D352F]/40
 rounded-[40px] p-10 
 shadow-[0_8px_32px_rgba(61,53,47,0.25)]">
 
-        <h2 class="text-5xl font-semibold text-center text-[#3d352f] mb-8"
-            style="font-family: 'Playfair Display', serif;">
+        <h2 class="text-5xl font-bold text-center text-[#3d352f] mb-8">
             Log In
         </h2>
 

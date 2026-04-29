@@ -2,17 +2,17 @@
 
 @section('content')
 
-<div class="min-h-screen bg-[#e8d6d6] flex flex-col items-center font-serif">
+<div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white flex flex-col items-center">
 
     <!-- Title -->
-    <div class="mt-20 text-center">
+    <div class="mt-28 text-center">
         <h1 class="text-5xl md:text-6xl text-[#3e3a34] font-bold">
             {{ $gallery['title'] }}
         </h1>
     </div>
 
     <!-- Content -->
-    <div class="flex flex-wrap justify-center gap-20 mt-16">
+    <div class="flex flex-wrap justify-center gap-20 mt-10">
 
         <!-- BEFORE -->
         <div class="text-center">

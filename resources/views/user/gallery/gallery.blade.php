@@ -5,14 +5,14 @@
 {{-- HERO --}}
 <section class="bg-gradient-to-b from-[#FFE4E6] to-white min-h-screen flex items-center justify-center text-center px-4">
     <div>
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
-            Real Result,<br> &emsp; &emsp; &emsp; &emsp; &emsp; Refined Artistry
+        <h1 class="text-4xl md:text-5xl font-bold text-[#3E382D] mb-6">
+            Real Result, Refined Artistry
         </h1>
-        <p class="text-gray-600 max-w-xl mx-auto mb-6">
+        <p class="text-tertiary-500 max-w-xl mx-auto mb-6 ">
             Tim kami yang terdiri dari tenaga ahli yang memiliki pengalaman bertahun-tahun
             untuk memberikan perawatan yang luar biasa dan dipersonalisasi.
         </p>
-        <div class="flex justify-center gap-6 text-sm text-gray-700">
+        <div class="flex justify-center gap-6 text-sm text-tertiary-500">
             <span>✔ Mengutamakan Keamanan</span>
             <span>✔ Hasil yang Natural</span>
             <span>✔ Terbukti Berpengalaman</span>
@@ -26,12 +26,33 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
             {{-- FILTER --}}
             <div class="flex flex-wrap gap-3 mb-6" id="filterBtns">
-                <button data-filter="all" class="filter-btn bg-gray-800 text-white px-5 py-2 rounded-md border border-gray-400"> All Gallery </button>
-                <button data-filter="hair" class="filter-btn bg-[#f5eaea] text-gray-800 px-5 py-2 rounded-md border border-gray-400"> Hair </button>
-                <button data-filter="facial" class="filter-btn bg-[#f5eaea] text-gray-800 px-5 py-2 rounded-md border border-gray-400"> Facial </button>
-                <button data-filter="nail polish" class="filter-btn bg-[#f5eaea] text-gray-800 px-5 py-2 rounded-md border border-gray-400"> Nail Polish </button>
-                <button data-filter="waxing" class="filter-btn bg-[#f5eaea] text-gray-800 px-5 py-2 rounded-md border border-gray-400"> Waxing </button>
-            </div>
+
+    <button data-filter="all"
+        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#3E382D] text-white">
+        All Gallery
+    </button>
+
+    <button data-filter="hair"
+        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+        Hair
+    </button>
+
+    <button data-filter="facial"
+        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+        Facial
+    </button>
+
+    <button data-filter="nail polish"
+        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+        Nail Polish
+    </button>
+
+    <button data-filter="waxing"
+        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+        Waxing
+    </button>
+
+</div>
             {{-- SEARCH --}}
             <div class="relative w-full max-w-xs">
                 <input 
@@ -72,8 +93,8 @@
                 <div class="gallery-item bg-white rounded-xl p-3 shadow hover:shadow-lg transition" data-role="{{ $item['role'] }}" data-index="{{ $index }}">
                     <img src="{{ $item['img'] }}" class="rounded-lg mb-3 w-full h-44 object-cover">
                     <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item['role'] }}</span>
-                    <h3 class="font-semibold text-sm text-gray-800 mt-2">{{ $item['title'] }}</h3>
-                    <p class="text-xs text-gray-600 mt-1 mb-3">{{ $item['desc'] }}</p>
+                    <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item['title'] }}</h3>
+                    <p class="text-xs text-[#3E382D] mt-1 mb-3">{{ $item['desc'] }}</p>
                     <div class="flex justify-end">
                         <a href="{{ url('/gallery/' . $item['slug']) }}"
                         class="bg-[#e9bcbc] hover:bg-[#dca9a9] text-white text-xs py-1 px-3 rounded">
@@ -85,136 +106,164 @@
         </div>
         {{-- PAGINATION --}}
         <div class="flex justify-center items-center gap-3 mt-10">
-            <button id="prevBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white"> « </button>
+            <button id="prevBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white"> « </button>
             <div id="pages" class="flex gap-3">
                 <button class="page-btn w-10 h-10 rounded-md border">1</button>
                 <button class="page-btn w-10 h-10 rounded-md border">2</button>
             </div>
-            <button id="nextBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white"> » </button>
+            <button id="nextBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white"> » </button>
         </div>
     </div>
 </section>
 
 <script>
-    const items = Array.from(document.querySelectorAll('.gallery-item'));
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const pageBtns = document.querySelectorAll('.page-btn');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
+const items = Array.from(document.querySelectorAll('.gallery-item'));
+const filterBtns = document.querySelectorAll('.filter-btn');
+const pageBtns = document.querySelectorAll('.page-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
 
-    let currentPage = 1;
-    let itemsPerPage = 6;
-    let currentFilter = 'all';
+let currentPage = 1;
+let itemsPerPage = 6;
+let currentFilter = 'all';
 
-    const FIXED_TOTAL_PAGES = 5;
+// =========================
+// LOAD FILTER
+// =========================
+let savedFilter = localStorage.getItem('gallery_filter');
+if (savedFilter) {
+    currentFilter = savedFilter;
+}
 
-    // LOAD LAST FILTER (BACK STATE)
-    let savedFilter = localStorage.getItem('gallery_filter');
-    if (savedFilter) {
-        currentFilter = savedFilter;
+// =========================
+// FILTER ITEMS
+// =========================
+function getFilteredItems() {
+    return items.filter(item => {
+        let role = item.getAttribute('data-role');
+        return currentFilter === 'all' || role === currentFilter;
+    });
+}
 
-        filterBtns.forEach(b => {
-            b.classList.remove('bg-gray-800','text-white');
-            b.classList.add('bg-[#f5eaea]','text-gray-800');
-
-            if (b.getAttribute('data-filter') === savedFilter) {
-                b.classList.add('bg-gray-800','text-white');
-                b.classList.remove('bg-[#f5eaea]','text-gray-800');
-            }
-        });
-    }
-    // GET FILTERED ITEMS
-    function getFilteredItems() {
-        return items.filter(item => {
-            let role = item.getAttribute('data-role');
-            return currentFilter === 'all' || role === currentFilter;
-        });
-    }
-    // RENDER PAGE
-    function render() {
-        let filtered = getFilteredItems();
-        let start = (currentPage - 1) * itemsPerPage;
-        let end = start + itemsPerPage;
-        // hide all
-        items.forEach(i => i.style.display = 'none');
-        // show current page items
-        filtered.slice(start, end).forEach(i => {
-            i.style.display = 'block';
-        });
-        updateUI(filtered.length);
-    }
-
-    // UPDATE UI
-    function updateUI(totalItems) {
-        // pagination active button
-        pageBtns.forEach((btn, index) => {
-            if (index + 1 === currentPage) {
-                btn.classList.add('bg-gray-800','text-white');
-            } else {
-                btn.classList.remove('bg-gray-800','text-white');
-            }
-        });
-        // prev state
-        if (currentPage === 1) {
-            prevBtn.classList.add('opacity-50','cursor-not-allowed');
-        } else {
-            prevBtn.classList.remove('opacity-50','cursor-not-allowed');
-        }
-        // next state
-        let maxPage = Math.ceil(totalItems / itemsPerPage);
-
-        if (currentPage >= maxPage || currentPage >= FIXED_TOTAL_PAGES) {
-            nextBtn.classList.add('opacity-50','cursor-not-allowed');
-        } else {
-            nextBtn.classList.remove('opacity-50','cursor-not-allowed');
-        }
-    }
-
-    // FILTER CLICK
+// =========================
+// SET BUTTON STYLE (ONLY 2 COLORS)
+// =========================
+function setActiveButton() {
     filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentFilter = btn.getAttribute('data-filter');
-            currentPage = 1;
-            // SAVE FILTER (BACK STATE)
-            localStorage.setItem('gallery_filter', currentFilter);
-            // active UI
-            filterBtns.forEach(b => {
-                b.classList.remove('bg-gray-800','text-white');
-                b.classList.add('bg-[#f5eaea]','text-gray-800');
-            });
-            btn.classList.add('bg-gray-800','text-white');
-            render();
-        });
+        let isActive = btn.getAttribute('data-filter') === currentFilter;
+
+        // RESET (NON ACTIVE)
+        btn.classList.remove('bg-[#3E382D]', 'text-white');
+        btn.classList.add('bg-[#f5eaea]', 'text-[#3E382D]');
+
+        // ACTIVE
+        if (isActive) {
+            btn.classList.add('bg-[#3E382D]', 'text-white');
+            btn.classList.remove('bg-[#f5eaea]', 'text-[#3E382D]');
+        }
+    });
+}
+
+// =========================
+// RENDER GALLERY
+// =========================
+function render() {
+    let filtered = getFilteredItems();
+
+    let start = (currentPage - 1) * itemsPerPage;
+    let end = start + itemsPerPage;
+
+    items.forEach(item => item.style.display = 'none');
+
+    filtered.slice(start, end).forEach(item => {
+        item.style.display = 'block';
     });
 
-    // PAGE NUMBER CLICK
+    updatePagination(filtered.length);
+}
+
+// =========================
+// PAGINATION UI
+// =========================
+function updatePagination(totalItems) {
+
     pageBtns.forEach((btn, index) => {
-        btn.addEventListener('click', () => {
-            currentPage = index + 1;
-            render();
-        });
+        if (index + 1 === currentPage) {
+            btn.classList.add('bg-[#3E382D]', 'text-white');
+        } else {
+            btn.classList.remove('bg-[#3E382D]', 'text-white');
+        }
     });
 
     // PREV
-    prevBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            render();
-        }
-    });
+    if (currentPage === 1) {
+        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
 
     // NEXT
-    nextBtn.addEventListener('click', () => {
-        let filtered = getFilteredItems();
-        let maxPage = Math.ceil(filtered.length / itemsPerPage);
+    let maxPage = Math.ceil(totalItems / itemsPerPage);
 
-        if (currentPage < maxPage && currentPage < FIXED_TOTAL_PAGES) {
-            currentPage++;
-            render();
-        }
+    if (currentPage >= maxPage) {
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+}
+
+// =========================
+// FILTER CLICK
+// =========================
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentFilter = btn.getAttribute('data-filter');
+        currentPage = 1;
+
+        localStorage.setItem('gallery_filter', currentFilter);
+
+        setActiveButton();
+        render();
     });
+});
 
-    // INIT
-    render();
+// =========================
+// PAGE CLICK
+// =========================
+pageBtns.forEach((btn, index) => {
+    btn.addEventListener('click', () => {
+        currentPage = index + 1;
+        render();
+    });
+});
+
+// =========================
+// PREV
+// =========================
+prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        render();
+    }
+});
+
+// =========================
+// NEXT
+// =========================
+nextBtn.addEventListener('click', () => {
+    let filtered = getFilteredItems();
+    let maxPage = Math.ceil(filtered.length / itemsPerPage);
+
+    if (currentPage < maxPage) {
+        currentPage++;
+        render();
+    }
+});
+
+// =========================
+// INIT
+// =========================
+setActiveButton();
+render();
 </script>
 @endsection
