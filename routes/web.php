@@ -242,3 +242,32 @@ Route::get('/specialist/{slug}', function ($slug) {
 
     return view('user.specialist.spdetail', compact('specialist'));
 });
+
+Route::get('/dashboard', function () {
+    return view('owner.dashboard');
+});
+
+Route::get('/customers', function () {
+    return view('owner.customers');
+});
+
+Route::get('/serviceo', function () {
+    return view('owner.service.service');
+});
+
+Route::get('/employee', function () {
+    return view('owner.employees.employee');
+});
+
+Route::get('/eemployee', function () {
+    return view('owner.employees.eemployee');
+})->name('employee.edit');
+
+Route::get('/aemployee', function () {
+    return view('owner.employees.aemployee');
+});
+
+Route::get('/eservice', function () {
+    return view('owner.service.eservice');
+});
+

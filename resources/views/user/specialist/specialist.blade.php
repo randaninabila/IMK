@@ -26,50 +26,7 @@
 {{-- FILTER + SEARCH --}}
 <section class="bg-gradient-to-b from-white via-[#FFF1F2] to-[#FFE4E6] py-10 px-6">
     <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-            {{-- FILTER --}}
-            <div class="flex flex-wrap gap-3 mb-6" id="filterBtns">
 
-    <button data-filter="all"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#3E382D] text-white">
-        All Gallery
-    </button>
-
-    <button data-filter="hair"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Hair
-    </button>
-
-    <button data-filter="facial"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Facial
-    </button>
-
-    <button data-filter="nail polish"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Nail Polish
-    </button>
-
-    <button data-filter="waxing"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Waxing
-    </button>
-
-</div>
-            {{-- SEARCH --}}
-            <div class="relative w-full max-w-xs">
-                <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    class="w-full pl-6 pr-12 py-3 bg-white border-2 border-[#E99688] rounded-2xl text-[#9CA3AF] placeholder-[#9CA3AF] outline-none transition-all focus:ring-2 focus:ring-[#f5c6be]"
-                >
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E99688]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
-            </div>
-        </div>
 
         {{-- CARD --}}
         @php
