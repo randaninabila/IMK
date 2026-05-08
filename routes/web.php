@@ -1,30 +1,29 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
 
-// Halaman Utama (Gallery)
+// =====================
+// PUBLIC / USER
+// =====================
+
+// Home
 Route::get('/', function () {
     return view('user.gallery.gallery');
 });
 
-
+// Login & Register
 Route::get('/login', function () {
-    return view('login.login');
-});
-// Halaman Service
-Route::get('/signin', function () {
-    return view('login.signin');
-});
-// Halaman Specialist
-Route::get('/specialist', function () {
-    return view('user.specialist.specialist');
-});
-// Halaman Gallery
-Route::get('/gallery', function () {
-    return view('user.gallery.gallery');
-});
+    return view('auth.login');
+})->name('login');
 
-// Halaman Gallery
+Route::get('/signin', function () {
+    return view('auth.signin');
+})->name('signin');
+
+// Service
 Route::get('/service', function () {
     return view('user.service.service');
 });
@@ -33,11 +32,25 @@ Route::get('/sdetail', function () {
     return view('user.service.sdetail');
 });
 
+// Specialist
+Route::get('/specialist', function () {
+    return view('user.specialist.specialist');
+});
+
+// Gallery
+Route::get('/gallery', function () {
+    return view('user.gallery.gallery');
+});
+
+// =====================
+// GALLERY DETAIL
+// =====================
+
 Route::get('/gallery/{slug}', function ($slug) {
 
     $galleries = [
 
-        // ================= HAIR (3) =================
+        // ================= HAIR =================
         'hair-repair-treatment' => [
             'title' => 'Hair Repair Treatment',
             'role' => 'hair',
@@ -70,178 +83,106 @@ Route::get('/gallery/{slug}', function ($slug) {
             ],
         ],
 
-        'scalp-detox-hair-spa' => [
-            'title' => 'Scalp Detox Hair Spa',
-            'role' => 'hair',
-            'before' => '/images/before3.jpg',
-            'after' => '/images/after3.jpg',
-            'before_list' => [
-                'Kulit kepala berminyak',
-                'Ketombe muncul',
-            ],
-            'after_list' => [
-                'Kulit kepala bersih',
-                'Lebih segar dan sehat',
-            ],
-        ],
-
-        // ================= FACIAL (3) =================
+        // ================= FACIAL =================
         'acne-facial-treatment' => [
             'title' => 'Acne Facial Treatment',
             'role' => 'facial',
             'before' => '/images/before4.jpg',
             'after' => '/images/after4.jpg',
-            'before_list' => [
-                'Jerawat aktif',
-                'Kulit berminyak',
-            ],
-            'after_list' => [
-                'Jerawat berkurang',
-                'Kulit lebih bersih',
-            ],
         ],
 
-        'brightening-facial' => [
-            'title' => 'Brightening Facial',
-            'role' => 'facial',
-            'before' => '/images/before5.jpg',
-            'after' => '/images/after5.jpg',
-            'before_list' => [
-                'Kulit kusam',
-                'Warna tidak merata',
-            ],
-            'after_list' => [
-                'Kulit lebih cerah',
-                'Warna merata',
-            ],
-        ],
-
-        'anti-aging-facial' => [
-            'title' => 'Anti Aging Facial',
-            'role' => 'facial',
-            'before' => '/images/before6.jpg',
-            'after' => '/images/after6.jpg',
-            'before_list' => [
-                'Garis halus terlihat',
-                'Kulit mulai kendur',
-            ],
-            'after_list' => [
-                'Kulit lebih kencang',
-                'Kerutan berkurang',
-            ],
-        ],
-
-        // ================= NAIL POLISH (3) =================
-        'classic-nail-polish' => [
-            'title' => 'Classic Nail Polish',
-            'role' => 'nail polish',
-            'before' => '/images/before7.jpg',
-            'after' => '/images/after7.jpg',
-            'before_list' => [
-                'Kuku kusam',
-                'Tidak terawat',
-            ],
-            'after_list' => [
-                'Kuku lebih cantik',
-                'Tampilan elegan',
-            ],
-        ],
-
-        'gel-nail-polish' => [
-            'title' => 'Gel Nail Polish',
-            'role' => 'nail polish',
-            'before' => '/images/before8.jpg',
-            'after' => '/images/after8.jpg',
-            'before_list' => [
-                'Cat kuku mudah hilang',
-            ],
-            'after_list' => [
-                'Tahan lama dan glossy',
-            ],
-        ],
-
-        'nail-art-design' => [
-            'title' => 'Nail Art Design',
-            'role' => 'nail polish',
-            'before' => '/images/before9.jpg',
-            'after' => '/images/after9.jpg',
-            'before_list' => [
-                'Kuku polos',
-            ],
-            'after_list' => [
-                'Desain modern dan unik',
-            ],
-        ],
-
-        // ================= WAXING (3) =================
-        'full-body-waxing' => [
-            'title' => 'Full Body Waxing',
-            'role' => 'waxing',
-            'before' => '/images/before10.jpg',
-            'after' => '/images/after10.jpg',
-            'before_list' => [
-                'Bulu tubuh lebat',
-            ],
-            'after_list' => [
-                'Kulit halus dan bersih',
-            ],
-        ],
-
-        'brazilian-waxing' => [
-            'title' => 'Brazilian Waxing',
-            'role' => 'waxing',
-            'before' => '/images/before11.jpg',
-            'after' => '/images/after11.jpg',
-            'before_list' => [
-                'Tidak nyaman di area sensitif',
-            ],
-            'after_list' => [
-                'Lebih bersih dan rapi',
-            ],
-        ],
-
-        'underarm-waxing' => [
-            'title' => 'Underarm Waxing',
-            'role' => 'waxing',
-            'before' => '/images/before12.jpg',
-            'after' => '/images/after12.jpg',
-            'before_list' => [
-                'Ketiak gelap dan berbulu',
-            ],
-            'after_list' => [
-                'Lebih cerah dan halus',
-            ],
-        ],
     ];
 
     $gallery = $galleries[$slug] ?? abort(404);
 
     return view('user.gallery.gdetail', compact('gallery'));
-});
+})->name('gallery.detail');
+
+// =====================
+// SPECIALIST DETAIL
+// =====================
 
 Route::get('/specialist/{slug}', function ($slug) {
 
     $specialists = [
+
         'aisyah-rahmawati' => [
             'name' => 'Dr. Aisyah Rahmawati',
             'role' => 'Senior Beautician',
             'desc' => 'Specializing in facial treatments...',
             'img' => 'https://via.placeholder.com/400x300',
-            'services' => ['Facial Treatment', 'Skin Brightening', 'Acne Care']
+            'services' => [
+                'Facial Treatment',
+                'Skin Brightening',
+                'Acne Care'
+            ]
         ],
+
         'kevin-pratama' => [
             'name' => 'Dr. Kevin Pratama',
             'role' => 'Skin Specialist',
             'desc' => 'Expert in advanced dermatology...',
             'img' => 'https://via.placeholder.com/400x300',
-            'services' => ['Anti Aging', 'Dermatology', 'Laser Therapy']
+            'services' => [
+                'Anti Aging',
+                'Dermatology',
+                'Laser Therapy'
+            ]
         ],
+
     ];
 
     $specialist = $specialists[$slug] ?? abort(404);
 
     return view('user.specialist.spdetail', compact('specialist'));
-});
+})->name('specialist.detail');
+
+// =====================
+// AUTH
+// =====================
+
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// =====================
+// FAKE VERIFY (DEV ONLY)
+// =====================
+
+Route::post('/fake-verify-email', function () {
+
+    $user = auth()->user();
+
+    $user->email_verified_at = now();
+    $user->save();
+
+    return redirect()->intended('/');
+
+})->middleware('auth');
+
+// =====================
+// EMAIL VERIFICATION
+// =====================
+
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $request->fulfill();
+
+    return redirect('/');
+})->middleware(['auth', 'signed'])->name('verification.verify');
+
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+
+    return back();
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+// =====================
+// OWNER
+// =====================
 
 Route::get('/dashboard', function () {
     return view('owner.dashboard');
@@ -271,3 +212,36 @@ Route::get('/eservice', function () {
     return view('owner.service.eservice');
 });
 
+// =====================
+// ADMIN
+// =====================
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+
+    });
+
+// // =====================
+// // CUSTOMER
+// // =====================
+
+// Route::middleware(['auth', 'verified', 'role:customer'])
+//     ->prefix('customer')
+//     ->name('customer.')
+//     ->group(function () {
+
+//         Route::get('/profile', function () {
+//             return view('customer.profile');
+//         })->name('profile');
+
+//         Route::get('/bookings', function () {
+//             return view('customer.bookings');
+//         })->name('bookings');
+
+//     });
