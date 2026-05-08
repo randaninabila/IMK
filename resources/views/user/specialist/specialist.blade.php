@@ -3,24 +3,26 @@
 @section('content')
 
 {{-- HERO --}}
-<section class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white text-center min-h-screen flex flex-col justify-center items-center px-4">
+<section
+    class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white text-center min-h-screen flex flex-col justify-center items-center px-4">
     <span class="bg-[#3E382D] text-white px-4 py-1 rounded text-sm">
-    Board-Certified Specialists
-</span>
+        Board-Certified Specialists
+    </span>
 
-<h1 class="text-4xl md:text-5xl font-bold text-[#3E382D] mt-6 mb-4">
-    Meet Our Specialists
-</h1>
+    <h1 class="text-4xl md:text-5xl font-bold text-[#3E382D] mt-6 mb-4">
+        Meet Our Specialists
+    </h1>
 
-<p class="text-tertiary-500 max-w-2xl mb-6">
-    Get to know our dedicated professionals who are here to help you feel more confident through friendly, safe, and high-quality services.
-</p>
+    <p class="text-tertiary-500 max-w-2xl mb-6">
+        Get to know our dedicated professionals who are here to help you feel more confident through friendly, safe, and
+        high-quality services.
+    </p>
 
-<div class="flex justify-center gap-8 text-sm text-tertiary-500">
-    <span>✔ Certified Experts</span>
-    <span>★ 3+ Years Experience</span>
-    <span>☺ 1000+ Happy Clients</span>
-</div>
+    <div class="flex justify-center gap-8 text-sm text-tertiary-500">
+        <span>✔ Certified Experts</span>
+        <span>★ 3+ Years Experience</span>
+        <span>☺ 1000+ Happy Clients</span>
+    </div>
 </section>
 
 {{-- FILTER + SEARCH --}}
@@ -29,43 +31,33 @@
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
             {{-- FILTER --}}
             <div class="flex flex-wrap gap-3 mb-6" id="filterBtns">
+                <button data-filter="all"
+                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#3E382D] text-white">
+                    All
+                </button>
+                <button data-filter="senior beautician"
+                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+                    Senior Beautician
+                </button>
+                <button data-filter="skin specialist"
+                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+                    Skin Specialist
+                </button>
+                <button data-filter="cosmetic doctor"
+                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
+                    Cosmetic Doctor
+                </button>
+            </div>
 
-    <button data-filter="all"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#3E382D] text-white">
-        All Gallery
-    </button>
-
-    <button data-filter="hair"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Hair
-    </button>
-
-    <button data-filter="facial"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Facial
-    </button>
-
-    <button data-filter="nail polish"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Nail Polish
-    </button>
-
-    <button data-filter="waxing"
-        class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-        Waxing
-    </button>
-
-</div>
             {{-- SEARCH --}}
             <div class="relative w-full max-w-xs">
-                <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    class="w-full pl-6 pr-12 py-3 bg-white border-2 border-[#E99688] rounded-2xl text-[#9CA3AF] placeholder-[#9CA3AF] outline-none transition-all focus:ring-2 focus:ring-[#f5c6be]"
-                >
+                <input type="text" placeholder="Search..."
+                    class="w-full pl-6 pr-12 py-3 bg-white border-2 border-[#E99688] rounded-2xl text-[#9CA3AF] placeholder-[#9CA3AF] outline-none transition-all focus:ring-2 focus:ring-[#f5c6be]">
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E99688]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E99688]" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
             </div>
@@ -73,58 +65,57 @@
 
         {{-- CARD --}}
         @php
-            $specialists = [
-    [
+        $specialists = [
+        [
         'name' => 'Dr. Aisyah Rahmawati',
         'slug' => 'aisyah-rahmawati',
         'role' => 'Senior Beautician',
         'desc' => 'Specializing in facial treatments and skin rejuvenation...',
         'img' => 'https://via.placeholder.com/400x300',
         'services' => ['Facial Treatment', 'Skin Brightening', 'Acne Care']
-    ],
-    [
+        ],
+        [
         'name' => 'Dr. Kevin Pratama',
         'slug' => 'kevin-pratama',
         'role' => 'Skin Specialist',
         'desc' => 'Expert in advanced dermatology...',
         'img' => 'https://via.placeholder.com/400x300',
         'services' => ['Anti Aging', 'Dermatology', 'Laser Therapy']
-    ],
-    [
+        ],
+        [
         'name' => 'Dr. Maria Siregar',
         'slug' => 'maria-siregar',
         'role' => 'Cosmetic Doctor',
         'desc' => 'Focused on natural beauty enhancement...',
         'img' => 'https://via.placeholder.com/400x300',
         'services' => ['Botox', 'Filler', 'Skin Rejuvenation']
-    ],
-];
+        ],
+        ];
         @endphp
-        <div class="grid md:grid-cols-3 gap-10">
-    @foreach ($specialists as $specialist)
-    <div class="bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
-        <img src="{{ $specialist['img'] }}" class="w-full h-56 object-cover">
-        <div class="p-4">
-            <h3 class="font-semibold text-[#3E382D]"> {{ $specialist['name'] }} </h3>
-            
-            <p class="text-sm text-gray-500 mb-2"> {{ $specialist['role'] }} </p>
-            
-            <p class="text-sm text-tertiary-500 mb-3"> {{ $specialist['desc'] }} </p>
-            
-            <ul class="text-xs text-tertiary-500 mb-4 space-y-1">
-                @foreach ($specialist['services'] as $service)
-                    <li>✔ {{ $service }}</li>
-                @endforeach
-            </ul>
-            
-            <a href="{{ url('/specialist/' . $specialist['slug']) }}" 
-               class="block text-center w-full bg-[#e9bcbc] hover:bg-[#dca9a9] text-white py-2 rounded">
-                View Profile
-            </a>
+        <div class="grid md:grid-cols-3 gap-10" id="specialistGrid">
+            @foreach ($specialists as $index => $specialist)
+            <div class="specialist-item bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden"
+                data-name="{{ strtolower($specialist['name']) }}"
+                data-role="{{ strtolower($specialist['role']) }}"
+                data-index="{{ $index }}">
+                <img src="{{ $specialist['img'] }}" class="w-full h-56 object-cover">
+                <div class="p-4">
+                    <h3 class="font-semibold text-[#3E382D]">{{ $specialist['name'] }}</h3>
+                    <p class="text-sm text-gray-500 mb-2">{{ $specialist['role'] }}</p>
+                    <p class="text-sm text-tertiary-500 mb-3">{{ $specialist['desc'] }}</p>
+                    <ul class="text-xs text-tertiary-500 mb-4 space-y-1">
+                        @foreach ($specialist['services'] as $service)
+                        <li>✔ {{ $service }}</li>
+                        @endforeach
+                    </ul>
+                    <a href="{{ url('/specialist/' . $specialist['slug']) }}"
+                        class="block text-center w-full bg-[#e9bcbc] hover:bg-[#dca9a9] text-white py-2 rounded">
+                        View Profile
+                    </a>
+                </div>
+            </div>
+            @endforeach
         </div>
-    </div>
-    @endforeach
-</div>
 
         {{-- PAGINATION --}}
         <div class="flex justify-center items-center gap-3 mt-10" id="pagination">
@@ -142,8 +133,7 @@
                 <button class="page-btn w-10 h-10 rounded-md border border-gray-300 bg-white text-gray-700">5</button>
             </div>
             {{-- NEXT --}}
-            <button id="nextBtn"
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white">
+            <button id="nextBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white">
                 →
             </button>
         </div>
@@ -163,78 +153,164 @@
 </section>
 
 <script>
-    const filterBtns = document.querySelectorAll('.filter-btn');
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                // reset semua
-                filterBtns.forEach(b => {
-                    b.classList.remove('bg-gray-800','text-white');
-                    b.classList.add('bg-[#f5eaea]','text-gray-800','border','border-gray-400');
-                });
-                // aktifkan yg diklik
-                btn.classList.remove('bg-[#f5eaea]','text-gray-800','border','border-gray-400');
-                btn.classList.add('bg-gray-800','text-white');
-            });
+const items = Array.from(document.querySelectorAll('.specialist-item'));
+const filterBtns = document.querySelectorAll('.filter-btn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const searchInput = document.querySelector('input[placeholder="Search..."]');
+
+let currentPage = 1;
+const itemsPerPage = 6;
+let currentFilter = 'all';
+let currentSearch = '';
+
+// =========================
+// GET FILTERED ITEMS
+// =========================
+function getFilteredItems() {
+    return items.filter(item => {
+        const name = item.getAttribute('data-name') ?? '';
+        const role = item.getAttribute('data-role') ?? '';
+
+        const matchFilter = currentFilter === 'all' || role === currentFilter;
+        const matchSearch = currentSearch === '' ||
+            name.includes(currentSearch) ||
+            role.includes(currentSearch);
+
+        return matchFilter && matchSearch;
+    });
+}
+
+// =========================
+// SET ACTIVE FILTER BUTTON
+// =========================
+function setActiveButton() {
+    filterBtns.forEach(btn => {
+        const isActive = btn.getAttribute('data-filter') === currentFilter;
+        btn.classList.toggle('bg-[#3E382D]', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('bg-[#f5eaea]', !isActive);
+        btn.classList.toggle('text-[#3E382D]', !isActive);
+    });
+}
+
+// =========================
+// UPDATE PAGINATION BUTTONS
+// =========================
+function updatePagination(totalItems) {
+    const maxPage = Math.ceil(totalItems / itemsPerPage);
+    const pagesContainer = document.getElementById('pages');
+
+    // Rebuild page buttons dinamis
+    pagesContainer.innerHTML = '';
+    for (let i = 1; i <= maxPage; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        btn.className = 'page-btn w-10 h-10 rounded-md border';
+
+        if (i === currentPage) {
+            btn.classList.add('bg-[#3E382D]', 'text-white', 'border-[#3E382D]');
+        } else {
+            btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+        }
+
+        btn.addEventListener('click', () => {
+            currentPage = i;
+            render();
         });
 
-    const buttons = document.querySelectorAll('.page-btn');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-
-    let currentPage = 1;
-    const totalPages = buttons.length;
-
-    function updateUI() {
-        buttons.forEach((btn, index) => {
-            if (index + 1 === currentPage) {
-                btn.classList.add('bg-gray-800','text-white','border-gray-800');
-                btn.classList.remove('bg-white','text-gray-700','border-gray-300');
-            } else {
-                btn.classList.remove('bg-gray-800','text-white','border-gray-800');
-                btn.classList.add('bg-white','text-gray-700','border-gray-300');
-            }
-        });
-        // PREV
-        if (currentPage === 1) {
-            prevBtn.classList.add('bg-gray-300','cursor-not-allowed');
-            prevBtn.classList.remove('bg-gray-800');
-        } else {
-            prevBtn.classList.remove('bg-gray-300','cursor-not-allowed');
-            prevBtn.classList.add('bg-gray-800');
-        }
-        // NEXT
-        if (currentPage === totalPages) {
-            nextBtn.classList.add('bg-gray-300','cursor-not-allowed');
-            nextBtn.classList.remove('bg-gray-800');
-        } else {
-            nextBtn.classList.remove('bg-gray-300','cursor-not-allowed');
-            nextBtn.classList.add('bg-gray-800');
-        }
+        pagesContainer.appendChild(btn);
     }
 
-    // CLICK NUMBER
-    buttons.forEach((btn, index) => {
-        btn.addEventListener('click', () => {
-            currentPage = index + 1;
-            updateUI();
-        });
-    });
-    // CLICK PREV
-    prevBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            updateUI();
+    // PREV
+    if (currentPage <= 1) {
+        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        prevBtn.classList.remove('bg-[#3E382D]');
+        prevBtn.classList.add('bg-gray-300');
+    } else {
+        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-300');
+        prevBtn.classList.add('bg-[#3E382D]');
+    }
+
+    // NEXT
+    if (currentPage >= maxPage) {
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('bg-[#3E382D]');
+        nextBtn.classList.add('bg-gray-300');
+    } else {
+        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-300');
+        nextBtn.classList.add('bg-[#3E382D]');
+    }
+
+    // Sembunyikan pagination kalau cuma 1 halaman
+    document.getElementById('pagination').style.display = maxPage <= 1 ? 'none' : 'flex';
+}
+
+// =========================
+// RENDER
+// =========================
+function render() {
+    const filtered = getFilteredItems();
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+
+    items.forEach(item => item.style.display = 'none');
+    filtered.slice(start, end).forEach(item => item.style.display = 'block');
+
+    // Empty state
+    let emptyMsg = document.getElementById('emptyMsg');
+    if (filtered.length === 0) {
+        if (!emptyMsg) {
+            emptyMsg = document.createElement('p');
+            emptyMsg.id = 'emptyMsg';
+            emptyMsg.className = 'col-span-3 text-center text-gray-400 py-10 text-sm';
+            emptyMsg.textContent = 'Tidak ada hasil yang ditemukan.';
+            document.getElementById('specialistGrid').appendChild(emptyMsg);
         }
+    } else {
+        emptyMsg?.remove();
+    }
+
+    updatePagination(filtered.length);
+}
+
+// =========================
+// EVENT LISTENERS
+// =========================
+filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+        currentFilter = btn.getAttribute('data-filter');
+        currentPage = 1;
+        setActiveButton();
+        render();
     });
-    // CLICK NEXT
-    nextBtn.addEventListener('click', () => {
-        if (currentPage < totalPages) {
-            currentPage++;
-            updateUI();
-        }
-    });
-    // INIT
-    updateUI();
+});
+
+searchInput.addEventListener('input', () => {
+    currentSearch = searchInput.value.toLowerCase().trim();
+    currentPage = 1;
+    render();
+});
+
+prevBtn.addEventListener('click', () => {
+    if (currentPage > 1) {
+        currentPage--;
+        render();
+    }
+});
+
+nextBtn.addEventListener('click', () => {
+    const maxPage = Math.ceil(getFilteredItems().length / itemsPerPage);
+    if (currentPage < maxPage) {
+        currentPage++;
+        render();
+    }
+});
+
+// =========================
+// INIT
+// =========================
+setActiveButton();
+render();
 </script>
 @endsection
-
