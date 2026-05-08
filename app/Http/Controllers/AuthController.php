@@ -5,61 +5,50 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use App\Models\User;
-use App\Models\CustomerProfile;
+use App\Models\Pelanggan;
 
 class AuthController extends Controller
 {
     // =====================
-    // LOGIN
+    // SHOW LOGIN
     // =====================
     public function showLogin()
     {
         if (Auth::check()) {
-            if (Auth::user()->role === 'customer') {
-                return redirect()->intended('/');
-            }
-
-            return $this->redirectByRole(
-                Auth::user()->role,
-                Auth::user()->branch_id
-            );
+            return $this->redirectByRole(Auth::user()->role);
         }
         return view('auth.login');
     }
 
+    // =====================
+    // SHOW REGISTER
+    // =====================
     public function showRegister()
     {
         if (Auth::check()) {
-            if (Auth::user()->role === 'customer') {
-                return redirect()->intended('/');
-            }
-
-            return $this->redirectByRole(
-                Auth::user()->role,
-                Auth::user()->branch_id
-            );
+            return $this->redirectByRole(Auth::user()->role);
         }
         return view('auth.signin');
     }
 
+    // =====================
+    // LOGIN
+    // =====================
     public function login(Request $request)
     {
-        $credentials = $request->validate([
+        $request->validate([
             'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::attempt(
+            ['email' => $request->email, 'password' => $request->password],
+            $request->boolean('remember')
+        )) {
             $request->session()->regenerate();
-            if (Auth::user()->role === 'customer') {
-                return redirect()->intended('/');
-            }
-
-            return $this->redirectByRole(
-                Auth::user()->role,
-                Auth::user()->branch_id
-            );
+            return $this->redirectByRole(Auth::user()->role);
         }
 
         return back()
@@ -68,42 +57,38 @@ class AuthController extends Controller
     }
 
     // =====================
-    // REGISTER (customer)
+    // REGISTER (pelanggan)
     // =====================
     public function register(Request $request)
     {
         $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:6', 'confirmed'],
-            'phone'    => ['nullable', 'string', 'max:20'],
+            'name'                  => ['required', 'string', 'max:100'],
+            'email'                 => ['required', 'email', 'unique:users,email'],
+            'password'              => ['required', 'min:6', 'confirmed'],
+            'phone'                 => ['nullable', 'string', 'max:20'],
         ]);
 
         $user = User::create([
-            'name'      => $request->name,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-            'role'      => 'customer',
-            'branch_id' => null,
+            'nama'        => $request->name,
+            'email'       => $request->email,
+            'password'    => Hash::make($request->password),
+            'no_hp'       => $request->phone,
+            'role'        => 'pelanggan',
+            'status_akun' => 'aktif',
         ]);
 
-        CustomerProfile::create([
-            'user_id' => $user->id,
-            'phone'   => $request->phone,
-        ]);
-
-        $user->sendEmailVerificationNotification();
+        // Buat record di tabel pelanggan jika ada
+        Pelanggan::create(['user_id' => $user->user_id]);
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        // Kalau register dari halaman booking, kembali ke booking
         return redirect()->intended('/');
     }
 
     // =====================
-    // REGISTER SAAT BOOKING
-    // (nama & email saja, tanpa password — auto-create akun)
+    // QUICK REGISTER (saat booking)
+    // nama & email saja — auto create akun
     // =====================
     public function quickRegister(Request $request)
     {
@@ -112,26 +97,31 @@ class AuthController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // Cek apakah email sudah terdaftar
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            // Buat akun baru, password random (customer bisa set password nanti)
             $user = User::create([
-                'name'      => $request->name,
-                'email'     => $request->email,
-                'password'  => Hash::make(\Str::random(16)),
-                'role'      => 'customer',
-                'branch_id' => null,
+                'nama'        => $request->name,
+                'email'       => $request->email,
+                'password'    => Hash::make(Str::random(16)),
+                'role'        => 'pelanggan',
+                'status_akun' => 'aktif',
             ]);
 
-            CustomerProfile::create(['user_id' => $user->id]);
+            Pelanggan::create(['user_id' => $user->user_id]);
         }
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        return response()->json(['success' => true, 'user' => $user->only('id', 'name', 'email')]);
+        return response()->json([
+            'success' => true,
+            'user'    => [
+                'id'    => $user->user_id,
+                'name'  => $user->nama,
+                'email' => $user->email,
+            ]
+        ]);
     }
 
     // =====================
@@ -146,16 +136,16 @@ class AuthController extends Controller
     }
 
     // =====================
-    // HELPER
+    // HELPER — redirect berdasarkan role
     // =====================
-    private function redirectByRole(string $role, ?int $branch_id = null)
+    private function redirectByRole(string $role)
     {
         return match($role) {
-            'owner'      => redirect('/dashboard'),
-            'admin'      => redirect("/admin/dashboard?branch_id={$branch_id}"),
-            'specialist' => redirect("/specialist/dashboard?branch_id={$branch_id}"),
-            'customer'   => redirect('/'),
-            default      => redirect('/'),
+            'owner'    => redirect('/dashboard'),
+            'admin'    => redirect('/admin/dashboard'),
+            'pegawai'  => redirect('/pegawai/dashboard'),
+            'pelanggan'=> redirect('/'),
+            default    => redirect('/login'),
         };
     }
 }

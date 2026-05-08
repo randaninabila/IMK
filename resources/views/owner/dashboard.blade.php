@@ -7,7 +7,6 @@
 <section 
     x-data="{
         showModal: false,
-
         selectedBranch: 'Semua',
         selectedReport: 'Financial'
     }"

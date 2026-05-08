@@ -2,57 +2,53 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable([
-    'name',
-    'email',
-    'password',
-    'role',
-    'branch_id'
-])]
-
-#[Hidden([
-    'password',
-    'remember_token'
-])]
-
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $table = 'users';
+    protected $primaryKey = 'user_id';
+    public $timestamps = true;
+    protected $keyType = 'int';
+    public $incrementing = true;
+
+    protected $fillable = [
+        'nama',
+        'email',
+        'password',
+        'no_hp',
+        'role',
+        'status_akun',
+    ];
+
+    protected $hidden = [
+        'password',
+    ];
+
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     // =====================
     // RELATIONS
     // =====================
-
-    public function branch()
+    public function pegawai()
     {
-        return $this->belongsTo(Branch::class);
+        return $this->hasOne(Pegawai::class, 'user_id', 'user_id');
     }
 
-    public function customerProfile()
+    public function pelanggan()
     {
-        return $this->hasOne(CustomerProfile::class);
+        return $this->hasOne(Pelanggan::class, 'user_id', 'user_id');
     }
 
     // =====================
     // HELPERS
     // =====================
-
     public function isOwner(): bool
     {
         return $this->role === 'owner';
@@ -63,13 +59,19 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'admin';
     }
 
-    public function isSpecialist(): bool
+    public function isPegawai(): bool
     {
-        return $this->role === 'specialist';
+        return $this->role === 'pegawai';
     }
 
-    public function isCustomer(): bool
+    public function isPelanggan(): bool
     {
-        return $this->role === 'customer';
+        return $this->role === 'pelanggan';
+    }
+
+    // Untuk navbar
+    public function getNameAttribute(): string
+    {
+        return $this->nama ?? '';
     }
 }
