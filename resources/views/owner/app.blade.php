@@ -14,10 +14,10 @@
     <!-- CHART -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- ✅ WAJIB: ALPINE -->
+    <!-- ALPINE -->
     <script src="//unpkg.com/alpinejs" defer></script>
 
-    <!-- ✅ WAJIB: ANTI KEDIP -->
+    <!-- ANTI KEDIP -->
     <style>
         body {
             font-family: 'Inter';
@@ -40,5 +40,6 @@
         @yield('content')
     </main>
 
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </body>
 </html>

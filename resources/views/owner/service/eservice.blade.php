@@ -6,7 +6,7 @@
 
     {{-- BACK --}}
     <a href="/service"
-       class="inline-flex items-center gap-2 bg-[#c98f8f] text-white px-6 py-3 rounded-full text-sm mb-10">
+        class="inline-flex items-center gap-2 bg-[#c98f8f] text-white px-6 py-3 rounded-full text-sm mb-10">
         ← Back
     </a>
 
@@ -14,9 +14,9 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
 
         @foreach([
-            ['title'=>'Total Category','val'=>5],
-            ['title'=>'Active Service','val'=>55],
-            ['title'=>'Cabang Package','val'=>7],
+        ['title'=>'Total Category','val'=>5],
+        ['title'=>'Active Service','val'=>55],
+        ['title'=>'Cabang Package','val'=>7],
         ] as $item)
 
         <div class="bg-[#f0eded] rounded-[30px] px-8 py-6 shadow-sm">
@@ -55,9 +55,8 @@
             {{-- SEARCH --}}
             <div class="flex items-center bg-[#e7bcbc] px-5 py-2 rounded-full w-[380px]">
                 <span class="mr-3 text-[#6b5c5c] text-lg">🔍</span>
-                <input type="text"
-                       placeholder="Search service"
-                       class="bg-transparent outline-none w-full text-sm text-[#3e382d] placeholder:text-[#6b5c5c]">
+                <input type="text" placeholder="Search service"
+                    class="bg-transparent outline-none w-full text-sm text-[#3e382d] placeholder:text-[#6b5c5c]">
             </div>
 
             {{-- ADD --}}
@@ -89,7 +88,7 @@
                 <tbody class="text-[#3e382d]">
 
                     @foreach([
-                        'Hair Spa','Hair Spa','Inai','Inai','Inai'
+                    'Hair Spa','Hair Spa','Inai','Inai','Inai'
                     ] as $i => $name)
 
                     <tr class="border-t border-[#e4caca] hover:bg-white/30 transition">

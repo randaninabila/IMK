@@ -5,6 +5,9 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
+use App\Http\Controllers\Owner\DashboardController;
+use App\Http\Controllers\Owner\ServiceController;
+
 // =====================
 // PUBLIC / USER
 // =====================
@@ -202,17 +205,13 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:owner'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('owner.dashboard');
-    });
+    Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::get('/customers', function () {
         return view('owner.customers');
     });
 
-    Route::get('/serviceo', function () {
-        return view('owner.service.service');
-    });
+    Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
 
     Route::get('/employee', function () {
         return view('owner.employees.employee');

@@ -17,9 +17,9 @@
 
             {{-- Dashboard --}}
             <a href="/dashboard"
-                class="relative hover:text-[#3E382D] {{ $current == '/dashboard' ? 'font-semibold text-[#3E382D]' : '' }}">
+                class="relative hover:text-[#3E382D] {{ $current == 'dashboard' ? 'font-semibold text-[#3E382D]' : '' }}">
                 Dashboard
-                @if($current == '/dashboard')
+                @if($current == 'dashboard')
                 <span class="absolute left-0 -bottom-1 w-full h-[2px] bg-[#3E382D] rounded"></span>
                 @endif
             </a>

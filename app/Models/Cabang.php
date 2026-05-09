@@ -21,4 +21,9 @@ class Cabang extends Model
         return $this->hasMany(Pegawai::class, 'cabang_id', 'cabang_id')
             ->whereHas('user', fn($q) => $q->where('role', 'admin'));
     }
+
+    public function layananCabang()
+    {
+        return $this->hasMany(LayananCabang::class, 'cabang_id');
+    }
 }
