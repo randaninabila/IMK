@@ -3,28 +3,88 @@
 @section('content')
 
 <div x-data="{ openModal:false }"
-     class="pt-28 px-10 bg-[#f4e6e6] min-h-screen">
+     class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen">
 
     {{-- BACK --}}
-    <a href="/employee"
-       class="inline-flex items-center gap-2 bg-[#c98f8f] text-white px-6 py-3 rounded-full text-sm mb-10 hover:opacity-90 transition">
-        ← Back
+    <a
+        href="{{ route('owner.employee') }}"
+        class="
+            inline-flex items-center justify-center gap-2
+            bg-white
+            border border-[#f1dede]
+            px-5 py-2.5
+            rounded-full
+            text-sm font-medium
+            text-[#b04a4a]
+            shadow-sm
+            hover:bg-pink-50
+            transition
+            mb-8
+        "
+    >
+        ← Back to Team Performance
     </a>
 
     {{-- SUMMARY --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+    <div class=" grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
-        @foreach([
-            ['title'=>'Total Employees','val'=>32],
-            ['title'=>'Active Today','val'=>30],
-            ['title'=>'Cabang Laudendang','val'=>32],
-            ['title'=>'Cabang Tuasan','val'=>32],
-        ] as $item)
+        {{-- TOTAL EMPLOYEE --}}
+        <div class="bg-white rounded-3xl p-5 shadow-sm">
 
-        <div class="bg-[#f0eded] rounded-[30px] px-8 py-6">
-            <p class="text-lg font-semibold text-[#3e382d]">{{ $item['title'] }}</p>
-            <h2 class="text-3xl font-bold text-[#e11d48] mt-2">{{ $item['val'] }}</h2>
+            <p class="text-sm text-gray-500 mb-2">
+                Total Employees
+            </p>
+
+            <h2 class="text-3xl font-bold text-[#f45b69]">
+                {{ $totalEmployees }}
+            </h2>
+
         </div>
+
+        {{-- ACTIVE --}}
+        <div class="bg-white rounded-3xl p-5 shadow-sm">
+
+            <p class="text-sm text-gray-500 mb-2">
+                Active This Month
+            </p>
+
+            <h2 class="text-3xl font-bold text-[#f45b69]">
+                {{ $activeEmployees }}
+            </h2>
+
+        </div>
+
+        {{-- CABANG --}}
+        @foreach($cabangs as $cabang)
+
+            @if(
+                $selectedCabang == 'all'
+                || $selectedCabang == $cabang->cabang_id
+            )
+
+            <div class="bg-white rounded-3xl p-5 shadow-sm">
+
+                <p class="
+                    text-sm
+                    text-gray-500
+                    mb-2
+                    truncate
+                ">
+                    {{ $cabang->nama_cabang }}
+                </p>
+
+                <h2 class="text-3xl font-bold text-[#f45b69]">
+
+                    {{
+                        $branchTotals[$cabang->nama_cabang]
+                        ?? 0
+                    }}
+
+                </h2>
+
+            </div>
+
+            @endif
 
         @endforeach
 
@@ -35,194 +95,697 @@
 
         {{-- HEADER --}}
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-4xl font-bold text-[#3e382d]">
-                Staff Directory
-            </h2>
 
-            <button class="bg-[#f45b69] text-white px-5 py-2 rounded-full text-sm">
-                Seluruh Cabang ▼
-            </button>
-        </div>
+            <div>
+                <h1 class="text-3xl font-bold text-[#2d2a26]">
+                    Staff Directory
+                </h1>
 
-        {{-- SEARCH + ADD --}}
-        <div class="flex justify-between items-center mb-6">
-
-            {{-- SEARCH --}}
-            <div class="relative w-full max-w-xs">
-                <input 
-                    type="text" 
-                    placeholder="Search..." 
-                    class="w-full pl-6 pr-12 py-3 bg-white border-2 border-[#E99688] rounded-2xl text-[#9CA3AF] placeholder-[#9CA3AF] outline-none transition-all focus:ring-2 focus:ring-[#f5c6be]"
-                >
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E99688]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </div>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{
+                        Carbon\Carbon::parse($selectedMonth)
+                            ->translatedFormat('F Y')
+                    }}
+                    • Manage salon specialists and staff
+                </p>
             </div>
 
-            {{-- ADD BUTTON --}}
-            <button @click="openModal = true"
-                    class="bg-[#e7bcbc] text-[#b91c1c] px-5 py-2 rounded-full text-sm
-                           hover:bg-[#f45b69] hover:text-white transition">
-                + Add Employee
-            </button>
+            <div class="flex gap-3">
+
+                {{-- FILTER CABANG --}}
+                <div class="relative" x-data="{ open: false }">
+
+                    <button
+                        @click="open = !open"
+                        class="
+                            bg-[#f45b69]
+                            text-white
+                            px-5 py-2.5
+                            rounded-full
+                            text-sm
+                            font-medium
+                            flex items-center gap-2
+                            shadow-sm
+                            hover:opacity-90
+                            transition
+                        "
+                    >
+
+                        @if($selectedCabang == 'all')
+
+                            Seluruh Cabang
+
+                        @else
+
+                            {{
+                                $cabangs
+                                    ->firstWhere(
+                                        'cabang_id',
+                                        $selectedCabang
+                                    )?->nama_cabang
+                            }}
+
+                        @endif
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                            />
+
+                        </svg>
+
+                    </button>
+
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition
+                        class="
+                            absolute
+                            top-full
+                            left-0
+                            mt-2
+                            w-64
+                            bg-white
+                            rounded-2xl
+                            shadow-xl
+                            border border-pink-100
+                            overflow-hidden
+                            z-50
+                        "
+                    >
+
+                        {{-- ALL --}}
+                        <a
+                            href="
+                                {{
+                                    route('owner.employee.edit', [
+                                        'cabang' => 'all',
+                                        'bulan' => $selectedMonth
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedCabang == 'all'
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>Seluruh Cabang</span>
+
+                            @if($selectedCabang == 'all')
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @foreach($cabangs as $cabang)
+
+                        <a
+                            href="
+                                {{
+                                    route('owner.employee.edit', [
+                                        'cabang' => $cabang->cabang_id,
+                                        'bulan' => $selectedMonth
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedCabang == $cabang->cabang_id
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>
+                                {{ $cabang->nama_cabang }}
+                            </span>
+
+                            @if($selectedCabang == $cabang->cabang_id)
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+                {{-- FILTER BULAN --}}
+                <div class="relative" x-data="{ open: false }">
+
+                    <button
+                        @click="open = !open"
+                        class="
+                            bg-white
+                            border border-[#f3dede]
+                            text-[#2d2a26]
+                            px-5 py-2.5
+                            rounded-full
+                            text-sm
+                            font-medium
+                            flex items-center gap-2
+                            shadow-sm
+                            hover:bg-[#fff7f7]
+                            transition
+                        "
+                    >
+
+                        {{
+                            collect($months)
+                                ->firstWhere(
+                                    'value',
+                                    $selectedMonth
+                                )['label']
+                        }}
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                            />
+
+                        </svg>
+
+                    </button>
+
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition
+                        class="
+                            absolute
+                            top-full
+                            right-0
+                            mt-2
+                            w-52
+                            bg-white
+                            rounded-2xl
+                            shadow-xl
+                            border border-pink-100
+                            overflow-hidden
+                            z-50
+                        "
+                    >
+
+                        @foreach($months as $month)
+
+                        <a
+                            href="
+                                {{
+                                    route('owner.employee.edit', [
+                                        'cabang' => $selectedCabang,
+                                        'bulan' => $month['value']
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedMonth == $month['value']
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>
+                                {{ $month['label'] }}
+                            </span>
+
+                            @if($selectedMonth == $month['value'])
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+                {{-- ADD --}}
+                <button
+                    @click="openModal = true"
+                    class="
+                        bg-[#f8cdd0]
+                        text-[#b04a4a]
+                        px-5 py-2.5
+                        rounded-full
+                        text-sm font-medium
+                        hover:opacity-90
+                        transition
+                    "
+                >
+                    + Add Employee
+                </button>
+
+            </div>
+        </div>
+
+        {{-- SEARCH --}}
+        <div class="mb-6">
+
+            <div class="
+                flex items-center
+                bg-white
+                px-5 py-3
+                rounded-2xl
+                border border-[#ecd9d9]
+                max-w-md
+            ">
+
+                <span class="mr-3 text-gray-400">
+                    🔍
+                </span>
+
+                <input
+                    type="text"
+                    placeholder="Search employee..."
+                    class="
+                        bg-transparent
+                        outline-none
+                        w-full
+                        text-sm
+                    "
+                    id="searchEmployee"
+                >
+
+            </div>
 
         </div>
 
         {{-- TABLE --}}
-        <table class="w-full text-sm">
+        <div class="overflow-x-auto">
 
-            <thead class="text-[#9f1d2c] text-base">
-                <tr>
-                    <th class="py-4 text-left">No</th>
-                    <th>Specialist</th>
-                    <th>Role</th>
-                    <th>Cabang</th>
-                    <th>Status</th>
-                    <th>Clients</th>
-                    <th>Since</th>
-                    <th>Rating</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
+            <table class="w-full min-w-[1100px] text-sm">
 
-            <tbody class="text-[#3e382d]">
+                {{-- HEADER --}}
+                <thead
+                    class="
+                        text-left
+                        text-[#b04a4a]
+                        border-b border-[#d8c6c6]
+                    "
+                >
 
-                @foreach(range(1,5) as $i)
+                    <tr>
 
-                <tr class="border-t hover:bg-white/30 transition">
+                        <th class="py-4 px-4 text-center w-[70px]">
+                            No
+                        </th>
 
-                    <td class="py-4">{{ $i }}</td>
+                        <th class="px-4 text-left w-[280px]">
+                            Specialist
+                        </th>
 
-                    <td class="flex items-center gap-2">
-                        <div class="w-6 h-6 bg-gray-300 rounded-full"></div>
-                        Putri Amelia
-                    </td>
+                        <th class="px-4 text-center w-[120px]">
+                            Role
+                        </th>
 
-                    <td>Specialist</td>
-                    <td>Tuasan</td>
+                        <th class="px-4 text-left w-[260px]">
+                            Cabang
+                        </th>
 
-                    <td class="text-green-500">Active</td>
+                        <th class="px-4 text-center w-[120px]">
+                            Status
+                        </th>
 
-                    <td>200</td>
-                    <td>January 2020</td>
-                    <td>4.9</td>
+                        <th class="px-4 text-center w-[90px]">
+                            Clients
+                        </th>
 
-                    <td class="flex gap-3">
-                        <button class="hover:scale-110">✏️</button>
-                        <button class="hover:scale-110">🗑️</button>
-                    </td>
+                        <th class="px-4 text-center w-[90px]">
+                            Services
+                        </th>
 
-                </tr>
+                        <th class="px-4 text-center w-[120px]">
+                            Since
+                        </th>
 
-                @endforeach
+                        <th class="px-4 text-center w-[100px]">
+                            Rating
+                        </th>
 
-            </tbody>
+                        <th class="px-4 text-center w-[110px]">
+                            Action
+                        </th>
 
-        </table>
+                    </tr>
 
-    </div>
+                </thead>
 
-    {{-- ================= MODAL ================= --}}
-    <div x-show="openModal"
-         x-cloak
-         x-transition.opacity
-         class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                {{-- BODY --}}
+                <tbody class="text-[#3e382d]">
 
-        {{-- BOX --}}
-        <div @click.outside="openModal=false"
-             class="bg-[#f3eded] w-full max-w-xl rounded-[40px] px-10 py-10">
+                    @forelse($employees as $i => $employee)
 
-            {{-- TITLE --}}
-            <div class="text-center mb-8">
-                <h2 class="text-4xl font-bold text-[#3e382d]">
-                    Add New Team
-                </h2>
-                <p class="text-gray-500 mt-2">
-                    Add a new specialist or admin to the team.
-                </p>
-            </div>
+                    <tr class="
+                        employee-row
+                        border-b border-[#ead7d7]
+                        hover:bg-[#fff7f7]
+                        transition duration-200
+                    ">
 
-            {{-- FORM --}}
-            <form class="space-y-6">
+                        {{-- NO --}}
+                        <td class="py-5 px-4 text-center font-medium">
+                            {{ $i + 1 }}
+                        </td>
 
-                <div>
-                    <label class="text-xl font-semibold">Full Name</label>
-                    <input type="text"
-                           class="w-full mt-2 bg-[#e7cfcf] px-5 py-3 rounded-xl">
-                </div>
+                        {{-- SPECIALIST --}}
+                        <td class="px-4 py-5">
 
-                <div>
-                    <label class="text-xl font-semibold">Phone Number</label>
-                    <input type="text"
-                           class="w-full mt-2 bg-[#e7cfcf] px-5 py-3 rounded-xl">
-                </div>
+                            <div class="flex items-center gap-3">
 
-                <div class="grid grid-cols-2 gap-6">
+                                {{-- PHOTO --}}
+                                @if($employee['foto_profile'])
 
-                    <div>
-                        <label class="text-xl font-semibold">Role</label>
-                        <select class="w-full mt-2 bg-[#e7cfcf] px-5 py-3 rounded-xl">
-                            <option>Specialist</option>
-                            <option>Admin</option>
-                        </select>
-                    </div>
+                                <img
+                                    src="{{ asset('storage/' . $employee['foto_profile']) }}"
+                                    alt="{{ $employee['nama'] }}"
+                                    class="
+                                        w-11 h-11
+                                        rounded-full
+                                        object-cover
+                                        border border-white
+                                        shadow-sm
+                                        flex-shrink-0
+                                    "
+                                >
 
-                    <div>
-                        <label class="text-xl font-semibold">Branch</label>
-                        <select class="w-full mt-2 bg-[#e7cfcf] px-5 py-3 rounded-xl">
-                            <option>Tuasan</option>
-                            <option>Laudendang</option>
-                        </select>
-                    </div>
+                                @else
 
-                </div>
+                                <div class="
+                                    w-11 h-11
+                                    rounded-full
+                                    bg-gradient-to-br
+                                    from-[#f45b69]
+                                    to-[#ff8fa3]
+                                    text-white
+                                    flex items-center justify-center
+                                    text-sm font-bold
+                                    shadow-sm
+                                    flex-shrink-0
+                                ">
 
-                {{-- BUTTON --}}
-                <div class="flex justify-end gap-4 mt-6">
+                                    {{ $employee['initial'] }}
 
-                    <button type="button"
-                            @click="openModal=false"
-                            class="bg-gray-300 px-6 py-2 rounded-full">
-                        Cancel
-                    </button>
+                                </div>
 
-                    <button type="submit"
-                            class="bg-[#ea868f] text-white px-6 py-2 rounded-full">
-                        Add Team
-                    </button>
+                                @endif
 
-                </div>
+                                {{-- NAME --}}
+                                <div class="min-w-0">
 
-            </form>
+                                    <p class="
+                                        employee-name
+                                        font-semibold
+                                        text-[#2d2a26]
+                                        truncate
+                                    ">
+                                        {{ $employee['nama'] }}
+                                    </p>
+
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        ID #{{ $employee['pegawai_id'] }}
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+                        {{-- ROLE --}}
+                        <td class="px-4 text-center">
+
+                            <span class="
+                                inline-flex items-center justify-center
+                                px-3 py-1
+                                rounded-full
+                                text-xs font-semibold
+                                whitespace-nowrap
+
+                                {{
+                                    $employee['role'] == 'admin'
+                                    ? 'bg-[#dbeafe] text-[#2563eb]'
+                                    : 'bg-[#ffe4e6] text-[#e11d48]'
+                                }}
+                            ">
+
+                                {{ ucfirst($employee['role']) }}
+
+                            </span>
+
+                        </td>
+
+                        {{-- CABANG --}}
+                        <td class="
+                            px-4
+                            employee-branch
+                            text-[#4b4035]
+                        ">
+
+                            <div class="truncate max-w-[240px]">
+                                {{ $employee['nama_cabang'] }}
+                            </div>
+
+                        </td>
+
+                        {{-- STATUS --}}
+                        <td class="px-4 text-center">
+
+                            <span class="
+                                inline-flex items-center justify-center
+                                px-3 py-1
+                                rounded-full
+                                text-xs font-semibold
+                                whitespace-nowrap
+
+                                {{
+                                    $employee['status_kerja'] == 'aktif'
+                                    ? 'bg-green-100 text-green-600'
+                                    : 'bg-red-100 text-red-500'
+                                }}
+                            ">
+
+                                {{ ucfirst($employee['status_kerja']) }}
+
+                            </span>
+
+                        </td>
+
+                        {{-- CLIENTS --}}
+                        <td class="
+                            px-4
+                            text-center
+                            font-medium
+                        ">
+
+                            {{ number_format($employee['total_clients']) }}
+
+                        </td>
+
+                        {{-- SERVICES --}}
+                        <td class="
+                            px-4
+                            text-center
+                            font-medium
+                        ">
+
+                            {{ number_format($employee['total_services']) }}
+
+                        </td>
+
+                        {{-- SINCE --}}
+                        <td class="
+                            px-4
+                            text-center
+                            whitespace-nowrap
+                            text-[#5f5347]
+                        ">
+
+                            {{ $employee['since_joined'] }}
+
+                        </td>
+
+                        {{-- RATING --}}
+                        <td class="px-4 text-center">
+
+                            <span class="
+                                inline-flex items-center gap-1
+                                font-semibold
+                                text-[#2d2a26]
+                            ">
+
+                                <span>⭐</span>
+
+                                {{ $employee['avg_rating'] }}
+
+                            </span>
+
+                        </td>
+
+                        {{-- ACTION --}}
+                        <td class="px-4">
+
+                            <div class="flex justify-center gap-2">
+
+                                {{-- EDIT --}}
+                                <button class="
+                                    w-9 h-9
+                                    rounded-xl
+                                    bg-white
+                                    border border-[#f3dede]
+                                    shadow-sm
+                                    hover:bg-pink-100
+                                    hover:scale-105
+                                    transition
+                                ">
+                                    ✏️
+                                </button>
+
+                                {{-- DELETE --}}
+                                <button class="
+                                    w-9 h-9
+                                    rounded-xl
+                                    bg-white
+                                    border border-[#f3dede]
+                                    shadow-sm
+                                    hover:bg-red-100
+                                    hover:scale-105
+                                    transition
+                                ">
+                                    🗑️
+                                </button>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    @empty
+
+                    <tr>
+
+                        <td colspan="10" class="py-16 text-center">
+
+                            <div class="flex flex-col items-center">
+
+                                <div class="text-5xl mb-4">
+                                    📊
+                                </div>
+
+                                <h3 class="
+                                    text-xl font-semibold
+                                    text-[#2d2a26]
+                                    mb-2
+                                ">
+                                    No employee data
+                                </h3>
+
+                                <p class="text-sm text-gray-500">
+                                    No employee activity found for this period.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
 
         </div>
 
     </div>
 
+    {{-- ================= MODAL ================= --}}
+    @include('owner.employees.addemployee')
+
 </div>
+
 <script>
-// =========================
-// SEARCH ONLY (SEPARATE)
-// =========================
-const searchInput = document.getElementById('searchInput');
+const searchInput =
+    document.getElementById('searchEmployee');
 
-searchInput.addEventListener('input', function () {
-    const query = this.value.toLowerCase();
+const rows =
+    document.querySelectorAll('.employee-row');
 
-    const items = document.querySelectorAll('.gallery-item');
+searchInput.addEventListener('keyup', function () {
 
-    items.forEach(item => {
-        const title = item.querySelector('h3').innerText.toLowerCase();
-        const desc = item.querySelector('p').innerText.toLowerCase();
+    const keyword =
+        this.value.toLowerCase();
 
-        if (title.includes(query) || desc.includes(query)) {
-            item.style.display = '';
-        } else {
-            item.style.display = 'none';
-        }
+    rows.forEach(row => {
+
+        const name =
+            row.querySelector('.employee-name')
+                ?.innerText
+                .toLowerCase() || '';
+
+        const branch =
+            row.querySelector('.employee-branch')
+                ?.innerText
+                .toLowerCase() || '';
+
+        row.style.display =
+            name.includes(keyword)
+            || branch.includes(keyword)
+            ? ''
+            : 'none';
+
     });
+
 });
 </script>
 @endsection

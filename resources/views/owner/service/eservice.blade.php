@@ -2,123 +2,569 @@
 
 @section('content')
 
-<div class="pt-28 px-10 bg-[#f4e6e6] min-h-screen">
+<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen">
 
     {{-- BACK --}}
-    <a href="/service"
-        class="inline-flex items-center gap-2 bg-[#c98f8f] text-white px-6 py-3 rounded-full text-sm mb-10">
-        ← Back
+    <a
+        href="{{ route('owner.service') }}"
+        class="
+            inline-flex items-center gap-2
+            bg-white
+            border border-[#f1dede]
+            px-5 py-2.5
+            rounded-full
+            text-sm font-medium
+            text-[#b04a4a]
+            shadow-sm
+            hover:bg-pink-50
+            transition
+            mb-8
+        "
+    >
+        ← Back to Service Analytics
     </a>
 
-    {{-- CARDS --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+    {{-- STATS --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-        @foreach([
-        ['title'=>'Total Category','val'=>5],
-        ['title'=>'Active Service','val'=>55],
-        ['title'=>'Cabang Package','val'=>7],
-        ] as $item)
-
-        <div class="bg-[#f0eded] rounded-[30px] px-8 py-6 shadow-sm">
-            <p class="text-lg font-semibold text-[#3e382d]">
-                {{ $item['title'] }}
+        <div class="bg-white rounded-3xl p-5 shadow-sm">
+            <p class="text-sm text-gray-500 mb-2">
+                Total Categories
             </p>
 
-            <h2 class="text-3xl font-bold text-[#e11d48] mt-2">
-                {{ $item['val'] }}
+            <h2 class="text-3xl font-bold text-[#f45b69]">
+                {{ $jenisLayanan->count() }}
             </h2>
         </div>
 
-        @endforeach
+        <div class="bg-white rounded-3xl p-5 shadow-sm">
+            <p class="text-sm text-gray-500 mb-2">
+                Active Services
+            </p>
+
+            <h2 class="text-3xl font-bold text-[#f45b69]">
+                {{ $leaderboard->count() }}
+            </h2>
+        </div>
+
+        <div class="bg-white rounded-3xl p-5 shadow-sm">
+            <p class="text-sm text-gray-500 mb-2">
+                Total Revenue
+            </p>
+
+            <h2 class="text-3xl font-bold text-[#f45b69]">
+                Rp {{ number_format(
+                    $totalRevenue,
+                    0,
+                    ',',
+                    '.'
+                ) }}
+            </h2>
+        </div>
 
     </div>
 
-    {{-- MAIN CARD --}}
-    <div class="bg-[#efe3e3] rounded-[35px] px-10 py-8">
+    {{-- MAIN --}}
+    <div class="bg-[#eadede] rounded-3xl p-6">
 
         {{-- HEADER --}}
         <div class="flex justify-between items-center mb-6">
 
-            <h2 class="text-4xl font-bold text-[#3e382d]">
-                Service Directory
-            </h2>
+            <div>
 
-            <button class="bg-[#f45b69] text-white px-5 py-2 rounded-full text-sm">
-                Seluruh Cabang ▼
-            </button>
+                <h1 class="text-3xl font-bold text-[#2d2a26]">
+                    Service Directory
+                </h1>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
+                    • Manage and monitor all salon services
+                </p>
+
+            </div>
+
+            <div class="flex gap-3">
+
+                {{-- FILTER CABANG --}}
+                <div class="relative" x-data="{ open: false }">
+
+                    <button
+                        @click="open = !open"
+                        class="
+                            bg-[#f45b69]
+                            text-white
+                            px-5 py-2.5
+                            rounded-full
+                            text-sm
+                            font-medium
+                            flex items-center gap-2
+                            shadow-sm
+                            hover:opacity-90
+                            transition
+                        "
+                    >
+
+                        @if($selectedCabang == 'all')
+
+                            Seluruh Cabang
+
+                        @else
+
+                            {{
+                                $cabangs
+                                    ->firstWhere(
+                                        'cabang_id',
+                                        $selectedCabang
+                                    )?->nama_cabang
+                            }}
+
+                        @endif
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                            />
+
+                        </svg>
+
+                    </button>
+
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition
+                        class="
+                            absolute
+                            top-full
+                            left-0
+                            mt-2
+                            w-64
+                            bg-white
+                            rounded-2xl
+                            shadow-xl
+                            border border-pink-100
+                            overflow-hidden
+                            z-50
+                        "
+                    >
+
+                        {{-- ALL --}}
+                        <a
+                            href="
+                                {{
+                                    route('owner.service.edit', [
+                                        'cabang' => 'all',
+                                        'bulan' => $selectedMonth
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedCabang == 'all'
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>Seluruh Cabang</span>
+
+                            @if($selectedCabang == 'all')
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @foreach($cabangs as $cabang)
+
+                        <a
+                            href="
+                                {{
+                                    route('owner.service.edit', [
+                                        'cabang' => $cabang->cabang_id,
+                                        'bulan' => $selectedMonth
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedCabang == $cabang->cabang_id
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>
+                                {{ $cabang->nama_cabang }}
+                            </span>
+
+                            @if($selectedCabang == $cabang->cabang_id)
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+                {{-- FILTER BULAN --}}
+                <div class="relative" x-data="{ open: false }">
+
+                    <button
+                        @click="open = !open"
+                        class="
+                            bg-white
+                            border border-[#f3dede]
+                            text-[#2d2a26]
+                            px-5 py-2.5
+                            rounded-full
+                            text-sm
+                            font-medium
+                            flex items-center gap-2
+                            shadow-sm
+                            hover:bg-[#fff7f7]
+                            transition
+                        "
+                    >
+
+                        {{
+                            collect($months)
+                                ->firstWhere(
+                                    'value',
+                                    $selectedMonth
+                                )['label']
+                        }}
+
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M19 9l-7 7-7-7"
+                            />
+
+                        </svg>
+
+                    </button>
+
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition
+                        class="
+                            absolute
+                            top-full
+                            right-0
+                            mt-2
+                            w-52
+                            bg-white
+                            rounded-2xl
+                            shadow-xl
+                            border border-pink-100
+                            overflow-hidden
+                            z-50
+                        "
+                    >
+
+                        @foreach($months as $month)
+
+                        <a
+                            href="
+                                {{
+                                    route('owner.service.edit', [
+                                        'cabang' => $selectedCabang,
+                                        'bulan' => $month['value']
+                                    ])
+                                }}
+                            "
+                            class="
+                                flex items-center justify-between
+                                px-5 py-3
+                                text-sm
+                                hover:bg-pink-50
+                                transition
+
+                                {{
+                                    $selectedMonth == $month['value']
+                                        ? 'bg-pink-50 font-semibold text-[#f45b69]'
+                                        : 'text-gray-700'
+                                }}
+                            "
+                        >
+
+                            <span>
+                                {{ $month['label'] }}
+                            </span>
+
+                            @if($selectedMonth == $month['value'])
+                                <span>✓</span>
+                            @endif
+
+                        </a>
+
+                        @endforeach
+
+                    </div>
+
+                </div>
+
+                {{-- ADD --}}
+                <button
+                    class="
+                        bg-[#f8cdd0]
+                        text-[#b04a4a]
+                        px-5 py-2.5
+                        rounded-full
+                        text-sm font-medium
+                        hover:opacity-90
+                        transition
+                    "
+                >
+                    + Add Service
+                </button>
+
+            </div>
 
         </div>
 
-        {{-- SEARCH + BUTTON --}}
-        <div class="flex justify-between items-center mb-6">
+        {{-- SEARCH --}}
+        <div class="mb-6">
 
-            {{-- SEARCH --}}
-            <div class="flex items-center bg-[#e7bcbc] px-5 py-2 rounded-full w-[380px]">
-                <span class="mr-3 text-[#6b5c5c] text-lg">🔍</span>
-                <input type="text" placeholder="Search service"
-                    class="bg-transparent outline-none w-full text-sm text-[#3e382d] placeholder:text-[#6b5c5c]">
+            <div class="
+                flex items-center
+                bg-white
+                px-5 py-3
+                rounded-2xl
+                border border-[#ecd9d9]
+                max-w-md
+            ">
+
+                <span class="mr-3 text-gray-400">
+                    🔍
+                </span>
+
+                <input
+                    type="text"
+                    placeholder="Search service..."
+                    class="
+                        bg-transparent
+                        outline-none
+                        w-full
+                        text-sm
+                    "
+                    id="searchService"
+                >
+
             </div>
-
-            {{-- ADD --}}
-            <button class="bg-[#e7bcbc] text-[#b91c1c] px-5 py-2 rounded-full text-sm flex items-center gap-2">
-                👤 + Add Service
-            </button>
 
         </div>
 
         {{-- TABLE --}}
-        <div class="overflow-hidden rounded-xl">
+        <div class="overflow-x-auto">
 
             <table class="w-full text-sm">
 
-                {{-- HEAD --}}
-                <thead class="text-[#9f1d2c] text-base">
+                <thead
+                    class="
+                        text-left
+                        text-[#b04a4a]
+                        border-b border-[#d8c6c6]
+                    "
+                >
+
                     <tr>
-                        <th class="py-4 text-left">No</th>
-                        <th class="text-left">Services</th>
-                        <th class="text-left">Category</th>
-                        <th class="text-left">Cabang Laudendang</th>
-                        <th class="text-left">Cabang Tuasan</th>
-                        <th class="text-left">Revenue</th>
-                        <th class="text-left">Action</th>
+                        <th class="py-4 px-4">No</th>
+                        <th class="px-4">Service</th>
+                        <th class="px-4">Category</th>
+
+                        @if($selectedCabang == 'all')
+
+                            @foreach($cabangs as $cabang)
+
+                            <th class="px-4">
+                                {{ $cabang->nama_cabang }}
+                            </th>
+
+                            @endforeach
+
+                        @else
+
+                            <th class="px-4">
+                                Branch Performance
+                            </th>
+
+                        @endif
+
+                        <th class="px-4">Revenue</th>
+                        <th class="px-4">Growth</th>
                     </tr>
+
                 </thead>
 
-                {{-- BODY --}}
-                <tbody class="text-[#3e382d]">
+                <tbody class="text-gray-700">
 
-                    @foreach([
-                    'Hair Spa','Hair Spa','Inai','Inai','Inai'
-                    ] as $i => $name)
+                    @forelse($leaderboard as $i => $item)
 
-                    <tr class="border-t border-[#e4caca] hover:bg-white/30 transition">
+                    <tr
+                        class="
+                            border-b border-[#e5d6d6]
+                            hover:bg-[#fdf4f4]
+                            transition-colors duration-200
+                        "
+                    >
 
-                        <td class="py-4">{{ $i+1 }}</td>
-
-                        <td class="font-medium">{{ $name }}</td>
-
-                        <td>Hair Treatment</td>
-
-                        <td>
-                            <div class="font-medium">102 booking</div>
-                            <div class="text-xs text-gray-500">Rp 25jt</div>
+                        <td class="py-5 px-4">
+                            {{ $i + 1 }}
                         </td>
 
-                        <td>
-                            <div class="font-medium">102 booking</div>
-                            <div class="text-xs text-gray-500">Rp 25jt</div>
+                        <td class="px-4 font-semibold">
+                            {{ $item['service'] }}
                         </td>
 
-                        <td class="font-semibold">Rp 50jt</td>
+                        <td class="px-4">
+                            {{ $item['category'] }}
+                        </td>
 
-                        <td class="flex gap-4">
-                            <button class="hover:scale-110 transition">✏️</button>
-                            <button class="hover:scale-110 transition">🗑️</button>
+                        @if($selectedCabang == 'all')
+
+                            <td class="px-4">
+
+                                <div class="leading-6">
+
+                                    <span class="font-medium">
+                                        {{ $item['cabang1_count'] }} booking
+                                    </span>
+
+                                    <br>
+
+                                    <span class="text-xs text-gray-400">
+                                        Rp {{ $item['cabang1_revenue'] }}
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+                            <td class="px-4">
+
+                                <div class="leading-6">
+
+                                    <span class="font-medium">
+                                        {{ $item['cabang2_count'] }} booking
+                                    </span>
+
+                                    <br>
+
+                                    <span class="text-xs text-gray-400">
+                                        Rp {{ $item['cabang2_revenue'] }}
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+                        @else
+
+                            <td class="px-4">
+
+                                <div class="leading-6">
+
+                                    <span class="font-medium">
+                                        {{ $item['selected_count'] }} booking
+                                    </span>
+
+                                    <br>
+
+                                    <span class="text-xs text-gray-400">
+                                        Rp {{ $item['selected_revenue'] }}
+                                    </span>
+
+                                </div>
+
+                            </td>
+
+                        @endif
+
+                        <td class="px-4 font-semibold">
+                            {{ $item['revenue'] }}
+                        </td>
+
+                        <td class="px-4">
+
+                            <span class="{{ $item['growth_class'] }} font-semibold">
+
+                                {{ $item['growth'] >= 0 ? '+' : '' }}
+                                {{ $item['growth'] }}%
+
+                            </span>
+
                         </td>
 
                     </tr>
 
-                    @endforeach
+                    @empty
+
+                    <tr>
+
+                        <td
+                            colspan="100%"
+                            class="py-14 text-center"
+                        >
+
+                            <div class="flex flex-col items-center">
+
+                                <div class="text-5xl mb-4">
+                                    📊
+                                </div>
+
+                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">
+                                    No service data
+                                </h3>
+
+                                <p class="text-sm text-gray-500">
+                                    No completed bookings were found.
+                                </p>
+
+                            </div>
+
+                        </td>
+
+                    </tr>
+
+                    @endforelse
 
                 </tbody>
 
@@ -130,4 +576,30 @@
 
 </div>
 
+<script>
+const searchInput =
+    document.getElementById('searchService');
+
+const tableRows =
+    document.querySelectorAll('tbody tr');
+
+searchInput.addEventListener('keyup', function () {
+
+    const keyword =
+        this.value.toLowerCase();
+
+    tableRows.forEach(row => {
+
+        const text =
+            row.innerText.toLowerCase();
+
+        row.style.display =
+            text.includes(keyword)
+            ? ''
+            : 'none';
+
+    });
+
+});
+</script>
 @endsection

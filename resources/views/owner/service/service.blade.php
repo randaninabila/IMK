@@ -2,7 +2,7 @@
 
 @section('content')
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen">
+<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative">
 
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-6">
@@ -416,9 +416,15 @@
                 Service Leaderboard
             </h2>
 
-            <button class="text-sm text-[#b04a4a]">
+            <a
+                href="{{ route('owner.service.edit') }}"
+                class="
+                    text-sm
+                    text-[#b04a4a]
+                "
+            >
                 Edit ✏️
-            </button>
+            </a>
         </div>
 
         <div class="overflow-x-auto">
@@ -427,6 +433,7 @@
 
                 <thead class="text-left text-[#b04a4a] border-b border-[#d8c6c6]">
                     <tr>
+                        <th class="py-4 px-4 text-center">No</th>
                         <th class="py-4 px-4">Services</th>
                         <th class="px-4">Category</th>
 
@@ -452,11 +459,15 @@
                 </thead>
 
                 <tbody class="text-gray-700">
-                    @forelse($leaderboard as $item)
+                    @forelse($leaderboard as $i => $item)
 
                     <tr
                         class="leaderboard-row border-b border-[#e5d6d6] hover:bg-[#fdf4f4] transition-colors duration-200"
                         data-category="{{ $item['category'] }}">
+
+                        <td class="py-5 px-4 text-center">
+                            {{ $i + 1 }}
+                        </td>
 
                         <td class="py-5 px-4 font-semibold">
                             {{ $item['service'] }}
@@ -584,6 +595,147 @@
                     No completed service bookings were found
                     for this category.
                 </p>
+            </div>
+
+            {{-- FOOTER TABLE --}}
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-5 border-t border-[#d8c6c6]">
+
+                {{-- INFO --}}
+                <div class="text-sm text-gray-500">
+
+                    @if($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator)
+
+                        Showing
+                        <span class="font-semibold text-[#2d2a26]">
+                            {{ $leaderboard->firstItem() }}
+                        </span>
+
+                        -
+
+                        <span class="font-semibold text-[#2d2a26]">
+                            {{ $leaderboard->lastItem() }}
+                        </span>
+
+                        of
+
+                        <span class="font-semibold text-[#2d2a26]">
+                            {{ $leaderboard->total() }}
+                        </span>
+
+                        specialists
+
+                    @else
+
+                        Showing all
+                        <span class="font-semibold text-[#2d2a26]">
+                            {{ $leaderboard->count() }}
+                        </span>
+
+                        specialists
+
+                    @endif
+
+                </div>
+
+                {{-- RIGHT CONTROL --}}
+                <div class="flex items-center gap-4">
+
+                    {{-- PER PAGE --}}
+                    <form method="GET">
+
+                    <div class="relative">
+
+                        <input
+                            type="hidden"
+                            name="cabang"
+                            value="{{ $selectedCabang }}"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="bulan"
+                            value="{{ $selectedMonth }}"
+                        >
+
+                        <select
+                            name="show"
+                            onchange="this.form.submit()"
+                            class="
+                                bg-white
+                                border border-[#ecd9d9]
+                                rounded-xl
+                                pl-4 pr-10 py-2
+                                text-sm
+                                outline-none
+                                shadow-sm
+                                appearance-none
+                                cursor-pointer
+                                hover:border-[#f4b6bc]
+                                transition
+                            "
+                        >
+
+                            <option value="10"
+                                {{ $perPage == 10 ? 'selected' : '' }}>
+                                10 rows
+                            </option>
+
+                            <option value="20"
+                                {{ $perPage == 20 ? 'selected' : '' }}>
+                                20 rows
+                            </option>
+
+                            <option value="50"
+                                {{ $perPage == 50 ? 'selected' : '' }}>
+                                50 rows
+                            </option>
+
+                            <option value="all"
+                                {{ $perPage == 'all' ? 'selected' : '' }}>
+                                All
+                            </option>
+
+                        </select>
+
+                        <div class="
+                            pointer-events-none
+                            absolute inset-y-0 right-3
+                            flex items-center
+                            text-gray-400
+                        ">
+
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="w-4 h-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M19 9l-7 7-7-7"
+                                />
+                            </svg>
+
+                        </div>
+
+                    </div>
+
+                    </form>
+
+                    {{-- PAGINATION --}}
+                    @if($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator)
+
+                        <div>
+                            {{ $leaderboard->links() }}
+                        </div>
+
+                    @endif
+
+                </div>
+
             </div>
 
         </div>

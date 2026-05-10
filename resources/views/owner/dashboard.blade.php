@@ -4,7 +4,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<section 
+<div 
     x-data="{
         showModal: false,
         selectedBranch: 'Semua',
@@ -38,18 +38,18 @@
             return ''
         }
     }"
-    class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white px-20 py-20 pt-25 min-h-screen relative"
+    class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative"
 >
 
     {{-- HEADER --}}
-    <div class="flex justify-between items-start mb-10 text-left">
+    <div class="flex justify-between items-center mb-8">
 
         <div>
-            <h2 class="text-6xl font-bold mb-3 tracking-tight">
+            <h2 class="text-4xl font-bold mb-3 tracking-tight">
                 Welcome Back!
             </h2>
 
-            <p class="text-gray-500 text-lg">
+            <p class="text-gray-500 text-base">
                 Your salon is humming with activity today. Here's your overview.
             </p>
         </div>
@@ -65,9 +65,9 @@
                     class="
                         bg-[#f45b69]
                         text-white
-                        px-6 py-2.5
+                        px-5 py-2.5
                         rounded-full
-                        text-sm
+                        text-xs
                         font-medium
                         flex items-center gap-2
                         shadow-sm
@@ -123,7 +123,7 @@
                             px-5 py-3
                             hover:bg-pink-50
                             transition
-                            text-sm
+                            text-xs
                             {{ !$selectedCabang ? 'bg-pink-50 font-semibold text-[#FF5C77]' : 'text-gray-700' }}
                         "
                     >
@@ -144,7 +144,7 @@
                             px-5 py-3
                             hover:bg-pink-50
                             transition
-                            text-sm
+                            text-xs
                             {{ $selectedCabang == $cabang->cabang_id
                                 ? 'bg-pink-50 font-semibold text-[#FF5C77]'
                                 : 'text-gray-700'
@@ -168,7 +168,7 @@
             {{-- BUTTON OPEN MODAL --}}
             <button
                 @click="showModal = true; document.body.classList.add('overflow-hidden')"
-                class="bg-[#f8cdd0] text-[#2d2a26] px-6 py-2.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-md"
+                class="bg-[#f8cdd0] text-[#2d2a26] px-5 py-2.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-sm"
             >
                 <span>📥</span>
                 Download PDF Report
@@ -179,63 +179,63 @@
     </div>
 
     {{-- CARDS --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10 text-left">
-        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-pink-50">
-            <div class="flex justify-between mb-4 text-xl">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 text-left">
+        <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
+            <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">💵</span>
                 <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">
                     +{{ $stats['todayBookings'] }} Today
                 </span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Total Revenue</p>
-            <h3 class="text-3xl font-bold text-pink-500 mb-1">{{ $stats['totalRevenue'] }}</h3>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ $stats['totalRevenue'] }}</h3>
             <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
         </div>
 
-        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-pink-50">
-            <div class="flex justify-between mb-4 text-xl">
+        <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
+            <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">📅</span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Total Bookings</p>
-            <h3 class="text-3xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalBookings']) }}</h3>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalBookings']) }}</h3>
             <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
         </div>
 
-        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-pink-50">
-            <div class="flex justify-between mb-4 text-xl">
+        <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
+            <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">👥</span>
                 <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">+12%</span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Active Customers</p>
-            <h3 class="text-3xl font-bold text-pink-500 mb-1">{{ number_format($stats['activeCustomers']) }}</h3>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['activeCustomers']) }}</h3>
             <p class="text-xs text-gray-400">Member base</p>
         </div>
 
-        <div class="bg-white p-5 rounded-[2rem] shadow-sm border border-pink-50">
-            <div class="flex justify-between mb-4 text-xl">
+        <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
+            <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">🆔</span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Total Staff</p>
-            <h3 class="text-3xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalStaff']) }}</h3>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalStaff']) }}</h3>
             <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
         </div>
     </div>
 
     {{-- CHART --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-left">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
 
-        <div class="md:col-span-2 bg-white p-10 rounded-[3rem] shadow-sm">
+        <div class="md:col-span-2 bg-white p-6 rounded-3xl shadow-sm">
 
             {{-- HEADER --}}
             <div class="flex flex-wrap md:flex-row md:items-center md:justify-between gap-4 mb-8">
 
                 {{-- LEFT --}}
                 <div>
-                    <h4 class="text-2xl font-bold">
+                    <h4 class="text-xl font-bold">
                         Revenue Trends
                     </h4>
 
-                    <p class="text-gray-400 text-sm mt-1">
+                    <p class="text-gray-400 text-xs mt-1">
                         Revenue from the last 6 months
                     </p>
                 </div>
@@ -253,9 +253,9 @@
                         "
                     >
 
-                        <div class="w-3 h-3 rounded-full bg-[#FF7096]"></div>
+                        <div class="w-3 h-2 rounded-full bg-[#FF7096]"></div>
 
-                        <span class="text-sm font-semibold text-[#3F342D]">
+                        <span class="text-xs font-semibold text-[#3F342D]">
                             {{ $cabangs->firstWhere('cabang_id', $selectedCabang)?->nama_cabang }}
                         </span>
 
@@ -272,11 +272,11 @@
 
                             <div class="flex items-center gap-2">
                                 <div
-                                    class="w-3 h-3 rounded-full"
+                                    class="w-3 h-2 rounded-full"
                                     style="background-color: {{ $colors[$index % count($colors)] }}"
                                 ></div>
 
-                                <span class="text-sm font-semibold text-gray-700 whitespace-nowrap">
+                                <span class="text-xs font-semibold text-gray-700 whitespace-nowrap">
                                     {{ $cabang->nama_cabang }}
                                 </span>
                             </div>
@@ -286,7 +286,7 @@
             </div>
 
             {{-- CANVAS --}}
-            <div class="h-[300px] relative">
+            <div class="h-[260px] relative">
 
                 <canvas id="revenueChart"></canvas>
 
@@ -294,15 +294,15 @@
 
                     <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
 
-                        <div class="text-5xl mb-3">
+                        <div class="text-4xl mb-3">
                             📭
                         </div>
 
-                        <h5 class="font-semibold text-gray-600 text-lg">
+                        <h5 class="font-semibold text-gray-600 text-base">
                             No revenue data yet
                         </h5>
 
-                        <p class="text-sm text-gray-400 mt-1">
+                        <p class="text-xs text-gray-400 mt-1">
                             Completed appointments will appear here
                         </p>
 
@@ -314,31 +314,31 @@
         </div>
 
         {{-- SERVICES --}}
-        <div class="bg-white p-10 rounded-[3rem] shadow-sm">
+        <div class="bg-white p-6 rounded-3xl shadow-sm">
 
-            <h4 class="text-2xl font-bold mb-2">
+            <h4 class="text-xl font-bold mb-2">
                 Popular Services
             </h4>
 
             <div class="mb-8 flex items-center justify-between flex-wrap">
                 {{-- Kiri --}}
-                <p class="text-gray-400 text-sm whitespace-nowrap m-0">
+                <p class="text-gray-400 text-xs whitespace-nowrap m-0">
                     Most booked services this month
                 </p>
 
                 {{-- Kanan --}}
                 @if($selectedCabang)
-                    <span class="inline-block px-3 py-1 bg-pink-50 rounded-full text-pink-600 font-semibold text-sm whitespace-nowrap ml-auto">
+                    <span class="inline-block px-3 py-1 bg-pink-50 rounded-full text-pink-600 font-semibold text-xs whitespace-nowrap ml-auto">
                         {{ $cabangs->firstWhere('cabang_id', $selectedCabang)?->nama_cabang }}
                     </span>
                 @endif
             </div>
 
-            <div class="space-y-8">
+            <div class="space-y-5">
 
                 @forelse($popularServices as $service)
                 <div>
-                    <div class="flex justify-between text-sm font-bold mb-2">
+                    <div class="flex justify-between text-xs font-bold mb-2">
                         <span>
                             {{ $service->nama_layanan }}
                         </span>
@@ -348,7 +348,7 @@
                         </span>
                     </div>
 
-                    <div class="w-full bg-pink-50 h-3 rounded-full overflow-hidden">
+                    <div class="w-full bg-pink-50 h-2 rounded-full overflow-hidden">
                         <div
                             class="h-full rounded-full bg-[#FF7096]"
                             style="width: {{ min($service->total * 10, 100) }}%"
@@ -368,7 +368,7 @@
                         No services booked yet
                     </h5>
 
-                    <p class="text-sm text-gray-400 mt-1">
+                    <p class="text-xs text-gray-400 mt-1">
                         Service statistics will appear after appointments
                     </p>
 
@@ -383,15 +383,15 @@
     </div>
 
     {{-- STAFF PERFORMANCE --}}
-    <h4 class="text-3xl font-bold mt-12 mb-6 text-left">Staff Performance</h4>
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 text-left">
+    <h4 class="text-xl font-bold mt-10 mb-6 text-left">Staff Performance</h4>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
         @forelse($staffPerformance as $staff)
-            <div class="bg-[#FFE4E9]/80 p-5 rounded-3xl flex items-center gap-4 border border-white shadow-sm">
-                <div class="w-16 h-16 bg-[#FF8FA3] rounded-full flex-shrink-0 border-2 border-white flex items-center justify-center">
-                    <span class="text-white font-bold text-sm">{{ substr($staff['nama'], 0, 1) }}</span>
+            <div class="bg-[#FFE4E9]/80 px-5 py-4 rounded-3xl flex items-center gap-4 border border-white shadow-sm">
+                <div class="w-12 h-12 bg-[#FF8FA3] rounded-full flex-shrink-0 border-2 border-white flex items-center justify-center">
+                    <span class="text-white font-bold text-xs">{{ substr($staff['nama'], 0, 1) }}</span>
                 </div>
                 <div class="flex-1 min-w-0">
-                    <h5 class="font-bold text-sm text-gray-800 truncate">{{ $staff['nama'] }}</h5>
+                    <h5 class="font-bold text-xs text-gray-800 truncate">{{ $staff['nama'] }}</h5>
                     <p class="text-[11px] text-gray-500 mb-1 truncate">{{ $staff['cabang'] }}</p>
                     <div class="flex items-center text-yellow-500 text-xs gap-1">
                         ★
@@ -410,7 +410,7 @@
     </div>
 
     @include('owner.dashboard.edashboard')
-</section>
+</div>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

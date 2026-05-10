@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
+use App\Http\Controllers\Owner\EmployeeController;
+use App\Http\Controllers\Owner\CustomerController;
 
 // =====================
 // PUBLIC / USER
@@ -205,29 +207,12 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:owner'])->group(function () {
 
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-
-    Route::get('/customers', function () {
-        return view('owner.customers');
-    });
-
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
     Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
-
-    Route::get('/employee', function () {
-        return view('owner.employees.employee');
-    });
-
-    Route::get('/eemployee', function () {
-        return view('owner.employees.eemployee');
-    })->name('employee.edit');
-
-    Route::get('/aemployee', function () {
-        return view('owner.employees.aemployee');
-    });
-
-    Route::get('/eservice', function () {
-        return view('owner.service.eservice');
-    });
+    Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');
+    Route::get('/employee', [EmployeeController::class, 'index'])->name('owner.employee');
+    Route::get('/employee/edit', [EmployeeController::class, 'edit'])->name('owner.employee.edit');
+    Route::get('/customers', [CustomerController::class, 'index'])->name('owner.customer');
 
 });
 
