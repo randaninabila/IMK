@@ -69,48 +69,17 @@
         </div>
 
         {{-- CARD GRID --}}
-        @php
-        $galleries = [
-        ['title' => 'Hair Repair Treatment', 'slug' => 'hair-repair-treatment', 'desc' => 'Mengembalikan kesehatan
-        rambut rusak dan kering', 'img' => '/images/before.jpg', 'role' => 'hair'],
-        ['title' => 'Hair Growth Therapy', 'slug' => 'hair-growth-therapy', 'desc' => 'Merangsang pertumbuhan rambut
-        agar lebih tebal', 'img' => '/images/before2.jpg', 'role' => 'hair'],
-        ['title' => 'Scalp Detox Hair Spa', 'slug' => 'scalp-detox-hair-spa', 'desc' => 'Membersihkan kulit kepala dari
-        minyak dan kotoran', 'img' => '/images/before3.jpg', 'role' => 'hair'],
-
-        ['title' => 'Acne Facial Treatment', 'slug' => 'acne-facial-treatment', 'desc' => 'Mengatasi jerawat dan kulit
-        berminyak', 'img' => '/images/before4.jpg', 'role' => 'facial'],
-        ['title' => 'Brightening Facial', 'slug' => 'brightening-facial', 'desc' => 'Mencerahkan kulit kusam dan tidak
-        merata', 'img' => '/images/before5.jpg', 'role' => 'facial'],
-        ['title' => 'Anti Aging Facial', 'slug' => 'anti-aging-facial', 'desc' => 'Mengurangi kerutan dan garis halus
-        pada wajah', 'img' => '/images/before6.jpg', 'role' => 'facial'],
-
-        ['title' => 'Classic Nail Polish', 'slug' => 'classic-nail-polish', 'desc' => 'Perawatan kuku dengan warna
-        natural elegan', 'img' => '/images/before7.jpg', 'role' => 'nail polish'],
-        ['title' => 'Gel Nail Polish', 'slug' => 'gel-nail-polish', 'desc' => 'Kuteks tahan lama dengan hasil glossy',
-        'img' => '/images/before8.jpg', 'role' => 'nail polish'],
-        ['title' => 'Nail Art Design', 'slug' => 'nail-art-design', 'desc' => 'Desain kuku kreatif dan modern', 'img' =>
-        '/images/before9.jpg', 'role' => 'nail polish'],
-
-        ['title' => 'Full Body Waxing', 'slug' => 'full-body-waxing', 'desc' => 'Menghilangkan bulu secara menyeluruh
-        pada tubuh', 'img' => '/images/before10.jpg', 'role' => 'waxing'],
-        ['title' => 'Brazilian Waxing', 'slug' => 'brazilian-waxing', 'desc' => 'Waxing area sensitif dengan hasil
-        bersih maksimal', 'img' => '/images/before11.jpg', 'role' => 'waxing'],
-        ['title' => 'Underarm Waxing', 'slug' => 'underarm-waxing', 'desc' => 'Menghilangkan bulu ketiak agar lebih
-        bersih dan halus', 'img' => '/images/before12.jpg', 'role' => 'waxing'],
-        ];
-        @endphp
         <div class="grid md:grid-cols-3 gap-6" id="galleryGrid">
-            @foreach ($galleries as $index => $item)
+            @foreach ($albums as $index => $item)
             <div class="gallery-item bg-white rounded-xl p-3 shadow hover:shadow-lg transition"
-                data-role="{{ $item['role'] }}" data-index="{{ $index }}">
-                <img src="{{ $item['img'] }}" class="rounded-lg mb-3 w-full h-44 object-cover">
+                data-role="{{ $item->layanan->nama_layanan }}" data-index="{{ $index }}">
+                <img src="{{ asset($item->fotos->first()->url_foto ?? 'images/default.jpg') }}" class="rounded-lg mb-3 w-full h-44 object-cover">
                 <span
-                    class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item['role'] }}</span>
-                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item['title'] }}</h3>
-                <p class="text-xs text-[#3E382D] mt-1 mb-3">{{ $item['desc'] }}</p>
+                    class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item->layanan->nama_layanan }}</span>
+                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item->layanan->nama_layanan }}</h3>
+                <p class="text-xs text-[#3E382D] mt-1 mb-3">{{ $item->deskripsi }}</p>
                 <div class="flex justify-end">
-                    <a href="{{ url('/gallery/' . $item['slug']) }}"
+                    <a href="{{ url('/gallery/' . $item->album_id) }}"
                         class="bg-[#e9bcbc] hover:bg-[#dca9a9] text-white text-xs py-1 px-3 rounded">
                         View Detail
                     </a>

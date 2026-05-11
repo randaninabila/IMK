@@ -86,9 +86,10 @@ bg-[radial-gradient(circle_at_top_left,_#FFADB2_0%,_transparent_40%),radial-grad
             <!-- SIGNUP -->
             <p class="text-center mt-6 text-[#3d352f]">
                 Dont have an Account ?
-                <span onclick="goToRegister()" class="font-semibold underline cursor-pointer">
+                <a href="{{ route('register') }}"
+                    class="font-semibold underline cursor-pointer">
                     Sign Up Here
-                </span>
+                </a>
             </p>
 
         </div>
@@ -137,10 +138,6 @@ bg-[radial-gradient(circle_at_top_left,_#FFADB2_0%,_transparent_40%),radial-grad
         window.location.href = "dashboard.html"; // ganti sesuai route kamu
     }
 
-    // 🚀 Redirect Register
-    function goToRegister() {
-        window.location.href = "register.html"; // beda halaman
-    }
     </script>
 
 </body>
