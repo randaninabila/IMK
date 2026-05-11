@@ -32,7 +32,7 @@
                 text-[#3e382d]
                 tracking-tight
             ">
-                Add New Team
+                Add New Employee
             </h2>
 
             <p class="text-gray-500 mt-2 text-sm">
@@ -41,13 +41,49 @@
 
         </div>
 
+        @if ($errors->any())
+
+        <div class="
+            mb-5
+            bg-red-100
+            border border-red-200
+            text-red-600
+            px-5 py-4
+            rounded-2xl
+        ">
+
+            <ul class="space-y-1 text-sm">
+
+                @foreach ($errors->all() as $error)
+
+                <li>
+                    • {{ $error }}
+                </li>
+
+                @endforeach
+
+            </ul>
+
+        </div>
+
+        @endif
+
         {{-- FORM --}}
-        <form class="space-y-5">
+        <form
+            x-data="{ loading:false }"
+            action="{{ route('owner.employee.store') }}"
+            method="POST"
+            class="space-y-5"
+            @submit="loading = true"
+        >
+            @csrf
 
             {{-- FULL NAME --}}
             <div>
 
-                <label class="
+                <label 
+                for="nama"
+                class="
                     text-base
                     font-semibold
                     text-[#2d2a26]
@@ -56,7 +92,45 @@
                 </label>
 
                 <input
+                    id="nama"
                     type="text"
+                    name="nama"
+                    value="{{ old('nama') }}"
+                    required
+                    class="
+                        w-full mt-2
+                        bg-[#e8d2d2]
+                        border border-transparent
+                        focus:border-[#f45b69]
+                        focus:ring-2 focus:ring-[#ffd5d8]
+                        outline-none
+                        px-5 py-3
+                        rounded-2xl
+                        transition
+                    "
+                >
+
+            </div>
+
+            {{-- EMAIL --}}
+            <div>
+
+                <label 
+                for="email"
+                class="
+                    text-base
+                    font-semibold
+                    text-[#2d2a26]
+                ">
+                    Email
+                </label>
+
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    value="{{ old('email') }}"
+                    required
                     class="
                         w-full mt-2
                         bg-[#e8d2d2]
@@ -75,7 +149,9 @@
             {{-- PHONE --}}
             <div>
 
-                <label class="
+                <label 
+                for="no_hp"
+                class="
                     text-base
                     font-semibold
                     text-[#2d2a26]
@@ -84,7 +160,11 @@
                 </label>
 
                 <input
+                    id="no_hp"
                     type="text"
+                    name="no_hp"
+                    value="{{ old('no_hp') }}"
+                    required
                     class="
                         w-full mt-2
                         bg-[#e8d2d2]
@@ -106,7 +186,9 @@
                 {{-- ROLE --}}
                 <div>
 
-                    <label class="
+                    <label 
+                    for="role"
+                    class="
                         text-base
                         font-semibold
                         text-[#2d2a26]
@@ -115,6 +197,9 @@
                     </label>
 
                     <select
+                        id="role"
+                        name="role"
+                        required
                         class="
                             w-full mt-2
                             bg-[#e8d2d2]
@@ -127,11 +212,11 @@
                             transition
                         "
                     >
-                        <option value="pegawai">
+                        <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>
                             Pegawai
                         </option>
 
-                        <option value="admin">
+                        <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
                             Admin
                         </option>
 
@@ -142,7 +227,9 @@
                 {{-- BRANCH --}}
                 <div>
 
-                    <label class="
+                    <label 
+                    for="cabang_id"
+                    class="
                         text-base
                         font-semibold
                         text-[#2d2a26]
@@ -151,6 +238,9 @@
                     </label>
 
                     <select
+                        id="cabang_id"
+                        name="cabang_id"
+                        required
                         class="
                             w-full mt-2
                             bg-[#e8d2d2]
@@ -166,7 +256,14 @@
 
                         @foreach($cabangs as $cabang)
 
-                        <option value="{{ $cabang->cabang_id }}">
+                        <option
+                            value="{{ $cabang->cabang_id }}"
+                            {{
+                                old('cabang_id') == $cabang->cabang_id
+                                ? 'selected'
+                                : ''
+                            }}
+                        >
                             {{ $cabang->nama_cabang }}
                         </option>
 
@@ -204,6 +301,8 @@
                 {{-- SUBMIT --}}
                 <button
                     type="submit"
+                    :disabled="loading"
+                    x-text="loading ? 'Adding...' : 'Add Employee'"
                     class="
                         px-6 py-2.5
                         rounded-full
@@ -212,9 +311,11 @@
                         text-sm font-medium
                         hover:bg-[#f45b69]
                         transition
+
+                        disabled:opacity-60
+                        disabled:cursor-not-allowed
                     "
                 >
-                    Add Team
                 </button>
 
             </div>

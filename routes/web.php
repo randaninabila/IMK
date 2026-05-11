@@ -208,10 +208,20 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:owner'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
+    
     Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
     Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');
+    
     Route::get('/employee', [EmployeeController::class, 'index'])->name('owner.employee');
     Route::get('/employee/edit', [EmployeeController::class, 'edit'])->name('owner.employee.edit');
+    
+    Route::post('/employee/store', [EmployeeController::class, 'store'])->name('owner.employee.store');
+    Route::patch('/employee/{pegawai_id}/today-status', [EmployeeController::class, 'updateTodayStatus'])->name('owner.employee.today-status');
+    Route::patch('/employee/{pegawai_id}/role', [EmployeeController::class, 'updateRole'])->name('owner.employee.role');
+    Route::patch('/employee/{pegawai_id}/resign', [EmployeeController::class, 'resign'])->name('owner.employee.resign');
+    Route::get('/employee/{pegawai_id}/edit', [EmployeeController::class, 'editEmployee'])->name('owner.employee.edit-form');
+    Route::patch('/employee/{pegawai_id}', [EmployeeController::class, 'updateEmployee'])->name('owner.employee.update');
+
     Route::get('/customers', [CustomerController::class, 'index'])->name('owner.customer');
 
 });

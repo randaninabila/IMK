@@ -479,33 +479,35 @@
 
                         @if($selectedCabang == 'all')
 
+                            @foreach($cabangs as $cabang)
+
                             <td class="px-4">
+
                                 <div class="leading-6">
+
                                     <span class="font-medium">
-                                        {{ $item['cabang1_count'] }} booking
+
+                                        {{
+                                            $item['branches'][$cabang->cabang_id]['count']
+                                        }} booking
+
                                     </span>
 
                                     <br>
 
                                     <span class="text-xs text-gray-400">
-                                        Rp {{ $item['cabang1_revenue'] }}
+
+                                        Rp {{
+                                            $item['branches'][$cabang->cabang_id]['revenue']
+                                        }}
+
                                     </span>
+
                                 </div>
+
                             </td>
 
-                            <td class="px-4">
-                                <div class="leading-6">
-                                    <span class="font-medium">
-                                        {{ $item['cabang2_count'] }} booking
-                                    </span>
-
-                                    <br>
-
-                                    <span class="text-xs text-gray-400">
-                                        Rp {{ $item['cabang2_revenue'] }}
-                                    </span>
-                                </div>
-                            </td>
+                            @endforeach
 
                         @else
 

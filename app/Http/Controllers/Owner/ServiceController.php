@@ -11,36 +11,28 @@ class ServiceController extends Controller
 {
     public function index(Request $request)
     {
+        $selectedSort     = $request->get('sort', 'performance');
         $selectedCabang   = $request->get('cabang', 'all');
         $selectedMonth    = $request->get('bulan', Carbon::now()->format('Y-m'));
         $selectedCategory = $request->get('kategori', 'all');
-        
+
         $perPage = $request->get('show', 10);
 
         if ($perPage !== 'all') {
             $perPage = (int) $perPage;
         }
 
-        $cabangs = DB::table('cabang')->where('status', 'BUKA')->get();
-
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
-            $months->push([
-                'value' => $month->format('Y-m'),
-                'label' => $month->translatedFormat('F Y'),
-            ]);
-        }
-
+        $cabangs      = DB::table('cabang')->where('status', 'BUKA')->get();
+        $months       = $this->getMonthOptions();
         $jenisLayanan = DB::table('jenis_layanan')->get(['jenis_layanan_id', 'nama_jenis']);
 
         $topLayanan  = $this->getTopLayanan($selectedCabang, $selectedMonth, $selectedCategory);
-        $leaderboard = $this->getLeaderboardData($selectedCabang, $selectedMonth, $selectedCategory, $perPage);
+        $leaderboard = $this->getLeaderboardData($selectedCabang, $selectedMonth, $selectedCategory, $perPage, $selectedSort);
 
         return view('owner.service.service', compact(
             'cabangs', 'months', 'jenisLayanan',
             'selectedCabang', 'selectedMonth', 'selectedCategory',
-            'topLayanan', 'leaderboard', 'perPage'
+            'topLayanan', 'leaderboard', 'perPage', 'selectedSort'
         ));
     }
 
@@ -123,10 +115,29 @@ class ServiceController extends Controller
             ]);
     }
 
-    private function getLeaderboardData($cabangId, $month, $category, $perPage = 10)
-    {
+    /**
+     * @param  string       $cabangId
+     * @param  string       $month
+     * @param  string       $category
+     * @param  int|string   $perPage
+     * @param  string       $selectedSort   performance | revenue | growth
+     * @param  string       $dir            asc | desc
+     * @param  string|null  $sortCabang     cabang_id acuan saat sort=performance & cabang=all
+     */
+    private function getLeaderboardData(
+        $cabangId,
+        $month,
+        $category,
+        $perPage      = 10,
+        $selectedSort  = 'performance',
+        $dir           = 'desc',
+        $sortCabang    = null
+    ) {
         $currentMonth = Carbon::parse($month);
         $prevMonth    = $currentMonth->copy()->subMonth();
+
+        // Normalise direction
+        $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
 
         // ── BULAN INI
         $currentQuery = DB::table('booking_detail as bd')
@@ -149,58 +160,59 @@ class ServiceController extends Controller
             $currentQuery->where('jl.nama_jenis', $category);
         }
 
-        $currentQuery = $currentQuery
-            ->select(
+        $cabangList = DB::table('cabang')
+            ->where('status', 'BUKA')
+            ->get();
+
+        $dynamicCabangSelect = [];
+        foreach ($cabangList as $cabang) {
+            $dynamicCabangSelect[] = DB::raw("
+                SUM(
+                    CASE
+                        WHEN c.cabang_id = {$cabang->cabang_id}
+                        THEN 1 ELSE 0
+                    END
+                ) as cabang{$cabang->cabang_id}_count
+            ");
+            $dynamicCabangSelect[] = DB::raw("
+                SUM(
+                    CASE
+                        WHEN c.cabang_id = {$cabang->cabang_id}
+                        THEN rev.revenue_proporsional ELSE 0
+                    END
+                ) as cabang{$cabang->cabang_id}_revenue
+            ");
+        }
+
+        $currentQuery->select(array_merge(
+            [
                 'l.layanan_id',
                 'l.nama_layanan',
                 'jl.nama_jenis',
-
-                DB::raw('SUM(CASE WHEN c.cabang_id = 1 THEN 1 ELSE 0 END) as cabang1_count'),
-
-                DB::raw('
-                    SUM(
-                        CASE
-                            WHEN c.cabang_id = 1
-                            THEN rev.revenue_proporsional
-                            ELSE 0
-                        END
-                    ) as cabang1_revenue
-                '),
-
-                DB::raw('SUM(CASE WHEN c.cabang_id = 2 THEN 1 ELSE 0 END) as cabang2_count'),
-
-                DB::raw('
-                    SUM(
-                        CASE
-                            WHEN c.cabang_id = 2
-                            THEN rev.revenue_proporsional
-                            ELSE 0
-                        END
-                    ) as cabang2_revenue
-                '),
-
                 DB::raw('SUM(rev.revenue_proporsional) as total_revenue'),
+                DB::raw('COUNT(*) as total_count'),
+            ],
+            $dynamicCabangSelect
+        ))->groupBy('l.layanan_id', 'l.nama_layanan', 'jl.nama_jenis');
 
-                DB::raw('COUNT(*) as total_count')
-            )
-
-            ->groupBy(
-                'l.layanan_id',
-                'l.nama_layanan',
-                'jl.nama_jenis'
-            )
-
-            ->orderByDesc('total_count')
-            ->orderByDesc('total_revenue');
-
+        // Sort di DB untuk performance & revenue; growth di-sort setelah mapping
+        if ($selectedSort === 'revenue') {
+            $currentQuery->orderBy('total_revenue', $dir);
+        } elseif ($selectedSort === 'performance') {
+            // Saat cabang=all, bisa sort by booking count cabang tertentu
+            if ($cabangId === 'all' && $sortCabang && is_numeric($sortCabang)) {
+                $sortCabangId = (int) $sortCabang;
+                $dirSql = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';
+                $currentQuery->orderByRaw("cabang{$sortCabangId}_count {$dirSql}");
+            } else {
+                $currentQuery->orderBy('total_count', $dir);
+            }
+        }
+        // growth: ambil semua dulu, sort setelah hitung growth
 
         $leaderboard = $perPage === 'all'
-
             ? $currentQuery->get()
-
-            : $currentQuery
-                ->paginate($perPage)
-                ->withQueryString();
+            : $currentQuery->paginate($perPage)->withQueryString();
 
         // ── BULAN LALU (untuk growth)
         $prevData = DB::table('booking_detail as bd')
@@ -218,58 +230,73 @@ class ServiceController extends Controller
             ->groupBy('l.nama_layanan')
             ->pluck('total_count', 'l.nama_layanan');
 
+        $transformData = function ($item) use ($prevData, $cabangList) {
+            $prevCount = $prevData[$item->nama_layanan] ?? 0;
+            $growth    = $prevCount > 0
+                ? round((($item->total_count - $prevCount) / $prevCount) * 100, 1)
+                : ($item->total_count > 0 ? 100 : 0);
+
+            return [
+                'service'  => $item->nama_layanan,
+                'category' => $item->nama_jenis,
+
+                'branches' => $cabangList->mapWithKeys(function ($cabang) use ($item) {
+                    return [
+                        $cabang->cabang_id => [
+                            'count'   => $item->{'cabang' . $cabang->cabang_id . '_count'},
+                            'revenue' => number_format(
+                                $item->{'cabang' . $cabang->cabang_id . '_revenue'},
+                                0, ',', '.'
+                            ),
+                        ],
+                    ];
+                }),
+
+                'selected_count'   => $item->total_count,
+                'selected_revenue' => number_format($item->total_revenue, 0, ',', '.'),
+                'revenue'          => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
+                'total_revenue_raw' => (float) $item->total_revenue,
+                'growth'           => $growth,
+                'growth_class'     => $growth >= 0 ? 'text-green-500' : 'text-red-500',
+            ];
+        };
+
         if ($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator) {
-
-            $leaderboard->getCollection()->transform(function ($item) use ($prevData) {
-
-                $prevCount = $prevData[$item->nama_layanan] ?? 0;
-
-                $growth = $prevCount > 0
-                    ? round((($item->total_count - $prevCount) / $prevCount) * 100, 1)
-                    : 100;
-
-                return [
-                    'service'          => $item->nama_layanan,
-                    'category'         => $item->nama_jenis,
-                    'cabang1_count'    => $item->cabang1_count,
-                    'cabang1_revenue'  => number_format($item->cabang1_revenue, 0, ',', '.'),
-                    'cabang2_count'    => $item->cabang2_count,
-                    'cabang2_revenue'  => number_format($item->cabang2_revenue, 0, ',', '.'),
-                    'selected_count'   => $item->total_count,
-                    'selected_revenue' => number_format($item->total_revenue, 0, ',', '.'),
-                    'revenue'          => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
-                    'growth'           => $growth,
-                    'growth_class'     => $growth >= 0 ? 'text-green-500' : 'text-red-500',
-                ];
-            });
-
+            $leaderboard->setCollection(
+                $leaderboard->getCollection()->map($transformData)
+            );
         } else {
+            $leaderboard = $leaderboard->map($transformData);
+        }
 
-            $leaderboard = $leaderboard->map(function ($item) use ($prevData) {
-
-                $prevCount = $prevData[$item->nama_layanan] ?? 0;
-
-                $growth = $prevCount > 0
-                    ? round((($item->total_count - $prevCount) / $prevCount) * 100, 1)
-                    : 100;
-
-                return [
-                    'service'          => $item->nama_layanan,
-                    'category'         => $item->nama_jenis,
-                    'cabang1_count'    => $item->cabang1_count,
-                    'cabang1_revenue'  => number_format($item->cabang1_revenue, 0, ',', '.'),
-                    'cabang2_count'    => $item->cabang2_count,
-                    'cabang2_revenue'  => number_format($item->cabang2_revenue, 0, ',', '.'),
-                    'selected_count'   => $item->total_count,
-                    'selected_revenue' => number_format($item->total_revenue, 0, ',', '.'),
-                    'revenue'          => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
-                    'growth'           => $growth,
-                    'growth_class'     => $growth >= 0 ? 'text-green-500' : 'text-red-500',
-                ];
-            });
+        // ── Sort growth setelah mapping (berlaku untuk semua kasus)
+        if ($selectedSort === 'growth') {
+            if ($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+                $sorted = $dir === 'asc'
+                    ? $leaderboard->getCollection()->sortBy('growth')->values()
+                    : $leaderboard->getCollection()->sortByDesc('growth')->values();
+                $leaderboard->setCollection($sorted);
+            } else {
+                $leaderboard = $dir === 'asc'
+                    ? $leaderboard->sortBy('growth')->values()
+                    : $leaderboard->sortByDesc('growth')->values();
+            }
         }
 
         return $leaderboard;
+    }
+
+    private function getMonthOptions(): \Illuminate\Support\Collection
+    {
+        $months = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $months->push([
+                'value' => $month->format('Y-m'),
+                'label' => $month->translatedFormat('F Y'),
+            ]);
+        }
+        return $months;
     }
 
     private function getTotalRevenue($cabangId, $month)
@@ -298,26 +325,25 @@ class ServiceController extends Controller
 
     public function edit(Request $request)
     {
+        $selectedSort   = $request->get('sort', 'performance');
+        $selectedDir    = $request->get('dir', 'desc');
         $selectedCabang = $request->get('cabang', 'all');
         $selectedMonth  = $request->get('bulan', Carbon::now()->format('Y-m'));
+        $selectedSortCabang = $request->get('sort_cabang');   // cabang acuan sort performance saat all
 
         $cabangs      = DB::table('cabang')->where('status', 'BUKA')->get();
         $jenisLayanan = DB::table('jenis_layanan')->get();
-        $leaderboard  = $this->getLeaderboardData($selectedCabang, $selectedMonth, 'all');
+        $leaderboard  = $this->getLeaderboardData(
+            $selectedCabang, $selectedMonth, 'all', 'all',
+            $selectedSort, $selectedDir, $selectedSortCabang
+        );
         $totalRevenue = $this->getTotalRevenue($selectedCabang, $selectedMonth);
-
-        $months = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $month = Carbon::now()->subMonths($i);
-            $months->push([
-                'value' => $month->format('Y-m'),
-                'label' => $month->translatedFormat('F Y'),
-            ]);
-        }
+        $months       = $this->getMonthOptions();
 
         return view('owner.service.eservice', compact(
-            'cabangs', 'selectedCabang', 'selectedMonth',
-            'jenisLayanan', 'leaderboard', 'totalRevenue', 'months'
+            'cabangs', 'selectedCabang', 'selectedMonth', 'selectedSortCabang',
+            'jenisLayanan', 'leaderboard', 'totalRevenue',
+            'months', 'selectedSort', 'selectedDir'
         ));
     }
 }
