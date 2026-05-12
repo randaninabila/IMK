@@ -25,9 +25,15 @@
                 <p class="text-sm leading-relaxed opacity-90 text-justify">
                     {{ $jenisLayanan->deskripsi ?? 'Nikmati layanan terbaik kami yang dirancang khusus untuk kenyamanan dan kecantikan Anda.' }}
                 </p>
-                @endif
-                @if($layanan->durasi)
-                <p class="mt-3 text-sm opacity-75">⏱ {{ $layanan->durasi }} menit</p>
+                
+                @php
+                    $firstLayanan = $layananList->first();
+                @endphp
+
+                @if($firstLayanan?->durasi)
+                <p class="mt-3 text-sm opacity-75">
+                    ⏱ {{ $firstLayanan->durasi }} menit
+                </p>
                 @endif
             </div>
         </div>

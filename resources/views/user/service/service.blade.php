@@ -36,7 +36,6 @@
                 <button class="filter-btn px-8 py-2 border-2 border-gray-400 bg-[#f5eaea] text-[#3E382D] rounded-lg transition duration-300" data-filter="waxing">
                     Waxing
                 </button>
-                @endforeach
             </div>
         </div>
 
@@ -98,6 +97,9 @@
                          class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110"
                          alt="Waxing">
                 </div>
+                <p class="mt-4 text-xl font-bold text-[#43392f] group-hover:text-pink-600">
+                    Waxing
+                </p>
         </div>
 
         {{-- PAGINATION --}}
