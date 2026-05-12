@@ -4,66 +4,50 @@
 
 <div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white flex flex-col items-center pb-24">
 
-    {{-- ══════════════════════════════════════════
-         JUDUL & META
-    ══════════════════════════════════════════ --}}
-    <div class="mt-28 text-center px-4 max-w-2xl">
-
-        <span class="text-xs uppercase tracking-widest text-[#e9bcbc] font-semibold">
-            {{ $layanan->nama_jenis ?? 'Layanan' }}
-        </span>
-
-        <h1 class="text-4xl md:text-5xl text-[#3e3a34] font-bold mt-2">
-            {{ $layanan->nama_layanan }}
+    {{-- TITLE --}}
+    <div class="mt-28 text-center">
+        <h1 class="text-5xl md:text-6xl text-[#3e3a34] font-bold">
+            {{ $gallery->layanan->nama_layanan }}
         </h1>
 
-        @if($layanan->deskripsi)
-        <p class="text-gray-500 mt-3 text-sm leading-relaxed">
-            {{ $layanan->deskripsi }}
+        <p class="mt-4 text-gray-600 max-w-2xl">
+            {{ $gallery->deskripsi }}
         </p>
-        @endif
-
-        {{-- Durasi + Rating --}}
-        <div class="flex justify-center gap-6 mt-4 text-sm text-[#3e3a34]">
-            @if($layanan->durasi)
-            <span>⏱ {{ $layanan->durasi }} menit</span>
-            @endif
-
-            @if($avgRating)
-            <span>⭐ {{ number_format($avgRating, 1) }} / 5.0
-                <span class="text-gray-400 text-xs">({{ $ulasan->count() }} ulasan)</span>
-            </span>
-            @endif
-        </div>
     </div>
 
-    {{-- ══════════════════════════════════════════
-         BEFORE & AFTER
-    ══════════════════════════════════════════ --}}
-    @if($beforeFoto || $afterFoto)
-    <div class="flex flex-wrap justify-center gap-12 mt-14 px-6">
+    {{-- CONTENT --}}
+    <div class="flex flex-wrap justify-center gap-20 mt-10">
 
-        @if($beforeFoto)
+        {{-- BEFORE --}}
         <div class="text-center">
-            <img src="{{ asset($beforeFoto->url_foto) }}"
-                 alt="Before {{ $layanan->nama_layanan }}"
-                 class="w-[320px] h-[220px] object-cover rounded-xl mx-auto shadow-md"
-                 onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
-            <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4 text-sm tracking-wide">
+
+            @php
+                $before = $gallery->fotos->where('tipe', 'before')->first();
+            @endphp
+
+            <img src="{{ asset($before->url_foto ?? 'images/default.jpg') }}"
+                 class="w-[320px] h-[220px] object-cover rounded-md mx-auto">
+
+            <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4">
                 Before
             </div>
         </div>
         @endif
 
-        @if($afterFoto)
+        {{-- AFTER --}}
         <div class="text-center">
-            <img src="{{ asset($afterFoto->url_foto) }}"
-                 alt="After {{ $layanan->nama_layanan }}"
-                 class="w-[320px] h-[220px] object-cover rounded-xl mx-auto shadow-md"
-                 onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
-            <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4 text-sm tracking-wide">
+
+            @php
+                $after = $gallery->fotos->where('tipe', 'after')->first();
+            @endphp
+
+            <img src="{{ asset($after->url_foto ?? 'images/default.jpg') }}"
+                 class="w-[320px] h-[220px] object-cover rounded-md mx-auto">
+
+            <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4">
                 After
             </div>
+
         </div>
         @endif
 

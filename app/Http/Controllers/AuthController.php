@@ -30,7 +30,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectByRole(Auth::user()->role);
         }
-        return view('auth.signin');
+        return view('auth.register');
     }
 
     // =====================

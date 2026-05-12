@@ -66,38 +66,17 @@
 
         {{-- CARD GRID --}}
         <div class="grid md:grid-cols-3 gap-6" id="galleryGrid">
-            @foreach ($albums as $album)
+            @foreach ($albums as $index => $item)
             <div class="gallery-item bg-white rounded-xl p-3 shadow hover:shadow-lg transition"
-                data-role="{{ strtolower($album->nama_jenis ?? '') }}"
-                data-name="{{ strtolower($album->nama_layanan ?? '') }}"
-                data-desc="{{ strtolower($album->layanan_deskripsi ?? $album->album_deskripsi ?? '') }}">
-
-                {{-- Cover foto --}}
-                <img
-                    src="{{ $album->cover_foto ? asset($album->cover_foto) : asset('images/placeholder.jpg') }}"
-                    alt="{{ $album->nama_layanan }}"
-                    class="rounded-lg mb-3 w-full h-44 object-cover"
-                    onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
-
-                {{-- Badge jenis --}}
-                <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600 capitalize">
-                    {{ $album->nama_jenis ?? '-' }}
-                </span>
-
-                {{-- Nama layanan --}}
-                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">
-                    {{ $album->nama_layanan ?? 'Layanan' }}
-                </h3>
-
-                {{-- Deskripsi --}}
-                <p class="text-xs text-[#3E382D] mt-1 mb-3 line-clamp-2">
-                    {{ $album->layanan_deskripsi ?? $album->album_deskripsi ?? '-' }}
-                </p>
-
-                {{-- Tombol detail --}}
+                data-role="{{ $item->layanan->nama_layanan }}" data-index="{{ $index }}">
+                <img src="{{ asset($item->fotos->first()->url_foto ?? 'images/default.jpg') }}" class="rounded-lg mb-3 w-full h-44 object-cover">
+                <span
+                    class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item->layanan->nama_layanan }}</span>
+                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item->layanan->nama_layanan }}</h3>
+                <p class="text-xs text-[#3E382D] mt-1 mb-3">{{ $item->deskripsi }}</p>
                 <div class="flex justify-end">
-                    <a href="{{ route('gallery.detail', $album->slug) }}"
-                        class="bg-[#e9bcbc] hover:bg-[#dca9a9] text-white text-xs py-1 px-3 rounded transition">
+                    <a href="{{ url('/gallery/' . $item->album_id) }}"
+                        class="bg-[#e9bcbc] hover:bg-[#dca9a9] text-white text-xs py-1 px-3 rounded">
                         View Detail
                     </a>
                 </div>

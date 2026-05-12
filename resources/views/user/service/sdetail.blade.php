@@ -4,24 +4,26 @@
 
 <div class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white text-[#3E382D]">
 
-    {{-- HERO --}}
-    <section class="relative h-[450px] flex items-center px-30 overflow-hidden">
+    {{-- ============================================================
+         HERO SECTION — nama & deskripsi dari tabel jenis_layanan
+    ============================================================ --}}
+    <section class="relative h-[450px] flex items-center overflow-hidden">
         <div class="absolute inset-0">
-            <img
-                src="{{ $coverFoto ? asset($coverFoto) : asset('images/placeholder.jpg') }}"
-                alt="{{ $layanan->nama_layanan }}"
-                class="w-full h-full object-cover"
-                onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
-            <div class="absolute inset-0 bg-black/30"></div>
+            {{-- Ambil foto pertama dari layanan di jenis ini, fallback ke unsplash --}}
+            @php
+                $heroFoto = $layananList->first()?->url_foto;
+            @endphp
+            <img src="{{ $heroFoto ? asset($heroFoto) : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=1200' }}"
+                 alt="{{ $jenisLayanan->nama_jenis }}"
+                 class="w-full h-full object-cover">
+            <div class="absolute inset-0 bg-black/40"></div>
         </div>
 
-        <div class="container mx-auto px-6 relative z-10 text-white text-right">
+        <div class="container mx-auto px-10 relative z-10 text-white text-right">
             <div class="max-w-xl ml-auto">
-                <span class="text-xs uppercase tracking-widest opacity-70">{{ $layanan->nama_jenis }}</span>
-                <h1 class="text-5xl font-bold mb-4 mt-1">{{ $layanan->nama_layanan }}</h1>
-                @if($layanan->deskripsi)
+                <h1 class="text-5xl font-bold mb-4">{{ $jenisLayanan->nama_jenis }}</h1>
                 <p class="text-sm leading-relaxed opacity-90 text-justify">
-                    {{ $layanan->deskripsi }}
+                    {{ $jenisLayanan->deskripsi ?? 'Nikmati layanan terbaik kami yang dirancang khusus untuk kenyamanan dan kecantikan Anda.' }}
                 </p>
                 @endif
                 @if($layanan->durasi)
@@ -31,146 +33,128 @@
         </div>
     </section>
 
-    {{-- HARGA PER CABANG --}}
-    @if($layananCabang->isNotEmpty())
-    <section class="py-12 container mx-auto px-6 max-w-3xl">
-        <div class="flex items-center justify-center mb-8">
-            <div class="flex-grow h-px bg-gray-300"></div>
-            <h2 class="px-4 text-lg font-bold text-tertiary-500 uppercase">Harga Layanan</h2>
-            <div class="flex-grow h-px bg-gray-300"></div>
-        </div>
-
-        <div class="space-y-3">
-            @foreach($layananCabang as $lc)
-            <div class="bg-white rounded-xl px-6 py-4 shadow flex justify-between items-center gap-4">
-                <div>
-                    <p class="font-semibold text-sm text-[#3e3a34]">{{ $lc->nama_cabang }}</p>
-                    @if(!empty($lc->alamat))
-                    <p class="text-[11px] text-gray-400 mt-0.5">{{ $lc->alamat }}</p>
-                    @endif
-                    @if($lc->harga_promo)
-                    <p class="text-xs text-gray-400 line-through mt-1">
-                        Rp {{ number_format($lc->harga, 0, ',', '.') }}
-                    </p>
-                    @endif
-                </div>
-                <div class="text-right shrink-0">
-                    @if($lc->harga_promo)
-                        <p class="text-[#e9bcbc] font-bold text-lg">
-                            Rp {{ number_format($lc->harga_promo, 0, ',', '.') }}
-                        </p>
-                        <span class="text-[11px] bg-red-100 text-red-500 px-2 py-0.5 rounded-full">PROMO</span>
-                    @else
-                        <p class="text-[#3e3a34] font-bold text-lg">
-                            Rp {{ number_format($lc->harga, 0, ',', '.') }}
-                        </p>
-                    @endif
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </section>
-    @endif
-
-    {{-- PAKET YANG MENGANDUNG LAYANAN INI --}}
-    @if($paket->isNotEmpty())
+    {{-- ============================================================
+         SECTION LAYANAN — dari tabel layanan + layanan_cabang
+    ============================================================ --}}
     <section class="py-12 bg-pink-50/50">
         <div class="container mx-auto px-6">
-            <div class="flex items-center justify-center mb-10">
+
+            <div class="flex items-center justify-center mb-12">
                 <div class="flex-grow h-px bg-gray-300"></div>
-                <h2 class="px-4 text-lg font-bold text-tertiary-500 uppercase">Tersedia Juga Dalam Paket</h2>
+                <h2 class="px-4 text-lg font-bold text-tertiary-500 uppercase whitespace-nowrap">
+                    {{ $jenisLayanan->nama_jenis }} Treatment
+                </h2>
                 <div class="flex-grow h-px bg-gray-300"></div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                @foreach($paket as $p)
-                <div class="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100">
-                    <div class="p-6">
-                        <span class="text-[10px] bg-rose-100 text-rose-500 px-2 py-1 rounded-full uppercase font-bold">
-                            Paket
-                        </span>
-                        <h3 class="text-lg font-bold mt-3 leading-snug">{{ $p->nama_paket }}</h3>
-                        <p class="text-xs text-gray-400 mt-1">{{ $p->nama_cabang }}</p>
-                        @if($p->deskripsi)
-                        <p class="text-tertiary-500 text-xs mt-2 italic line-clamp-2">{{ $p->deskripsi }}</p>
-                        @endif
-                        <div class="mt-6 flex justify-between items-center border-t pt-4">
-                            <div>
-                                @if($p->harga_promo)
-                                    <p class="text-xs text-gray-400 line-through">
-                                        Rp {{ number_format($p->harga_normal, 0, ',', '.') }}
-                                    </p>
-                                    <p class="font-bold text-[#e9bcbc]">
-                                        Rp {{ number_format($p->harga_promo, 0, ',', '.') }}
-                                    </p>
-                                @else
-                                    <p class="font-bold text-[#43392f]">
-                                        Rp {{ number_format($p->harga_normal, 0, ',', '.') }}
-                                    </p>
+            @if($layananList->isEmpty())
+                <p class="text-center text-gray-400 py-10">Belum ada layanan tersedia untuk kategori ini.</p>
+            @else
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                    @foreach($layananList as $layanan)
+                    <div class="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100 flex flex-col">
+
+                        {{-- Foto layanan: dari album_foto, fallback ke placeholder --}}
+                        <img src="{{ $layanan->url_foto
+                                    ? asset($layanan->url_foto)
+                                    : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=500' }}"
+                             class="w-full h-56 object-cover"
+                             alt="{{ $layanan->nama_layanan }}">
+
+                        <div class="p-6 flex flex-col flex-grow">
+
+                            {{-- Badge kategori --}}
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-[10px] bg-rose-100 text-rose-500 px-2 py-1 rounded-full uppercase font-bold">
+                                    {{ $jenisLayanan->nama_jenis }}
+                                </span>
+                                @if($layanan->kategori_pelanggan === 'anak')
+                                    <span class="text-[10px] bg-blue-100 text-blue-500 px-2 py-1 rounded-full uppercase font-bold">
+                                        Anak
+                                    </span>
                                 @endif
                             </div>
-                            <button class="bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
-                                Book Now
-                            </button>
+
+                            {{-- Nama + durasi --}}
+                            <div class="flex justify-between items-start mt-1">
+                                <h3 class="text-lg font-bold leading-snug">{{ $layanan->nama_layanan }}</h3>
+                                <span class="text-xs text-gray-400 flex items-center whitespace-nowrap ml-2 mt-1">
+                                    <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    {{ $layanan->durasi }} min
+                                </span>
+                            </div>
+
+                            {{-- Deskripsi --}}
+                            <p class="text-tertiary-500 text-xs mt-2 line-clamp-2 italic flex-grow">
+                                {{ $layanan->deskripsi ?? '-' }}
+                            </p>
+
+                            {{-- Harga + tombol --}}
+                            <div class="mt-6 flex justify-between items-center border-t pt-4">
+                                <div>
+                                    @if($layanan->harga_promo)
+                                        <span class="text-xs line-through text-gray-400 block">
+                                            Rp {{ number_format($layanan->harga, 0, ',', '.') }}
+                                        </span>
+                                        <span class="font-bold text-rose-500 text-sm">
+                                            Rp {{ number_format($layanan->harga_promo, 0, ',', '.') }}
+                                        </span>
+                                    @else
+                                        <span class="font-bold text-tertiary-500 text-sm">
+                                            Rp {{ number_format($layanan->harga, 0, ',', '.') }}
+                                        </span>
+                                    @endif
+                                </div>
+
+                                {{-- Ganti href sesuai route booking yang kamu buat --}}
+                                <a href="#"
+                                   class="bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
+                                    Book Now
+                                </a>
+                            </div>
+
                         </div>
                     </div>
+                    @endforeach
                 </div>
-                @endforeach
-            </div>
+            @endif
+
         </div>
     </section>
-    @endif
 
-    {{-- ULASAN --}}
-    @if($ulasan->isNotEmpty())
-    <section class="py-12 container mx-auto px-6 max-w-3xl">
-        <div class="flex items-center justify-center mb-8">
+    {{-- ============================================================
+         SECTION PAKET — dari tabel paket_layanan
+         Hanya tampil jika ada paket yang relevan
+    ============================================================ --}}
+    @if($paketList->isNotEmpty())
+    <section class="py-16 container mx-auto px-6">
+
+        <div class="flex items-center justify-center mb-10">
             <div class="flex-grow h-px bg-gray-300"></div>
-            <h2 class="px-4 text-lg font-bold text-tertiary-500 uppercase">Ulasan Pelanggan</h2>
+            <h2 class="px-4 text-lg font-bold text-tertiary-500 uppercase whitespace-nowrap">
+                Paket {{ $jenisLayanan->nama_jenis }}
+            </h2>
             <div class="flex-grow h-px bg-gray-300"></div>
         </div>
 
-        @if($avgRating)
-        <p class="text-center text-sm text-gray-500 mb-6">
-            ⭐ {{ number_format($avgRating, 1) }} / 5.0
-            <span class="text-gray-400">({{ $ulasan->count() }} ulasan)</span>
-        </p>
-        @endif
-
-        <div class="space-y-4">
-            @foreach($ulasan as $review)
-            <div class="bg-white rounded-xl px-6 py-4 shadow">
-                <div class="flex justify-between items-start">
-                    <p class="font-semibold text-sm text-[#3e3a34]">{{ $review->nama_pelanggan }}</p>
-                    <span class="text-yellow-400 text-sm tracking-widest">
-                        @for($i = 1; $i <= 5; $i++)
-                            {{ $i <= $review->rating ? '★' : '☆' }}
-                        @endfor
-                    </span>
-                </div>
-                @if($review->komentar)
-                <p class="text-xs text-gray-500 mt-2 leading-relaxed">{{ $review->komentar }}</p>
-                @endif
-                <p class="text-[10px] text-gray-300 mt-2">
-                    {{ \Carbon\Carbon::parse($review->created_at)->diffForHumans() }}
-                </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            @foreach($paketList as $paket)
+            <div class="border border-gray-200 bg-[#fff8f8] p-6 rounded-2xl shadow-sm hover:shadow-md transition">
+                <h3 class="font-bold text-base text-[#3E382D] mb-2">{{ $paket->nama_paket }}</h3>
+                <p class="text-xs text-gray-500 italic mb-4">{{ $paket->deskripsi ?? '-' }}</p>
+                <a href="#"
+                   class="block text-center bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
+                    Pilih Paket
+                </a>
             </div>
             @endforeach
         </div>
+
     </section>
     @endif
-
-    @if($ulasan->isEmpty())
-    <p class="text-center text-sm text-gray-400 py-8">Belum ada ulasan untuk layanan ini.</p>
-    @endif
-
-    {{-- TOMBOL KEMBALI --}}
-    <div class="flex justify-center pb-16">
-        <a href="{{ route('service.index') }}"
-            class="bg-[#3e3a34] text-white px-8 py-3 rounded-full text-sm hover:opacity-80 transition">
-            ← Kembali ke Layanan
-        </a>
-    </div>
 
 </div>
 
