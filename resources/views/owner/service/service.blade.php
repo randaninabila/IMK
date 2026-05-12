@@ -423,7 +423,7 @@
                     text-[#b04a4a]
                 "
             >
-                Edit ✏️
+                See all →
             </a>
         </div>
 
@@ -624,7 +624,7 @@
                             {{ $leaderboard->total() }}
                         </span>
 
-                        specialists
+                        services
 
                     @else
 

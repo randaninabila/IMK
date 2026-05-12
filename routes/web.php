@@ -10,14 +10,15 @@ use App\Http\Controllers\Owner\ServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
 use App\Http\Controllers\Owner\CustomerController;
 
+use App\Http\Controllers\User\GalleryController;
+use App\Http\Controllers\User\UserServiceController;
+
 // =====================
 // PUBLIC / USER
 // =====================
 
 // Home
-Route::get('/', function () {
-    return view('user.gallery.gallery');
-});
+Route::get('/', [GalleryController::class, 'index'])->name('home');
 
 // Login & Register
 Route::middleware('guest')->group(function () {
@@ -33,13 +34,8 @@ Route::middleware('guest')->group(function () {
 });
 
 // Service
-Route::get('/service', function () {
-    return view('user.service.service');
-});
-
-Route::get('/sdetail', function () {
-    return view('user.service.sdetail');
-});
+Route::get('/service', [UserServiceController::class, 'index'])->name('service.index');
+Route::get('/service/{slug}', [UserServiceController::class, 'show'])->name('service.detail');
 
 // Specialist
 Route::get('/specialist', function () {
@@ -47,64 +43,11 @@ Route::get('/specialist', function () {
 });
 
 // Gallery
-Route::get('/gallery', function () {
-    return view('user.gallery.gallery');
-});
+Route::get('/gallery', [GalleryController::class, 'index'])
+    ->name('gallery.index');
 
-// =====================
-// GALLERY DETAIL
-// =====================
-
-Route::get('/gallery/{slug}', function ($slug) {
-
-    $galleries = [
-
-        'hair-repair-treatment' => [
-            'title' => 'Hair Repair Treatment',
-            'role' => 'hair',
-            'before' => '/images/before.jpg',
-            'after' => '/images/after.jpg',
-            'before_list' => [
-                'Rambut kering dan bercabang',
-                'Tekstur kasar dan sulit diatur',
-                'Rambut mudah patah',
-            ],
-            'after_list' => [
-                'Rambut lebih halus',
-                'Lebih kuat dan sehat',
-                'Lebih mudah diatur',
-            ],
-        ],
-
-        'hair-growth-therapy' => [
-            'title' => 'Hair Growth Therapy',
-            'role' => 'hair',
-            'before' => '/images/before2.jpg',
-            'after' => '/images/after2.jpg',
-            'before_list' => [
-                'Rambut tipis',
-                'Pertumbuhan lambat',
-            ],
-            'after_list' => [
-                'Rambut lebih tebal',
-                'Pertumbuhan lebih cepat',
-            ],
-        ],
-
-        'acne-facial-treatment' => [
-            'title' => 'Acne Facial Treatment',
-            'role' => 'facial',
-            'before' => '/images/before4.jpg',
-            'after' => '/images/after4.jpg',
-        ],
-
-    ];
-
-    $gallery = $galleries[$slug] ?? abort(404);
-
-    return view('user.gallery.gdetail', compact('gallery'));
-
-})->name('gallery.detail');
+Route::get('/gallery/{slug}', [GalleryController::class, 'show'])
+    ->name('gallery.detail');
 
 // =====================
 // SPECIALIST DETAIL
@@ -152,25 +95,17 @@ Route::get('/specialist/{slug}', function ($slug) {
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // =====================
 // QUICK VERIFY DEV
 // =====================
 
 Route::post('/fake-verify-email', function () {
-
     $user = auth()->user();
-
     $user->email_verified_at = now();
-
     $user->save();
-
     return redirect()->intended('/');
-
 })->middleware('auth');
 
 // =====================

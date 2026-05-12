@@ -77,7 +77,6 @@ class AuthController extends Controller
             'status_akun' => 'aktif',
         ]);
 
-        // Buat record di tabel pelanggan jika ada
         Pelanggan::create(['user_id' => $user->user_id]);
 
         Auth::login($user);
@@ -132,7 +131,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        return redirect('/');
     }
 
     // =====================

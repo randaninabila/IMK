@@ -37,114 +37,136 @@ class DashboardController extends Controller
 
     private function getDashboardStats($selectedCabang = null)
     {
-        // ── Total Revenue
+        $allCabangs = Cabang::where('status', 'BUKA')->get();
+
+        $revenueForCabang = function($cabangId) {
+            return DB::table('pembayaran')
+                ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
+                ->where('pembayaran.status', 'verified')
+                ->whereDate('booking.tanggal_booking', today())
+                ->whereExists(function ($sub) use ($cabangId) {
+                    $sub->select(DB::raw(1))
+                        ->from('booking_detail')
+                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
+                        ->where('layanan_cabang.cabang_id', $cabangId);
+                })
+                ->sum('pembayaran.jumlah');
+        };
+
+        $bookingForCabang = function($cabangId) {
+            return DB::table('booking')
+                ->whereDate('tanggal_booking', today())
+                ->where('status', '!=', 'batal')
+                ->whereExists(function ($sub) use ($cabangId) {
+                    $sub->select(DB::raw(1))
+                        ->from('booking_detail')
+                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
+                        ->where('layanan_cabang.cabang_id', $cabangId);
+                })
+                ->count();
+        };
+
+        $customerForCabang = function($cabangId) {
+            return DB::table('booking')
+                ->join('pelanggan', 'booking.pelanggan_id', '=', 'pelanggan.pelanggan_id')
+                ->whereDate('booking.tanggal_booking', today())
+                ->whereExists(function ($sub) use ($cabangId) {
+                    $sub->select(DB::raw(1))
+                        ->from('booking_detail')
+                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
+                        ->where('layanan_cabang.cabang_id', $cabangId);
+                })
+                ->distinct()
+                ->count('pelanggan.pelanggan_id');
+        };
+
+        $staffForCabang = function($cabangId) {
+            return Pegawai::join('users', 'pegawai.user_id', '=', 'users.user_id')
+                ->where('pegawai.status_kerja', 'aktif')
+                ->whereIn('users.role', ['pegawai', 'admin'])
+                ->where('pegawai.cabang_id', $cabangId)
+                ->count();
+        };
+
+        $cabangBreakdown = [];
+        if (!$selectedCabang) {
+            foreach ($allCabangs as $cabang) {
+                $rev = $revenueForCabang($cabang->cabang_id);
+                $cabangBreakdown[] = [
+                    'nama'     => $cabang->nama_cabang,
+                    'revenue'  => number_format($rev / 1000, 0) . 'k',
+                    'bookings' => $bookingForCabang($cabang->cabang_id),
+                    'customers'=> $customerForCabang($cabang->cabang_id),
+                    'staff'    => $staffForCabang($cabang->cabang_id),
+                ];
+            }
+        }
+
+        // === TOTAL ===
         $revenueQuery = DB::table('pembayaran')
             ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
             ->where('pembayaran.status', 'verified')
-            ->where('booking.status', 'selesai');
+            ->whereDate('booking.tanggal_booking', today());
 
         if ($selectedCabang) {
             $revenueQuery->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
+                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
                     ->where('layanan_cabang.cabang_id', $selectedCabang);
             });
         }
+        $todayRevenue = $revenueQuery->sum('pembayaran.jumlah');
 
-        $totalRevenue = $revenueQuery->sum('pembayaran.jumlah');
-
-        // ── Total Bookings selesai
         $bookingQuery = DB::table('booking')
-            ->where('booking.status', 'selesai');
-
+            ->whereDate('tanggal_booking', today())
+            ->where('status', '!=', 'batal');
         if ($selectedCabang) {
             $bookingQuery->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
+                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
                     ->where('layanan_cabang.cabang_id', $selectedCabang);
             });
         }
+        $todayBookings = $bookingQuery->count();
 
-        $totalBookings = $bookingQuery->count('booking.booking_id');
-
-        // ── Pelanggan Aktif
         $customerQuery = DB::table('booking')
             ->join('pelanggan', 'booking.pelanggan_id', '=', 'pelanggan.pelanggan_id')
-            ->join('users', 'pelanggan.user_id', '=', 'users.user_id')
-            ->where('booking.status', 'selesai')
-            ->where('users.status_akun', 'aktif');
-
+            ->whereDate('booking.tanggal_booking', today());
         if ($selectedCabang) {
             $customerQuery->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
+                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
                     ->where('layanan_cabang.cabang_id', $selectedCabang);
             });
         }
+        $todayCustomers = $customerQuery->distinct()->count('pelanggan.pelanggan_id');
 
-        $activeCustomers = $customerQuery->distinct()->count('pelanggan.pelanggan_id');
-
-        // ── Staff Aktif
-        $totalStaff = Pegawai::join('users', 'pegawai.user_id', '=', 'users.user_id')
+        $activeStaff = Pegawai::join('users', 'pegawai.user_id', '=', 'users.user_id')
             ->where('pegawai.status_kerja', 'aktif')
             ->whereIn('users.role', ['pegawai', 'admin'])
             ->when($selectedCabang, fn($q) => $q->where('pegawai.cabang_id', $selectedCabang))
             ->count();
-
-        // ── Booking Hari Ini
-        $todayQuery = DB::table('booking')
-            ->whereDate('booking.tanggal_booking', today())
-            ->where('booking.status', '!=', 'batal');
-
-        if ($selectedCabang) {
-            $todayQuery->whereExists(function ($sub) use ($selectedCabang) {
-                $sub->select(DB::raw(1))
-                    ->from('booking_detail')
-                    ->join(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
-                    ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where('layanan_cabang.cabang_id', $selectedCabang);
-            });
-        }
-
-        $todayBookings = $todayQuery->distinct()->count('booking.booking_id');
 
         $selectedCabangName = $selectedCabang
             ? Cabang::find($selectedCabang)?->nama_cabang
             : 'Seluruh Cabang';
 
         return [
-            'totalRevenue'       => number_format($totalRevenue / 1000, 0) . 'k',
-            'totalBookings'      => $totalBookings,
-            'activeCustomers'    => $activeCustomers,
-            'totalStaff'         => $totalStaff,
+            'todayRevenue'       => number_format($todayRevenue / 1000, 0) . 'k',
             'todayBookings'      => $todayBookings,
+            'todayCustomers'     => $todayCustomers,
+            'activeStaff'        => $activeStaff,
             'selectedCabangName' => $selectedCabangName,
+            'cabangBreakdown'    => $cabangBreakdown,
         ];
     }
 

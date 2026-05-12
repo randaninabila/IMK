@@ -57,7 +57,7 @@ class EmployeeController extends Controller
             ->leftJoin('booking as b', 'bd.booking_id', '=', 'b.booking_id')
             ->leftJoin('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
-            ->where('p.status_kerja', '!=', 'resign') // filter out resigned employees
+            ->where('p.status_kerja', '!=', 'resign')
             ->whereDate('u.created_at', '<=', $currentMonth->copy()->endOfMonth())
             ->where(function ($q) use ($currentMonth) {
                 $q->whereNull('b.booking_id')
@@ -75,7 +75,6 @@ class EmployeeController extends Controller
         $query->select(
             'p.pegawai_id', 'p.status_kerja',
             'u.nama', 'u.role', 'u.foto_profile',
-            // today_status derived from status_kerja: aktif = tersedia, else = tidak_tersedia
             DB::raw("CASE WHEN p.status_kerja = 'aktif' THEN 'tersedia' ELSE 'tidak_tersedia' END as today_status"),
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
@@ -156,11 +155,55 @@ class EmployeeController extends Controller
             method_exists($employees, 'items') ? $employees->items() : $employees
         )->where('today_status', 'tersedia')->count();
 
+        $parsedMonth = Carbon::parse($selectedMonth);
+
+        $cabangStats = $cabangs->map(function ($cabang) use ($parsedMonth) {
+            $total  = DB::table('pegawai as p')
+                ->join('users as u', 'p.user_id', '=', 'u.user_id')
+                ->where('p.cabang_id', $cabang->cabang_id)
+                ->whereIn('u.role', ['pegawai', 'admin'])
+                ->where('p.status_kerja', '!=', 'resign')
+                ->count();
+
+            $active = DB::table('pegawai as p')
+                ->join('users as u', 'p.user_id', '=', 'u.user_id')
+                ->where('p.cabang_id', $cabang->cabang_id)
+                ->whereIn('u.role', ['pegawai', 'admin'])
+                ->where('p.status_kerja', 'aktif')
+                ->count();
+
+            $avgRating = DB::table('pegawai as p')
+                ->join('users as u', 'p.user_id', '=', 'u.user_id')
+                ->join('booking_detail as bd', 'p.pegawai_id', '=', 'bd.pegawai_id')
+                ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
+                ->join('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
+                ->where('p.cabang_id', $cabang->cabang_id)
+                ->whereIn('u.role', ['pegawai', 'admin'])
+                ->where('p.status_kerja', '!=', 'resign')
+                ->whereMonth('b.tanggal_booking', $parsedMonth->month)
+                ->whereYear('b.tanggal_booking', $parsedMonth->year)
+                ->where('b.status', 'selesai')
+                ->avg('ul.rating');
+
+            return [
+                'cabang_id'   => $cabang->cabang_id,
+                'nama_cabang' => $cabang->nama_cabang,
+                'total'       => $total,
+                'active'      => $active,
+                'off_today'   => $total - $active,
+                'avg_rating'  => $avgRating ? round($avgRating, 1) : null,
+            ];
+        });
+
+        $avgRatingAll = $cabangStats->whereNotNull('avg_rating')->avg('avg_rating');
+        $avgRatingAll = $avgRatingAll ? round($avgRatingAll, 1) : null;
+
         return view('owner.employees.eemployee', compact(
             'employees', 'cabangs', 'months',
             'selectedCabang', 'selectedMonth',
             'selectedSort', 'selectedDir', 'selectedSortCabang',
-            'totalEmployees', 'activeEmployees', 'perPage'
+            'totalEmployees', 'activeEmployees', 'perPage',
+            'cabangStats', 'avgRatingAll'
         ));
     }
 
@@ -182,7 +225,7 @@ class EmployeeController extends Controller
             ->leftJoin('booking as b', 'bd.booking_id', '=', 'b.booking_id')
             ->leftJoin('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
-            ->where('p.status_kerja', '!=', 'resign') // filter out resigned employees
+            ->where('p.status_kerja', '!=', 'resign')
             ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth())
             ->where(function ($q) use ($parsedMonth) {
                 $q->whereNull('b.booking_id')
@@ -210,7 +253,6 @@ class EmployeeController extends Controller
         $query->select(array_merge([
             'p.pegawai_id', 'p.status_kerja',
             'u.nama', 'u.role', 'u.foto_profile', 'u.created_at',
-            // today_status derived from status_kerja: aktif = tersedia, else = tidak_tersedia
             DB::raw("CASE WHEN p.status_kerja = 'aktif' THEN 'tersedia' ELSE 'tidak_tersedia' END as today_status"),
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
@@ -402,7 +444,6 @@ class EmployeeController extends Controller
             if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 
             // Hanya update status_kerja di pegawai — TIDAK mengubah status_akun di users
-            // Filter resign sudah ditangani via where('p.status_kerja', '!=', 'resign') di query
             DB::table('pegawai')->where('pegawai_id', $pegawai_id)->update(['status_kerja' => 'resign']);
 
             DB::commit();

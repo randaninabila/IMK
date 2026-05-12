@@ -115,15 +115,6 @@ class ServiceController extends Controller
             ]);
     }
 
-    /**
-     * @param  string       $cabangId
-     * @param  string       $month
-     * @param  string       $category
-     * @param  int|string   $perPage
-     * @param  string       $selectedSort   performance | revenue | growth
-     * @param  string       $dir            asc | desc
-     * @param  string|null  $sortCabang     cabang_id acuan saat sort=performance & cabang=all
-     */
     private function getLeaderboardData(
         $cabangId,
         $month,
@@ -195,7 +186,6 @@ class ServiceController extends Controller
             $dynamicCabangSelect
         ))->groupBy('l.layanan_id', 'l.nama_layanan', 'jl.nama_jenis');
 
-        // Sort di DB untuk performance & revenue; growth di-sort setelah mapping
         if ($selectedSort === 'revenue') {
             $currentQuery->orderBy('total_revenue', $dir);
         } elseif ($selectedSort === 'performance') {
@@ -208,7 +198,6 @@ class ServiceController extends Controller
                 $currentQuery->orderBy('total_count', $dir);
             }
         }
-        // growth: ambil semua dulu, sort setelah hitung growth
 
         $leaderboard = $perPage === 'all'
             ? $currentQuery->get()
@@ -269,7 +258,6 @@ class ServiceController extends Controller
             $leaderboard = $leaderboard->map($transformData);
         }
 
-        // ── Sort growth setelah mapping (berlaku untuk semua kasus)
         if ($selectedSort === 'growth') {
             if ($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator) {
                 $sorted = $dir === 'asc'
@@ -329,7 +317,7 @@ class ServiceController extends Controller
         $selectedDir    = $request->get('dir', 'desc');
         $selectedCabang = $request->get('cabang', 'all');
         $selectedMonth  = $request->get('bulan', Carbon::now()->format('Y-m'));
-        $selectedSortCabang = $request->get('sort_cabang');   // cabang acuan sort performance saat all
+        $selectedSortCabang = $request->get('sort_cabang');
 
         $cabangs      = DB::table('cabang')->where('status', 'BUKA')->get();
         $jenisLayanan = DB::table('jenis_layanan')->get();

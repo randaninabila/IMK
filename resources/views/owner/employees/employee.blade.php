@@ -126,7 +126,7 @@
 
         <div class="flex justify-between items-center mb-5">
             <h2 class="text-xl font-semibold text-[#2d2a26]">Specialist Efficiency</h2>
-            <a href="{{ route('owner.employee.edit') }}" class="text-sm text-[#b04a4a]">Edit ✏️</a>
+            <a href="{{ route('owner.employee.edit') }}" class="text-sm text-[#b04a4a]">See all →</a>
         </div>
 
         <div class="overflow-x-auto">

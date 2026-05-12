@@ -3,12 +3,6 @@
 @section('content')
 
 @php
-    /**
-     * Helper: buat URL sort dengan toggle asc/desc.
-     * - performance + cabang tertentu: pakai sort_cabang
-     * - kolom sama diklik lagi → balik arah
-     * - kolom berbeda → mulai dari 'desc'
-     */
     $sortUrl = function (string $key, $cabangAcuan = null) use ($selectedCabang, $selectedMonth, $selectedSort, $selectedDir, $selectedSortCabang): string {
         // Cek apakah kolom ini yang sedang aktif
         $isActive = $selectedSort === $key
@@ -30,10 +24,6 @@
         return route('owner.service.edit', $params);
     };
 
-    /**
-     * Helper: tampilkan panah sort di header.
-     * Aktif hanya jika key cocok DAN sort_cabang cocok (bila ada).
-     */
     $sortIcon = function (string $key, $cabangAcuan = null) use ($selectedSort, $selectedDir, $selectedSortCabang): string {
         $isActive = $selectedSort === $key
             && ($cabangAcuan === null || (string)$cabangAcuan === (string)$selectedSortCabang);
@@ -45,9 +35,6 @@
         return '<span class="sort-icon active">' . $arrow . '</span>';
     };
 
-    /**
-     * Helper: cek apakah kolom ini aktif (untuk CSS class).
-     */
     $isActive = function (string $key, $cabangAcuan = null) use ($selectedSort, $selectedSortCabang): bool {
         return $selectedSort === $key
             && ($cabangAcuan === null || (string)$cabangAcuan === (string)$selectedSortCabang);
@@ -76,7 +63,7 @@
 .sort-link:hover {
     color: #f45b69;
 }
-/* Aktif: baru muncul pill putih */
+
 .sort-link.active {
     background: #fff;
     border-color: #f1dede;
@@ -246,11 +233,6 @@
                         @endforeach
                     </div>
                 </div>
-
-                {{-- ADD --}}
-                <button class="bg-[#f8cdd0] text-[#b04a4a] px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition">
-                    + Add Service
-                </button>
 
             </div>
         </div>

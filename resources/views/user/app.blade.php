@@ -21,6 +21,117 @@
 
     {{-- Navbar --}}
     @include('user.partials.navbar')
+    
+    {{-- GLOBAL NOTIFICATION --}}
+    <div class="
+        fixed top-24 left-0 right-0
+        z-[999]
+        px-8
+        pointer-events-none
+    ">
+
+        {{-- SUCCESS --}}
+        @if(session('success'))
+
+        <div
+            x-data="{ show:true }"
+
+            x-init="
+                setTimeout(
+                    () => show = false,
+                    3000
+                )
+            "
+
+            x-show="show"
+
+            x-transition.opacity
+
+            class="
+                mb-4
+                bg-green-100
+                text-green-700
+                px-5 py-4
+                rounded-2xl
+                flex items-center justify-between
+                shadow-lg
+                pointer-events-auto
+            "
+        >
+
+            <span>
+                {{ session('success') }}
+            </span>
+
+            <button
+                @click="show = false"
+                class="
+                    ml-4
+                    text-lg
+                    font-bold
+                    hover:opacity-70
+                    transition
+                "
+            >
+                ✕
+            </button>
+
+        </div>
+
+        @endif
+
+
+        {{-- ERROR --}}
+        @if(session('error'))
+
+        <div
+            x-data="{ show:true }"
+
+            x-init="
+                setTimeout(
+                    () => show = false,
+                    3000
+                )
+            "
+
+            x-show="show"
+
+            x-transition.opacity
+
+            class="
+                mb-4
+                bg-red-100
+                text-red-600
+                px-5 py-4
+                rounded-2xl
+                flex items-center justify-between
+                shadow-lg
+                pointer-events-auto
+            "
+        >
+
+            <span>
+                {{ session('error') }}
+            </span>
+
+            <button
+                @click="show = false"
+                class="
+                    ml-4
+                    text-lg
+                    font-bold
+                    hover:opacity-70
+                    transition
+                "
+            >
+                ✕
+            </button>
+
+        </div>
+
+        @endif
+
+    </div>
 
     {{-- Content --}}
     <main>

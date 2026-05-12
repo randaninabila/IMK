@@ -45,9 +45,9 @@
     <div class="flex justify-between items-center mb-8">
 
         <div>
-            <h2 class="text-4xl font-bold mb-3 tracking-tight">
+            <h1 class="text-5xl font-bold text-[#2d2a26]">
                 Welcome Back!
-            </h2>
+            </h1>
 
             <p class="text-gray-500 text-base">
                 Your salon is humming with activity today. Here's your overview.
@@ -180,6 +180,8 @@
 
     {{-- CARDS --}}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-10 text-left">
+
+        {{-- TODAY'S REVENUE --}}
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">💵</span>
@@ -187,38 +189,86 @@
                     +{{ $stats['todayBookings'] }} Today
                 </span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Total Revenue</p>
-            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ $stats['totalRevenue'] }}</h3>
-            <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
+            <p class="text-gray-500 font-semibold mb-1">Today's Revenue</p>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ $stats['todayRevenue'] }}</h3>
+            <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
+
+            @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
+                <div class="border-t border-pink-50 pt-2 space-y-1">
+                    @foreach($stats['cabangBreakdown'] as $cb)
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400 truncate max-w-[65%]">{{ $cb['nama'] }}</span>
+                            <span class="font-semibold text-gray-600">{{ $cb['revenue'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
+        {{-- TODAY'S BOOKINGS --}}
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">📅</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Total Bookings</p>
-            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalBookings']) }}</h3>
-            <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
+            <p class="text-gray-500 font-semibold mb-1">Today's Bookings</p>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayBookings']) }}</h3>
+            <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
+
+            @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
+                <div class="border-t border-pink-50 pt-2 space-y-1">
+                    @foreach($stats['cabangBreakdown'] as $cb)
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400 truncate max-w-[65%]">{{ $cb['nama'] }}</span>
+                            <span class="font-semibold text-gray-600">{{ $cb['bookings'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
+        {{-- TODAY'S CUSTOMERS --}}
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">👥</span>
                 <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">+12%</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Active Customers</p>
-            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['activeCustomers']) }}</h3>
-            <p class="text-xs text-gray-400">Member base</p>
+            <p class="text-gray-500 font-semibold mb-1">Today's Customers</p>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayCustomers']) }}</h3>
+            <p class="text-xs text-gray-400 mb-2">Member base</p>
+
+            @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
+                <div class="border-t border-pink-50 pt-2 space-y-1">
+                    @foreach($stats['cabangBreakdown'] as $cb)
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400 truncate max-w-[65%]">{{ $cb['nama'] }}</span>
+                            <span class="font-semibold text-gray-600">{{ $cb['customers'] }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
 
+        {{-- ACTIVE STAFF --}}
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">🆔</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Total Staff</p>
-            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['totalStaff']) }}</h3>
-            <p class="text-xs text-gray-400">{{ $stats['selectedCabangName'] }}</p>
+            <p class="text-gray-500 font-semibold mb-1">Active Staff Today</p>
+            <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['activeStaff']) }}</h3>
+            <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
+
+            @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
+                <div class="border-t border-pink-50 pt-2 space-y-1">
+                    @foreach($stats['cabangBreakdown'] as $cb)
+                        <div class="flex justify-between text-xs">
+                            <span class="text-gray-400 truncate max-w-[65%]">{{ $cb['nama'] }}</span>
+                            <span class="font-semibold text-gray-600">{{ $cb['staff'] }} staff</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
+
     </div>
 
     {{-- CHART --}}

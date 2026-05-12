@@ -3,9 +3,6 @@
 @section('content')
 
 @php
-    /**
-     * Helper: buat URL sort dengan toggle asc/desc.
-     */
     $sortUrl = function (string $key, $cabangAcuan = null) use (
         $selectedCabang, $selectedMonth, $selectedSort, $selectedDir,
         $selectedSortCabang, $perPage
@@ -103,14 +100,130 @@
     {{-- SUMMARY --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
-        <div class="bg-white rounded-3xl p-5 shadow-sm">
-            <p class="text-sm text-gray-500 mb-2">Total Employees</p>
-            <h2 class="text-3xl font-bold text-[#f45b69]">{{ $totalEmployees }}</h2>
+        {{-- 1. TOTAL EMPLOYEES --}}
+        <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm font-semibold text-gray-500">Total Employees</p>
+                <span class="p-2 bg-pink-100 rounded-xl text-base leading-none">🆔</span>
+            </div>
+            <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $totalEmployees }}</h2>
+            <p class="text-xs text-gray-400 mb-4">
+                @if($selectedCabang == 'all') Seluruh Cabang
+                @else {{ $cabangs->firstWhere('cabang_id', $selectedCabang)?->nama_cabang }}
+                @endif
+            </p>
+
+            @if($selectedCabang == 'all')
+            <div class="border-t border-pink-50 pt-3 space-y-2.5">
+                @foreach($cabangStats as $cs)
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 20) }}</span>
+                    <span class="text-xs font-semibold text-[#f45b69] bg-pink-50 px-2.5 py-0.5 rounded-full flex-shrink-0">
+                        {{ $cs['total'] }} staff
+                    </span>
+                </div>
+                @endforeach
+            </div>
+            @endif
         </div>
 
-        <div class="bg-white rounded-3xl p-5 shadow-sm">
-            <p class="text-sm text-gray-500 mb-2">Available Today</p>
-            <h2 class="text-3xl font-bold text-[#f45b69]">{{ $activeEmployees }}</h2>
+        {{-- 2. AVAILABLE TODAY --}}
+        <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm font-semibold text-gray-500">Available Today</p>
+                <span class="p-2 bg-blue-100 rounded-xl text-base leading-none">✅</span>
+            </div>
+            <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $activeEmployees }}</h2>
+            <p class="text-xs text-gray-400 mb-4">
+                @if($selectedCabang == 'all') Seluruh Cabang
+                @else {{ $cabangs->firstWhere('cabang_id', $selectedCabang)?->nama_cabang }}
+                @endif
+            </p>
+
+            @if($selectedCabang == 'all')
+            <div class="border-t border-pink-50 pt-3 space-y-2.5">
+                @foreach($cabangStats as $cs)
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 18) }}</span>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <div class="w-14 h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-400 rounded-full transition-all"
+                                style="width: {{ $cs['total'] > 0 ? round(($cs['active'] / $cs['total']) * 100) : 0 }}%">
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full w-6 text-center">
+                            {{ $cs['active'] }}
+                        </span>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+
+        {{-- 3. OFF TODAY --}}
+        <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm font-semibold text-gray-500">Off Today</p>
+                <span class="p-2 bg-amber-100 rounded-xl text-base leading-none">⏰</span>
+            </div>
+            <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $totalEmployees - $activeEmployees }}</h2>
+            <p class="text-xs text-gray-400 mb-4">
+                @if($selectedCabang == 'all') Seluruh Cabang
+                @else {{ $cabangs->firstWhere('cabang_id', $selectedCabang)?->nama_cabang }}
+                @endif
+            </p>
+
+            @if($selectedCabang == 'all')
+            <div class="border-t border-pink-50 pt-3 space-y-2.5">
+                @foreach($cabangStats as $cs)
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 18) }}</span>
+                    <span class="text-xs font-semibold flex-shrink-0 px-2.5 py-0.5 rounded-full
+                        {{ $cs['off_today'] > 0
+                            ? 'text-amber-700 bg-amber-50'
+                            : 'text-gray-400 bg-gray-50' }}">
+                        {{ $cs['off_today'] }} off
+                    </span>
+                </div>
+                @endforeach
+            </div>
+            @endif
+        </div>
+
+        {{-- 4. AVG RATING BULAN INI --}}
+        <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
+            <div class="flex items-center justify-between mb-4">
+                <p class="text-sm font-semibold text-gray-500">Avg Rating</p>
+                <span class="p-2 bg-yellow-100 rounded-xl text-base leading-none">⭐</span>
+            </div>
+
+            @if($avgRatingAll)
+                <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $avgRatingAll }}</h2>
+            @else
+                <h2 class="text-3xl font-bold text-gray-300 mb-1">—</h2>
+            @endif
+
+            <p class="text-xs text-gray-400 mb-4">
+                {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
+            </p>
+
+            @if($selectedCabang == 'all')
+            <div class="border-t border-pink-50 pt-3 space-y-2.5">
+                @foreach($cabangStats as $cs)
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 18) }}</span>
+                    @if($cs['avg_rating'])
+                        <span class="text-xs font-semibold text-yellow-700 bg-yellow-50 px-2.5 py-0.5 rounded-full flex-shrink-0">
+                            ★ {{ $cs['avg_rating'] }}
+                        </span>
+                    @else
+                        <span class="text-xs text-gray-300 flex-shrink-0">—</span>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+            @endif
         </div>
 
     </div>
