@@ -9,9 +9,8 @@
     ============================================================ --}}
     <section class="relative h-[450px] flex items-center overflow-hidden">
         <div class="absolute inset-0">
-            {{-- Ambil foto pertama dari layanan di jenis ini, fallback ke unsplash --}}
             @php
-                $heroFoto = $layananList->first()?->url_foto;
+                $heroFoto = $layananList->first()?->cover_foto;
             @endphp
             <img src="{{ $heroFoto ? asset($heroFoto) : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=1200' }}"
                  alt="{{ $jenisLayanan->nama_jenis }}"
@@ -21,10 +20,12 @@
 
         <div class="container mx-auto px-10 relative z-10 text-white text-right">
             <div class="max-w-xl ml-auto">
-                <h1 class="text-5xl font-bold mb-4">{{ $jenisLayanan->nama_jenis }}</h1>
-                <p class="text-sm leading-relaxed opacity-90 text-justify">
+                <h1 class="text-5xl font-bold mb-4">
+                    {{ $jenisLayanan->nama_jenis }}
+                </h1>
+                <p class="text-sm leading-relaxed opacity-90 text-right">
                     {{ $jenisLayanan->deskripsi ?? 'Nikmati layanan terbaik kami yang dirancang khusus untuk kenyamanan dan kecantikan Anda.' }}
-                </p>
+                </p> 
             </div>
         </div>
     </section>
@@ -50,9 +51,9 @@
                     @foreach($layananList as $layanan)
                     <div class="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100 flex flex-col">
 
-                        {{-- Foto layanan: dari album_foto, fallback ke placeholder --}}
-                        <img src="{{ $layanan->url_foto
-                                    ? asset($layanan->url_foto)
+                        {{-- Foto layanan: dari kolom cover_foto tabel layanan --}}
+                        <img src="{{ $layanan->cover_foto
+                                    ? asset($layanan->cover_foto)
                                     : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=500' }}"
                              class="w-full h-56 object-cover"
                              alt="{{ $layanan->nama_layanan }}">
@@ -105,10 +106,10 @@
                                     @endif
                                 </div>
 
-                                {{-- Ganti href sesuai route booking yang kamu buat --}}
-                                <a href="#"
+                                {{-- Link ke halaman detail layanan --}}
+                                <a href="{{ route('service.layanan', $layanan->layanan_id) }}"
                                    class="bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
-                                    Book Now
+                                    Lihat Detail
                                 </a>
                             </div>
 
@@ -123,7 +124,6 @@
 
     {{-- ============================================================
          SECTION PAKET — dari tabel paket_layanan
-         Hanya tampil jika ada paket yang relevan
     ============================================================ --}}
     @if($paketList->isNotEmpty())
     <section class="py-16 container mx-auto px-6">

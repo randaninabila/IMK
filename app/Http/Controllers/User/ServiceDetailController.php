@@ -14,17 +14,9 @@ class ServiceDetailController extends Controller
             ->where('jenis_layanan_id', $jenis_layanan_id)
             ->firstOrFail();
 
-        // Layanan + harga cabang + foto album
+        // Layanan + harga cabang, foto dari kolom cover_foto tabel layanan
         $layananList = DB::table('layanan as l')
             ->join('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->leftJoin('album as a', 'a.layanan_id', '=', 'l.layanan_id')
-            ->leftJoin('album_foto as af', function ($join) {
-                $join->on('af.album_id', '=', 'a.album_id')
-                    ->whereRaw('af.foto_id = (
-                        SELECT MIN(foto_id) FROM album_foto
-                        WHERE album_id = a.album_id
-                    )');
-            })
             ->where('l.jenis_layanan_id', $jenis_layanan_id)
             ->where('lc.cabang_id', 1)
             ->where('lc.status', 'tersedia')
@@ -34,10 +26,10 @@ class ServiceDetailController extends Controller
                 'l.deskripsi',
                 'l.durasi',
                 'l.kategori_pelanggan',
+                'l.cover_foto',          // ← langsung dari tabel layanan
                 'lc.layanan_cabang_id',
                 'lc.harga',
-                'lc.harga_promo',
-                'af.url_foto'
+                'lc.harga_promo'
             )
             ->get();
 
