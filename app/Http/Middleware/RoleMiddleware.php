@@ -15,14 +15,15 @@ class RoleMiddleware
         }
 
         if (!in_array(Auth::user()->role, $roles)) {
-            if (Auth::user()->role === 'customer') {
-                return redirect()->intended('/');
-            }
+            return $this->redirectByRole(Auth::user()->role);
+        }
 
-            return $this->redirectByRole(
-                Auth::user()->role,
-                Auth::user()->branch_id
-            );
+        // Cek status akun — nonaktif tidak boleh masuk
+        if (Auth::user()->status_akun === 'nonaktif') {
+            Auth::logout();
+            return redirect('/login')->withErrors([
+                'email' => 'Akun Anda telah dinonaktifkan.'
+            ]);
         }
 
         return $next($request);
@@ -31,11 +32,11 @@ class RoleMiddleware
     private function redirectByRole(string $role)
     {
         return match($role) {
-            'owner'      => redirect('/dashboard'),
-            'admin'      => redirect('/admin/dashboard'),
-            'specialist' => redirect('/specialist/dashboard'),
-            'customer'   => redirect('/'),
-            default      => redirect('/login'),
+            'owner'     => redirect('/dashboard'),
+            'admin'     => redirect('/admin/dashboard'),
+            'pegawai'   => redirect('/pegawai/dashboard'),
+            'pelanggan' => redirect('/'),
+            default     => redirect('/login'),
         };
     }
 }
