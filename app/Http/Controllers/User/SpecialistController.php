@@ -19,9 +19,7 @@ class SpecialistController extends Controller
             ->where('p.status_kerja', 'aktif')
             ->select(
                 'p.pegawai_id',
-                'p.jabatan',
-                'p.deskripsi',
-                'p.foto',
+                'u.foto_profile as foto', // kolom foto ada di tabel users
                 'u.nama',
                 'u.no_hp'
             )
@@ -42,16 +40,14 @@ class SpecialistController extends Controller
             ->where('u.status_akun', 'aktif')
             ->select(
                 'p.pegawai_id',
-                'p.jabatan',
-                'p.deskripsi',
-                'p.foto',
+                'u.foto_profile as foto', // kolom foto ada di tabel users
                 'p.cabang_id',
                 'u.nama',
                 'u.no_hp'
             )
             ->firstOrFail();
 
-        // Jadwal kerja pegawai (tanggal hari ini ke depan, tersedia)
+        // Jadwal kerja pegawai
         $jadwal = DB::table('jadwal_pegawai')
             ->where('pegawai_id', $pegawai_id)
             ->where('tanggal', '>=', now()->toDateString())
@@ -60,9 +56,9 @@ class SpecialistController extends Controller
             ->orderBy('jam_mulai')
             ->select('tanggal', 'jam_mulai', 'jam_selesai')
             ->get()
-            ->groupBy('tanggal'); // group per tanggal
+            ->groupBy('tanggal');
 
-        // Layanan yang pernah dikerjakan pegawai ini (dari booking_detail)
+        // Layanan yang pernah dikerjakan
         $layananList = DB::table('layanan as l')
             ->join('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
             ->join('booking_detail as bd', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')

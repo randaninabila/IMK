@@ -69,7 +69,7 @@
             @foreach ($albums as $index => $item)
             <div class="gallery-item bg-white rounded-xl p-3 shadow hover:shadow-lg transition"
                 data-role="{{ $item->layanan->nama_layanan }}" data-index="{{ $index }}">
-                <img src="{{ asset($item->fotos->first()->url_foto ?? 'images/default.jpg') }}" class="rounded-lg mb-3 w-full h-44 object-cover">
+                <img src="{{ asset($item->fotos->first()->url_foto ?? 'images/default.jpg') }}" class="rounded-lg mb-3 w-full h-56 object-cover">
                 <span
                     class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item->layanan->nama_layanan }}</span>
                 <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item->layanan->nama_layanan }}</h3>

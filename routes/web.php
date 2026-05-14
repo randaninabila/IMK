@@ -15,6 +15,7 @@ use App\Http\Controllers\Owner\CustomerController;
 use App\Http\Controllers\User\GalleryController;
 use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
+use App\Http\Controllers\User\LayananDetailController;
 
 
 // =====================
@@ -31,6 +32,7 @@ Route::get('/gallery', function () {
     $albums = Album::with(['layanan', 'fotos'])->get();
     return view('user.gallery.gallery', compact('albums'));
 });
+
 
 // Login & Register
 Route::middleware('guest')->group(function () {
@@ -55,6 +57,9 @@ Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show
 
 Route::get('/specialist', [SpecialistController::class, 'index']);
  
+Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'show'])
+    ->name('service.layanan');
+
 // Detail specialist - dari database
 Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
     ->name('specialist.show')
