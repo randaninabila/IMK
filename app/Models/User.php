@@ -21,31 +21,6 @@ class User extends Authenticatable
         'email',
         'password',
         'no_hp',
-        'role',
-        'status_akun',
-    ];
-
-    protected $hidden = [
-        'password',
-    ];
-
-    protected $casts = [
-        'password' => 'hashed',
-    ];
-
-    protected $primaryKey = 'user_id';
-
-    protected $keyType = 'int';
-
-    public $incrementing = true;
-
-    public $timestamps = true;
-
-    protected $fillable = [
-        'nama',
-        'email',
-        'password',
-        'no_hp',
         'foto_profile',
         'role',
         'status_akun',
@@ -59,6 +34,7 @@ class User extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
     ];
+
 
     // =========================
     // RELATIONS
@@ -134,9 +110,4 @@ class User extends Authenticatable
         return $this->status_akun === 'aktif';
     }
 
-    // Untuk navbar
-    public function getNameAttribute(): string
-    {
-        return $this->nama ?? '';
-    }
 }
