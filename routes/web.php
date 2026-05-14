@@ -123,6 +123,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:owner'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
+    Route::get('/export-pdf', [DashboardController::class, 'exportPDF'])->name('owner.export-pdf');
     
     Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
     Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');

@@ -26,7 +26,7 @@ class ServiceDetailController extends Controller
                 'l.deskripsi',
                 'l.durasi',
                 'l.kategori_pelanggan',
-                'l.cover_foto',          // ← langsung dari tabel layanan
+                'l.cover_foto',
                 'lc.layanan_cabang_id',
                 'lc.harga',
                 'lc.harga_promo'
