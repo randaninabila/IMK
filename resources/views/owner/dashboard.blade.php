@@ -8,6 +8,7 @@
     x-data="{
         showModal: false,
         openBranch: false,
+
         selectedBranch: 'Semua',
         selectedReports: [],
         selectedPeriod: 'month',

@@ -36,6 +36,7 @@ Route::get('/gallery', function () {
 
 // Login & Register
 Route::middleware('guest')->group(function () {
+
     Route::get('/login', function () {
         return view('auth.login');
     })->name('login');
@@ -71,8 +72,48 @@ Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
 Route::get('/gallery/{id}', function ($id) {
     $gallery = Album::with(['layanan', 'fotos'])->findOrFail($id);
     return view('user.gallery.gdetail', compact('gallery'));
+
 })->name('gallery.detail');
 
+// =====================
+// SPECIALIST DETAIL
+// =====================
+
+Route::get('/specialist/{slug}', function ($slug) {
+
+    $specialists = [
+
+        'aisyah-rahmawati' => [
+            'name' => 'Dr. Aisyah Rahmawati',
+            'role' => 'Senior Beautician',
+            'desc' => 'Specializing in facial treatments...',
+            'img' => 'https://via.placeholder.com/400x300',
+            'services' => [
+                'Facial Treatment',
+                'Skin Brightening',
+                'Acne Care'
+            ]
+        ],
+
+        'kevin-pratama' => [
+            'name' => 'Dr. Kevin Pratama',
+            'role' => 'Skin Specialist',
+            'desc' => 'Expert in advanced dermatology...',
+            'img' => 'https://via.placeholder.com/400x300',
+            'services' => [
+                'Anti Aging',
+                'Dermatology',
+                'Laser Therapy'
+            ]
+        ],
+
+    ];
+
+    $specialist = $specialists[$slug] ?? abort(404);
+
+    return view('user.specialist.spdetail', compact('specialist'));
+
+})->name('specialist.detail');
 
 // =====================
 // AUTH
@@ -87,6 +128,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::post('/fake-verify-email', function () {
     $user = auth()->user();
     $user->email_verified_at = now();
+
     $user->save();
     return redirect()->intended('/');
 })->middleware('auth');
@@ -102,18 +144,25 @@ Route::get('/logout-test', function () {
 // EMAIL VERIFICATION
 // =====================
 Route::middleware('auth')->group(function () {
+
     Route::get('/email/verify', function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+
         $request->fulfill();
+
         return redirect('/');
+
     })->middleware('signed')->name('verification.verify');
 
     Route::post('/email/verification-notification', function (Request $request) {
+
         $request->user()->sendEmailVerificationNotification();
+
         return back();
+
     })->middleware('throttle:6,1')->name('verification.send');
 });
 
@@ -121,7 +170,6 @@ Route::middleware('auth')->group(function () {
 // OWNER
 // =====================
 Route::middleware(['auth', 'role:owner'])->group(function () {
-
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
     Route::get('/export-pdf', [DashboardController::class, 'exportPDF'])->name('owner.export-pdf');
     
@@ -156,22 +204,47 @@ Route::middleware(['auth', 'role:admin'])
 // =====================
 // PEGAWAI
 // =====================
+
 Route::middleware(['auth', 'role:pegawai'])
     ->prefix('pegawai')
     ->name('pegawai.')
     ->group(function () {
+
         Route::get('/dashboard', function () {
             return view('pegawai.dashboard');
         })->name('dashboard');
+
+        Route::get('/history', function () {
+            return view('pegawai.history.his1');
+        })->name('history');
+
+        Route::get('/notification', function () {
+            return view('pegawai.notifikasi.not1');
+        })->name('notification');
+
+        Route::get('/profile', function () {
+            return view('pegawai.profile.prof1');
+        })->name('profile');
+
+        Route::get('/jadwal', function () {
+            return view('pegawai.jk.jkb');
+        })->name('jadwal');
+
+        Route::get('/booking', function () {
+            return view('pegawai.booking.book1');
+        })->name('booking');
+
     });
 
 // =====================
 // PELANGGAN
 // =====================
+
 Route::middleware(['auth', 'role:pelanggan'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
+
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
@@ -179,4 +252,5 @@ Route::middleware(['auth', 'role:pelanggan'])
         Route::get('/bookings', function () {
             return view('pelanggan.bookings');
         })->name('bookings');
+
     });

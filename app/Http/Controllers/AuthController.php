@@ -43,13 +43,20 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        if (Auth::attempt(
+            ['email' => $request->email, 'password' => $request->password],
+            $request->boolean('remember')
+        )) {
+            $request->session()->regenerate();
 
-        if (!$user || !$this->checkPassword($request->password, $user->password)) {
-            return back()
-                ->withInput($request->only('email'))
-                ->withErrors(['email' => 'Email atau password salah.']);
+            return $this->redirectByRole(Auth::user()->role);
         }
+
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors([
+                'email' => 'Email atau password salah.'
+            ]);
 
         // Jika password lama (bukan Bcrypt), rehash otomatis ke Bcrypt
         if (!str_starts_with($user->password, '$2y$') && !str_starts_with($user->password, '$2a$')) {
