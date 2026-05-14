@@ -13,7 +13,7 @@
             </h1>
 
             <p class="text-gray-500 mt-2">
-                Overview of specialist efficiency across your luxury network.
+                Overview of employee efficiency across your luxury network.
             </p>
         </div>
 
@@ -125,7 +125,7 @@
     <div class="bg-[#eadede] p-6 rounded-3xl">
 
         <div class="flex justify-between items-center mb-5">
-            <h2 class="text-xl font-semibold text-[#2d2a26]">Specialist Efficiency</h2>
+            <h2 class="text-xl font-semibold text-[#2d2a26]">Employee Efficiency</h2>
             <a href="{{ route('owner.employee.edit') }}" class="text-sm text-[#b04a4a]">See all →</a>
         </div>
 
@@ -136,12 +136,11 @@
                 <thead class="text-[#b04a4a] border-b border-[#d8c6c6]">
                     <tr>
                         <th class="py-4 px-4 text-center">No</th>
-                        <th class="px-4 text-left">Specialist</th>
+                        <th class="px-4 text-left">Employee</th>
                         <th class="px-4 text-left">Cabang</th>
                         <th class="px-4 text-center">Today</th>
                         <th class="px-4 text-center">Clients</th>
                         <th class="px-4 text-center">Services</th>
-                        <th class="px-4 text-center">Rating</th>
                     </tr>
                 </thead>
 
@@ -157,7 +156,7 @@
                                 : 1) + $i }}
                         </td>
 
-                        {{-- SPECIALIST --}}
+                        {{-- EMPLOYEE --}}
                         <td class="px-4 py-5">
                             <div class="flex items-center gap-3">
                                 @if($employee['foto_profile'])
@@ -191,11 +190,6 @@
                         {{-- SERVICES --}}
                         <td class="px-4 text-center">{{ number_format($employee['total_services']) }}</td>
 
-                        {{-- RATING --}}
-                        <td class="px-4 text-center">
-                            <span class="font-medium">⭐ {{ $employee['avg_rating'] }}</span>
-                        </td>
-
                     </tr>
 
                     @empty
@@ -226,11 +220,11 @@
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->lastItem() }}</span>
                         of
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->total() }}</span>
-                        specialists
+                        employees
                     @else
                         Showing all
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->count() }}</span>
-                        specialists
+                        employees
                     @endif
                 </div>
 

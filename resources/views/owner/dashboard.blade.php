@@ -493,18 +493,21 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
         @forelse($staffPerformance as $staff)
             <div class="bg-[#FFE4E9]/80 px-5 py-4 rounded-3xl flex items-center gap-4 border border-white shadow-sm">
-                <div class="w-12 h-12 bg-[#FF8FA3] rounded-full flex-shrink-0 border-2 border-white flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">{{ substr($staff->nama, 0, 1) }}</span>
-                </div>
+                @if($staff->foto_profile)
+                    <img
+                        src="{{ asset('storage/' . $staff->foto_profile) }}"
+                        class="w-16 h-16 rounded-full object-cover border-2 border-white"
+                    >
+                @else
+                    <div class="w-16 h-16 rounded-full bg-[#F58C98] flex items-center justify-center text-white font-bold">
+                        {{ strtoupper(substr($staff->nama, 0, 1)) }}
+                    </div>
+                @endif
                 <div class="flex-1 min-w-0">
                     <h5 class="font-bold text-xs text-gray-800 truncate">{{ $staff->nama }}</h5>
                     <p class="text-[11px] text-gray-500 mb-1 truncate">{{ $staff->cabang }}</p>
-                    <div class="flex items-center text-yellow-500 text-xs gap-1">
-                        ★
-                        <span class="text-gray-800 font-bold">
-                            {{ $staff->rating ?? 0 }}
-                        </span>
-                        <span class="text-gray-500 font-normal ml-1">({{ $staff->total_booking }} bookings)</span>
+                    <div class="flex items-center text-gray-500 text-xs gap-1">
+                        ({{ $staff->total_booking }} bookings)
                     </div>
                 </div>
             </div>

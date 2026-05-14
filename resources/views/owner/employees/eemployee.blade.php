@@ -17,7 +17,6 @@
             'bulan'  => $selectedMonth,
             'sort'   => $key,
             'dir'    => $newDir,
-            'show'   => $perPage,
         ];
 
         if ($cabangAcuan !== null) {
@@ -191,41 +190,6 @@
             @endif
         </div>
 
-        {{-- 4. AVG RATING BULAN INI --}}
-        <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
-            <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-500">Avg Rating</p>
-                <span class="p-2 bg-yellow-100 rounded-xl text-base leading-none">⭐</span>
-            </div>
-
-            @if($avgRatingAll)
-                <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $avgRatingAll }}</h2>
-            @else
-                <h2 class="text-3xl font-bold text-gray-300 mb-1">—</h2>
-            @endif
-
-            <p class="text-xs text-gray-400 mb-4">
-                {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
-            </p>
-
-            @if($selectedCabang == 'all')
-            <div class="border-t border-pink-50 pt-3 space-y-2.5">
-                @foreach($cabangStats as $cs)
-                <div class="flex items-center justify-between gap-2">
-                    <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 18) }}</span>
-                    @if($cs['avg_rating'])
-                        <span class="text-xs font-semibold text-yellow-700 bg-yellow-50 px-2.5 py-0.5 rounded-full flex-shrink-0">
-                            ★ {{ $cs['avg_rating'] }}
-                        </span>
-                    @else
-                        <span class="text-xs text-gray-300 flex-shrink-0">—</span>
-                    @endif
-                </div>
-                @endforeach
-            </div>
-            @endif
-        </div>
-
     </div>
 
     {{-- MAIN CARD --}}
@@ -235,7 +199,7 @@
         <div class="flex justify-between items-center mb-6">
 
             <div>
-                <h1 class="text-3xl font-bold text-[#2d2a26]">Staff Directory</h1>
+                <h1 class="text-3xl font-bold text-[#2d2a26]">Employee Directory</h1>
                 <p class="text-sm text-gray-500 mt-1">
                     {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
                     • Manage salon specialists and staff
@@ -320,14 +284,14 @@
                         <th class="font-semibold text-center w-[60px]">No</th>
 
                         {{-- EMPLOYEE (sort by name) --}}
-                        <th class="px-4 w-[260px]">
+                        <th class="text-center px-4 w-[260px]">
                             <a href="{{ $sortUrl('employee') }}" class="sort-link {{ $isActive('employee') ? 'active' : '' }}">
                                 Employee {!! $sortIcon('employee') !!}
                             </a>
                         </th>
 
                         <th class="px-4 font-semibold text-center w-[110px]">Role</th>
-                        <th class="px-4 font-semibold w-[200px]">Cabang</th>
+                        <th class="px-4 font-semibold text-center w-[200px]">Cabang</th>
                         <th class="px-4 font-semibold text-center w-[110px]">Today</th>
 
                         {{-- CLIENTS --}}
@@ -348,13 +312,6 @@
                         <th class="px-4 text-center w-[120px]">
                             <a href="{{ $sortUrl('since') }}" class="sort-link {{ $isActive('since') ? 'active' : '' }}">
                                 Since {!! $sortIcon('since') !!}
-                            </a>
-                        </th>
-
-                        {{-- RATING --}}
-                        <th class="px-4 text-center w-[110px]">
-                            <a href="{{ $sortUrl('rating') }}" class="sort-link {{ $isActive('rating') ? 'active' : '' }}">
-                                Rating {!! $sortIcon('rating') !!}
                             </a>
                         </th>
 
@@ -427,13 +384,6 @@
 
                         {{-- SINCE --}}
                         <td class="px-4 text-center whitespace-nowrap text-[#5f5347]">{{ $employee['since_joined'] }}</td>
-
-                        {{-- RATING --}}
-                        <td class="px-4 text-center">
-                            <span class="inline-flex items-center gap-1 font-semibold text-[#2d2a26]">
-                                <span>⭐</span>{{ $employee['avg_rating'] }}
-                            </span>
-                        </td>
 
                         {{-- ACTION --}}
                         <td class="px-4">
@@ -509,65 +459,6 @@
                 </tbody>
 
             </table>
-        </div>
-
-        {{-- FOOTER TABLE --}}
-        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mt-8 pt-5 border-t border-[#d8c6c6]">
-
-            {{-- INFO --}}
-            <div class="text-sm text-gray-500">
-                @if($employees instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    Showing
-                    <span class="font-semibold text-[#2d2a26]">{{ $employees->firstItem() }}</span>
-                    -
-                    <span class="font-semibold text-[#2d2a26]">{{ $employees->lastItem() }}</span>
-                    of
-                    <span class="font-semibold text-[#2d2a26]">{{ $employees->total() }}</span>
-                    specialists
-                @else
-                    Showing all
-                    <span class="font-semibold text-[#2d2a26]">{{ $employees->count() }}</span>
-                    specialists
-                @endif
-            </div>
-
-            {{-- RIGHT: PER PAGE + PAGINATION --}}
-            <div class="flex items-center gap-4">
-
-                {{-- PER PAGE --}}
-                <form method="GET">
-                    <input type="hidden" name="cabang" value="{{ $selectedCabang }}">
-                    <input type="hidden" name="bulan" value="{{ $selectedMonth }}">
-                    <input type="hidden" name="sort" value="{{ $selectedSort }}">
-                    <input type="hidden" name="dir" value="{{ $selectedDir }}">
-                    <div class="relative">
-                        <select
-                            name="show"
-                            onchange="this.form.submit()"
-                            class="bg-white border border-[#ecd9d9] rounded-xl pl-4 pr-10 py-2 text-sm outline-none shadow-sm appearance-none cursor-pointer hover:border-[#f4b6bc] transition"
-                        >
-                            <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 rows</option>
-                            <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 rows</option>
-                            <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 rows</option>
-                            <option value="all" {{ $perPage == 'all' ? 'selected' : '' }}>All</option>
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                </form>
-
-                {{-- PAGINATION LINKS --}}
-                @if($employees instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                <div>
-                    {{ $employees->links() }}
-                </div>
-                @endif
-
-            </div>
-
         </div>
 
     </div>

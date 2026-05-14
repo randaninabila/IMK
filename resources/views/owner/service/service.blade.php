@@ -435,7 +435,7 @@
                     <tr>
                         <th class="py-4 px-4 text-center">No</th>
                         <th class="py-4 px-4">Services</th>
-                        <th class="px-4">Category</th>
+                        <th class="py-4 px-4">Category</th>
 
                         @if($selectedCabang == 'all')
 
@@ -453,8 +453,8 @@
 
                         @endif
 
-                        <th class="px-4">Revenue</th>
-                        <th class="px-4">Growth</th>
+                        <th class="px-4 text-center">Revenue</th>
+                        <th class="px-4 text-center">Growth</th>
                     </tr>
                 </thead>
 
@@ -633,7 +633,7 @@
                             {{ $leaderboard->count() }}
                         </span>
 
-                        specialists
+                        services
 
                     @endif
 

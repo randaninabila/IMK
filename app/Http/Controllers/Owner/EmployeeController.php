@@ -37,7 +37,10 @@ class EmployeeController extends Controller
 
         $topPerformers = collect(
             $perPage === 'all' ? $employees : $employees->items()
-        )->sortByDesc('total_clients')->take(3);
+        )
+        ->filter(fn($employee) => $employee['total_clients'] > 0)
+        ->sortByDesc('total_clients')
+        ->take(3);
 
         return view('owner.employees.employee', compact(
             'employees', 'topPerformers', 'cabangs', 'months',
@@ -79,7 +82,6 @@ class EmployeeController extends Controller
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
             DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-            DB::raw('ROUND(AVG(ul.rating), 1) as avg_rating'),
             DB::raw('DATE_FORMAT(u.created_at, "%M %Y") as since_joined')
         )->groupBy(
             'p.pegawai_id', 'p.status_kerja',
@@ -104,7 +106,6 @@ class EmployeeController extends Controller
                 'nama_cabang'   => $item->nama_cabang,
                 'total_clients' => $item->total_clients,
                 'total_services'=> $item->total_services,
-                'avg_rating'    => $item->avg_rating ?? 0,
                 'since_joined'  => $item->since_joined,
             ];
         };
@@ -172,38 +173,21 @@ class EmployeeController extends Controller
                 ->where('p.status_kerja', 'aktif')
                 ->count();
 
-            $avgRating = DB::table('pegawai as p')
-                ->join('users as u', 'p.user_id', '=', 'u.user_id')
-                ->join('booking_detail as bd', 'p.pegawai_id', '=', 'bd.pegawai_id')
-                ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-                ->join('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
-                ->where('p.cabang_id', $cabang->cabang_id)
-                ->whereIn('u.role', ['pegawai', 'admin'])
-                ->where('p.status_kerja', '!=', 'resign')
-                ->whereMonth('b.tanggal_booking', $parsedMonth->month)
-                ->whereYear('b.tanggal_booking', $parsedMonth->year)
-                ->where('b.status', 'selesai')
-                ->avg('ul.rating');
-
             return [
                 'cabang_id'   => $cabang->cabang_id,
                 'nama_cabang' => $cabang->nama_cabang,
                 'total'       => $total,
                 'active'      => $active,
                 'off_today'   => $total - $active,
-                'avg_rating'  => $avgRating ? round($avgRating, 1) : null,
             ];
         });
-
-        $avgRatingAll = $cabangStats->whereNotNull('avg_rating')->avg('avg_rating');
-        $avgRatingAll = $avgRatingAll ? round($avgRatingAll, 1) : null;
 
         return view('owner.employees.eemployee', compact(
             'employees', 'cabangs', 'months',
             'selectedCabang', 'selectedMonth',
             'selectedSort', 'selectedDir', 'selectedSortCabang',
             'totalEmployees', 'activeEmployees', 'perPage',
-            'cabangStats', 'avgRatingAll'
+            'cabangStats'
         ));
     }
 
@@ -223,7 +207,6 @@ class EmployeeController extends Controller
             ->join('cabang as c', 'p.cabang_id', '=', 'c.cabang_id')
             ->leftJoin('booking_detail as bd', 'p.pegawai_id', '=', 'bd.pegawai_id')
             ->leftJoin('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->leftJoin('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
             ->where('p.status_kerja', '!=', 'resign')
             ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth())
@@ -257,7 +240,6 @@ class EmployeeController extends Controller
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
             DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-            DB::raw('ROUND(AVG(ul.rating), 1) as avg_rating'),
             DB::raw('DATE_FORMAT(u.created_at, "%M %Y") as since_joined'),
         ], $dynamicCabangSelect))
         ->groupBy(
@@ -273,9 +255,6 @@ class EmployeeController extends Controller
                 break;
             case 'services':
                 $query->orderBy('total_services', $dir);
-                break;
-            case 'rating':
-                $query->orderBy('avg_rating', $dir);
                 break;
             case 'since':
                 $query->orderBy('u.created_at', $dir);
@@ -312,7 +291,6 @@ class EmployeeController extends Controller
                 'cabang_id'       => $item->cabang_id,
                 'total_clients'   => (int) $item->total_clients,
                 'total_services'  => (int) $item->total_services,
-                'avg_rating'      => $item->avg_rating ?? 0,
                 'since_joined'    => $item->since_joined,
                 'created_at_raw'  => $item->created_at,
                 'branches'        => $cabangList->mapWithKeys(function ($cabang) use ($item) {
@@ -354,8 +332,8 @@ class EmployeeController extends Controller
 
         DB::beginTransaction();
         try {
-            $phone         = preg_replace('/[^0-9+]/', '', $validated['no_hp']);
-            $plainPassword = Str::password(12);
+            $phone = preg_replace('/[^0-9+]/', '', $validated['no_hp']);
+            $plainPassword = Str::slug($validated['nama'], '.');
 
             $userId = DB::table('users')->insertGetId([
                 'nama'       => trim($validated['nama']),

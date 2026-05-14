@@ -243,7 +243,10 @@ class DashboardController extends Controller
             ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
             ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
             ->where('booking.status', '!=', 'batal')
-            ->whereYear('booking.tanggal_booking', now()->year)
+            ->where(function ($q) {
+                $q->whereNull('booking.booking_id')
+                ->orWhereYear('booking.tanggal_booking', now()->year);
+            })
             ->whereMonth('booking.tanggal_booking', now()->month)
             ->when($selectedCabang, fn($q) => $q->where('layanan_cabang.cabang_id', $selectedCabang))
             ->select('layanan.nama_layanan', DB::raw('COUNT(*) as total'))
@@ -268,15 +271,17 @@ class DashboardController extends Controller
             ->where('pegawai.status_kerja', 'aktif')
             ->leftJoin('booking_detail', 'pegawai.pegawai_id', '=', 'booking_detail.pegawai_id')
             ->leftJoin('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
-            ->leftJoin('ulasan', 'booking.booking_id', '=', 'ulasan.booking_id')
             ->when($selectedCabang, fn($q) => $q->where('pegawai.cabang_id', $selectedCabang))
-            ->whereYear('booking.tanggal_booking', now()->year)
+            ->where(function ($q) {
+                $q->whereNull('booking.booking_id')
+                ->orWhereYear('booking.tanggal_booking', now()->year);
+            })
             ->select(
                 'pegawai.pegawai_id',
                 'pegawai.cabang_id',
                 'users.nama as nama_pegawai',
+                'users.foto_profile',
                 DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
-                DB::raw('ROUND(AVG(ulasan.rating), 1) as avg_rating')
             )
             ->groupBy('pegawai.pegawai_id', 'pegawai.cabang_id', 'users.nama')
             ->orderByDesc('total_booking')
@@ -287,9 +292,9 @@ class DashboardController extends Controller
             $cabang = Cabang::find($staffData->cabang_id);
             return (object) [
                 'nama' => $staffData->nama_pegawai,
+                'foto_profile' => $staffData->foto_profile,
                 'cabang' => $cabang?->nama_cabang ?? '-',
                 'total_booking' => $staffData->total_booking,
-                'rating' => $staffData->avg_rating ?? 0,
             ];
         });
     }
@@ -434,11 +439,19 @@ class DashboardController extends Controller
     {
         $query = DB::table('pegawai')
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
+            ->join('cabang', 'pegawai.cabang_id', '=', 'cabang.cabang_id')
             ->leftJoin('booking_detail', 'pegawai.pegawai_id', '=', 'booking_detail.pegawai_id')
             ->leftJoin('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
-            ->leftJoin('ulasan', 'booking.booking_id', '=', 'ulasan.booking_id')
+            ->whereIn('users.role', ['pegawai', 'admin'])
             ->where('pegawai.status_kerja', 'aktif')
-            ->whereBetween('booking.tanggal_booking', [$dateRange['start'], $dateRange['end']]);
+
+            ->where(function ($q) use ($dateRange) {
+                $q->whereNull('booking.booking_id')
+                ->orWhereBetween('booking.tanggal_booking', [
+                    $dateRange['start'],
+                    $dateRange['end']
+                ]);
+            });
 
         if ($branch !== 'Semua') {
             $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
@@ -450,10 +463,12 @@ class DashboardController extends Controller
         return $query->select(
                 'pegawai.pegawai_id',
                 'users.nama as nama_pegawai',
+                'users.role',
+                'cabang.nama_cabang',
                 DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
-                DB::raw('ROUND(AVG(ulasan.rating), 1) as avg_rating')
+                DB::raw('COUNT(DISTINCT booking_detail.booking_detail_id) as total_services'),
             )
-            ->groupBy('pegawai.pegawai_id', 'users.nama')
+            ->groupBy('pegawai.pegawai_id', 'users.nama', 'users.role', 'cabang.nama_cabang')
             ->orderByDesc('total_booking')
             ->get();
     }

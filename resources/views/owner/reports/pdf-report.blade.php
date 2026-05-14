@@ -120,6 +120,10 @@
             border-radius: 0 12px 12px 0;
             text-align: center;
         }
+        .employee-table td:nth-child(2) {
+            text-align: left;
+            padding-left: 18px;
+        }
         .amount {
             text-align: center;
             letter-spacing: 0.3px;
@@ -273,24 +277,28 @@
                 <h2>👨‍💼 Employee Performance</h2>
 
                 <p class="section-desc">
-                    Employee productivity and average customer satisfaction ratings.
+                    Employee workload, service activity, and branch assignment during this reporting period.
                 </p>
 
                 @if($employees_data->count() > 0)
-                    <table>
+                    <table class="employee-table">
                         <thead>
                             <tr>
                                 <th>Employee</th>
+                                <th>Branch</th>
+                                <th>Role</th>
                                 <th>Bookings</th>
-                                <th>Avg Rating</th>
+                                <th>Services</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($employees_data as $employee)
                                 <tr>
                                     <td>{{ $employee->nama_pegawai }}</td>
+                                    <td>{{ $employee->nama_cabang ?? '-' }}</td>
+                                    <td>{{ ucfirst($employee->role) }}</td>
                                     <td>{{ $employee->total_booking }}</td>
-                                    <td>{{ $employee->avg_rating ?? '-' }}</td>
+                                    <td>{{ $employee->total_services }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
