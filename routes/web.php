@@ -2,15 +2,21 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\User\ServiceDetailController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Album;
+
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
+use App\Http\Controllers\Owner\EmployeeController;
+use App\Http\Controllers\Owner\CustomerController;
+
+use App\Http\Controllers\User\GalleryController;
+use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
+
 
 // =====================
 // PUBLIC / USER
@@ -73,10 +79,7 @@ Route::get('/gallery/{id}', function ($id) {
 // =====================
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // =====================
 // QUICK VERIFY DEV
@@ -118,13 +121,23 @@ Route::middleware('auth')->group(function () {
 // OWNER
 // =====================
 Route::middleware(['auth', 'role:owner'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-    Route::get('/customers', function () { return view('owner.customers'); });
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
+    
     Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
-    Route::get('/employee', function () { return view('owner.employees.employee'); });
-    Route::get('/eemployee', function () { return view('owner.employees.eemployee'); })->name('employee.edit');
-    Route::get('/aemployee', function () { return view('owner.employees.aemployee'); });
-    Route::get('/eservice', function () { return view('owner.service.eservice'); });
+    Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');
+    
+    Route::get('/employee', [EmployeeController::class, 'index'])->name('owner.employee');
+    Route::get('/employee/edit', [EmployeeController::class, 'edit'])->name('owner.employee.edit');
+    
+    Route::post('/employee/store', [EmployeeController::class, 'store'])->name('owner.employee.store');
+    Route::patch('/employee/{pegawai_id}/today-status', [EmployeeController::class, 'updateTodayStatus'])->name('owner.employee.today-status');
+    Route::patch('/employee/{pegawai_id}/role', [EmployeeController::class, 'updateRole'])->name('owner.employee.role');
+    Route::patch('/employee/{pegawai_id}/resign', [EmployeeController::class, 'resign'])->name('owner.employee.resign');
+    Route::get('/employee/{pegawai_id}/edit', [EmployeeController::class, 'editEmployee'])->name('owner.employee.edit-form');
+    Route::patch('/employee/{pegawai_id}', [EmployeeController::class, 'updateEmployee'])->name('owner.employee.update');
+
+    Route::get('/customers', [CustomerController::class, 'index'])->name('owner.customer');
 });
 
 // =====================

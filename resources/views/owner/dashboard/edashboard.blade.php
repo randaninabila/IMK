@@ -316,6 +316,7 @@
                         px-8 py-3
                         rounded-full
                         text-white
+                        text-sm
                         font-semibold
                         bg-[#F58C98]
                         hover:opacity-90

@@ -3,13 +3,12 @@
 @section('content')
 
 {{-- HERO --}}
-<section
-    class="bg-gradient-to-b from-[#FFE4E6] to-white min-h-screen flex items-center justify-center text-center px-4">
+<section class="bg-gradient-to-b from-[#FFE4E6] to-white min-h-screen flex items-center justify-center text-center px-4">
     <div>
         <h1 class="text-4xl md:text-5xl font-bold text-[#3E382D] mb-6">
             Real Result, Refined Artistry
         </h1>
-        <p class="text-tertiary-500 max-w-xl mx-auto mb-6 ">
+        <p class="text-tertiary-500 max-w-xl mx-auto mb-6">
             Tim kami yang terdiri dari tenaga ahli yang memiliki pengalaman bertahun-tahun
             untuk memberikan perawatan yang luar biasa dan dipersonalisasi.
         </p>
@@ -21,42 +20,39 @@
     </div>
 </section>
 
-{{-- FILTER + SEARCH --}}
+{{-- FILTER + SEARCH + GRID --}}
 <section class="bg-gradient-to-b from-white via-[#FFF1F2] to-[#FFE4E6] py-10 px-6">
     <div class="max-w-6xl mx-auto">
-        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
-            {{-- FILTER --}}
-            <div class="flex flex-wrap gap-3 mb-6" id="filterBtns">
 
+        @if($albums->isEmpty())
+            <div class="text-center py-20 text-gray-400">
+                <p class="text-lg">Belum ada galeri yang tersedia.</p>
+            </div>
+        @else
+
+        @php
+            $roles = $albums->pluck('nama_jenis')->unique()->filter()->values();
+        @endphp
+
+        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-4">
+
+            {{-- FILTER BUTTONS --}}
+            <div class="flex flex-wrap gap-3" id="filterBtns">
                 <button data-filter="all"
                     class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#3E382D] text-white">
                     All Gallery
                 </button>
-
-                <button data-filter="hair"
-                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-                    Hair
+                @foreach($roles as $role)
+                <button data-filter="{{ strtolower($role) }}"
+                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D] capitalize">
+                    {{ ucfirst($role) }}
                 </button>
-
-                <button data-filter="facial"
-                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-                    Facial
-                </button>
-
-                <button data-filter="nail polish"
-                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-                    Nail Polish
-                </button>
-
-                <button data-filter="waxing"
-                    class="filter-btn px-5 py-2 rounded-md border border-[#3E382D] bg-[#f5eaea] text-[#3E382D]">
-                    Waxing
-                </button>
-
+                @endforeach
             </div>
+
             {{-- SEARCH --}}
             <div class="relative w-full max-w-xs">
-                <input type="text" placeholder="Search..."
+                <input type="text" id="searchInput" placeholder="Search..."
                     class="w-full pl-6 pr-12 py-3 bg-white border-2 border-[#E99688] rounded-2xl text-[#9CA3AF] placeholder-[#9CA3AF] outline-none transition-all focus:ring-2 focus:ring-[#f5c6be]">
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#E99688]" fill="none"
@@ -87,202 +83,132 @@
             </div>
             @endforeach
         </div>
+
+        {{-- EMPTY MESSAGE --}}
+        <p id="emptyMsg" class="hidden text-center text-gray-400 py-10 text-sm">
+            Tidak ada hasil yang ditemukan.
+        </p>
+
         {{-- PAGINATION --}}
         <div class="flex justify-center items-center gap-3 mt-10">
             <button id="prevBtn"
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white"> « </button>
-            <div id="pages" class="flex gap-3">
-                <button class="page-btn w-10 h-10 rounded-md border">1</button>
-                <button class="page-btn w-10 h-10 rounded-md border">2</button>
-            </div>
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white">«</button>
+            <div id="pages" class="flex gap-3"></div>
             <button id="nextBtn"
-                class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white"> » </button>
+                class="w-10 h-10 flex items-center justify-center rounded-full bg-[#3E382D] text-white">»</button>
         </div>
+
+        @endif
     </div>
 </section>
 
 <script>
-const items = Array.from(document.querySelectorAll('.gallery-item'));
-const filterBtns = document.querySelectorAll('.filter-btn');
-const pageBtns = document.querySelectorAll('.page-btn');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const searchInput = document.querySelector('input[placeholder="Search..."]');
+const items       = Array.from(document.querySelectorAll('.gallery-item'));
+const filterBtns  = document.querySelectorAll('.filter-btn');
+const prevBtn     = document.getElementById('prevBtn');
+const nextBtn     = document.getElementById('nextBtn');
+const pagesDiv    = document.getElementById('pages');
+const searchInput = document.getElementById('searchInput');
+const emptyMsg    = document.getElementById('emptyMsg');
 
-let currentPage = 1;
-let itemsPerPage = 6;
-let currentFilter = 'all';
+const ITEMS_PER_PAGE = 6;
+let currentPage   = 1;
+let currentFilter = localStorage.getItem('gallery_filter') || 'all';
 let currentSearch = '';
 
-// =========================
-// LOAD FILTER
-// =========================
-let savedFilter = localStorage.getItem('gallery_filter');
-if (savedFilter) {
-    currentFilter = savedFilter;
-}
-
-// =========================
-// FILTER ITEMS + SEARCH
-// =========================
-function getFilteredItems() {
+// ── Helpers ───────────────────────────────────────────
+function getFiltered() {
     return items.filter(item => {
-        let role = item.getAttribute('data-role');
-        let title = item.querySelector('h3')?.textContent.toLowerCase() ?? '';
-        let desc = item.querySelector('p')?.textContent.toLowerCase() ?? '';
+        const role = item.dataset.role  ?? '';
+        const name = item.dataset.name  ?? '';
+        const desc = item.dataset.desc  ?? '';
 
-        let matchFilter = currentFilter === 'all' || role === currentFilter;
-        let matchSearch = currentSearch === '' ||
-            title.includes(currentSearch) ||
-            desc.includes(currentSearch) ||
-            role.includes(currentSearch);
+        const matchFilter = currentFilter === 'all' || role === currentFilter;
+        const matchSearch = currentSearch === ''
+            || name.includes(currentSearch)
+            || desc.includes(currentSearch)
+            || role.includes(currentSearch);
 
         return matchFilter && matchSearch;
     });
 }
 
-// =========================
-// SET BUTTON STYLE (ONLY 2 COLORS)
-// =========================
 function setActiveButton() {
     filterBtns.forEach(btn => {
-        let isActive = btn.getAttribute('data-filter') === currentFilter;
-
-        // RESET (NON ACTIVE)
-        btn.classList.remove('bg-[#3E382D]', 'text-white');
-        btn.classList.add('bg-[#f5eaea]', 'text-[#3E382D]');
-
-        // ACTIVE
-        if (isActive) {
-            btn.classList.add('bg-[#3E382D]', 'text-white');
-            btn.classList.remove('bg-[#f5eaea]', 'text-[#3E382D]');
-        }
+        const active = btn.dataset.filter === currentFilter;
+        btn.classList.toggle('bg-[#3E382D]', active);
+        btn.classList.toggle('text-white',   active);
+        btn.classList.toggle('bg-[#f5eaea]', !active);
+        btn.classList.toggle('text-[#3E382D]', !active);
     });
 }
 
-// =========================
-// RENDER GALLERY
-// =========================
+// ── Render ────────────────────────────────────────────
 function render() {
-    let filtered = getFilteredItems();
+    const filtered = getFiltered();
+    const maxPage  = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+    if (currentPage > maxPage) currentPage = maxPage;
 
-    let start = (currentPage - 1) * itemsPerPage;
-    let end = start + itemsPerPage;
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    const end   = start + ITEMS_PER_PAGE;
 
-    items.forEach(item => item.style.display = 'none');
+    items.forEach(item => (item.style.display = 'none'));
+    filtered.slice(start, end).forEach(item => (item.style.display = 'block'));
 
-    filtered.slice(start, end).forEach(item => {
-        item.style.display = 'block';
-    });
-
-    // Tampilkan pesan jika tidak ada hasil
-    let emptyMsg = document.getElementById('emptyMsg');
-    if (filtered.length === 0) {
-        if (!emptyMsg) {
-            emptyMsg = document.createElement('p');
-            emptyMsg.id = 'emptyMsg';
-            emptyMsg.className = 'col-span-3 text-center text-gray-400 py-10 text-sm';
-            emptyMsg.textContent = 'Tidak ada hasil yang ditemukan.';
-            document.getElementById('galleryGrid').appendChild(emptyMsg);
-        }
-    } else {
-        if (emptyMsg) emptyMsg.remove();
-    }
-
-    updatePagination(filtered.length);
+    emptyMsg?.classList.toggle('hidden', filtered.length > 0);
+    buildPagination(filtered.length);
 }
 
-// =========================
-// PAGINATION UI
-// =========================
-function updatePagination(totalItems) {
+function buildPagination(total) {
+    const maxPage = Math.max(1, Math.ceil(total / ITEMS_PER_PAGE));
 
-    pageBtns.forEach((btn, index) => {
-        if (index + 1 === currentPage) {
-            btn.classList.add('bg-[#3E382D]', 'text-white');
-        } else {
-            btn.classList.remove('bg-[#3E382D]', 'text-white');
+    if (pagesDiv) {
+        pagesDiv.innerHTML = '';
+        for (let i = 1; i <= maxPage; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i;
+            btn.className   = 'page-btn w-10 h-10 rounded-md border'
+                + (i === currentPage ? ' bg-[#3E382D] text-white' : ' text-[#3E382D]');
+            btn.addEventListener('click', () => { currentPage = i; render(); });
+            pagesDiv.appendChild(btn);
         }
-    });
-
-    // PREV
-    if (currentPage === 1) {
-        prevBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
-        prevBtn.classList.remove('opacity-50', 'cursor-not-allowed');
     }
 
-    // NEXT
-    let maxPage = Math.ceil(totalItems / itemsPerPage);
-
-    if (currentPage >= maxPage) {
-        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
-    } else {
-        nextBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-    }
+    prevBtn?.classList.toggle('opacity-50',       currentPage === 1);
+    prevBtn?.classList.toggle('cursor-not-allowed', currentPage === 1);
+    nextBtn?.classList.toggle('opacity-50',       currentPage >= maxPage);
+    nextBtn?.classList.toggle('cursor-not-allowed', currentPage >= maxPage);
 }
 
-// =========================
-// FILTER CLICK
-// =========================
+// ── Event Listeners ───────────────────────────────────
 filterBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-        currentFilter = btn.getAttribute('data-filter');
-        currentPage = 1;
-
+        currentFilter = btn.dataset.filter;
+        currentPage   = 1;
         localStorage.setItem('gallery_filter', currentFilter);
-
         setActiveButton();
         render();
     });
 });
 
-// =========================
-// SEARCH INPUT
-// =========================
-searchInput.addEventListener('input', () => {
+searchInput?.addEventListener('input', () => {
     currentSearch = searchInput.value.toLowerCase().trim();
-    currentPage = 1; // reset ke halaman 1 saat search
+    currentPage   = 1;
     render();
 });
 
-// =========================
-// PAGE CLICK
-// =========================
-pageBtns.forEach((btn, index) => {
-    btn.addEventListener('click', () => {
-        currentPage = index + 1;
-        render();
-    });
+prevBtn?.addEventListener('click', () => {
+    if (currentPage > 1) { currentPage--; render(); }
 });
 
-// =========================
-// PREV
-// =========================
-prevBtn.addEventListener('click', () => {
-    if (currentPage > 1) {
-        currentPage--;
-        render();
-    }
+nextBtn?.addEventListener('click', () => {
+    const maxPage = Math.ceil(getFiltered().length / ITEMS_PER_PAGE);
+    if (currentPage < maxPage) { currentPage++; render(); }
 });
 
-// =========================
-// NEXT
-// =========================
-nextBtn.addEventListener('click', () => {
-    let filtered = getFilteredItems();
-    let maxPage = Math.ceil(filtered.length / itemsPerPage);
-
-    if (currentPage < maxPage) {
-        currentPage++;
-        render();
-    }
-});
-
-// =========================
-// INIT
-// =========================
+// ── Init ──────────────────────────────────────────────
 setActiveButton();
 render();
 </script>
+
 @endsection

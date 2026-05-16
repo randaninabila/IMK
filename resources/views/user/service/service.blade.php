@@ -100,8 +100,6 @@
                 <p class="mt-4 text-xl font-bold text-[#43392f] group-hover:text-pink-600">
                     Waxing
                 </p>
-            </a>
-
         </div>
 
         {{-- PAGINATION --}}
@@ -182,7 +180,8 @@ pageBtns.forEach((btn, index) => {
 prevBtn.addEventListener('click', () => { if (currentPage > 1) { currentPage--; updatePaginationUI(); } });
 nextBtn.addEventListener('click', () => { if (currentPage < pageBtns.length) { currentPage++; updatePaginationUI(); } });
 
-updatePaginationUI();
+setActiveBtn();
+render();
 </script>
 
 @endsection
