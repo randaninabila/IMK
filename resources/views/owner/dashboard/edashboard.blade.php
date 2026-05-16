@@ -13,7 +13,7 @@
         class="
             bg-white
             w-full
-            max-w-[560px]
+            max-w-[620px]
             max-h-[95vh]
             overflow-y-auto
             rounded-[24px]
@@ -108,7 +108,7 @@
         </div>
 
         {{-- REPORT TYPE --}}
-        <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-6 mb-5"
+        <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-5 mb-4"
             style="font-family: Playfair Display, serif;">
             Select Report Type
         </h2>
@@ -121,7 +121,7 @@
                 :class="selectedReports.includes('Financial')
                     ? 'border border-pink-500 bg-white'
                     : 'bg-[#FCEDEF] border border-transparent'"
-                class="rounded-[24px] p-3 text-left transition-all duration-300 h-[72px]"
+                class="rounded-[20px] p-3 text-left transition-all duration-300 h-[64px]"
             >
                 <div class="flex gap-4 items-start">
 
@@ -229,65 +229,132 @@
 
         </div>
 
-        {{-- DATE RANGE --}}
-        <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-6 mb-4"
-            style="font-family: Playfair Display, serif;">
-            Date Range
-        </h2>
+    {{-- DATE RANGE --}}
+    <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-5 mb-3"
+        style="font-family: Playfair Display, serif;">
+        Report Period
+    </h2>
 
-        <div class="flex flex-col md:flex-row items-center gap-4">
+    {{-- QUICK FILTER --}}
+    <div class="grid grid-cols-5 gap-2 mb-5">
 
-            {{-- START DATE --}}
-            <div class="w-full">
-                <label class="block text-sm text-gray-500 mb-2">
-                    Start Date
-                </label>
+        {{-- Today --}}
+        <button
+            @click="selectedPeriod='today'"
+            :class="selectedPeriod === 'today'
+                ? 'bg-[#F58C98] text-white'
+                : 'bg-[#FCEDEF] text-[#4A3B35]'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
+        >
+            Today
+        </button>
 
-                <div class="relative">
+        {{-- This Week --}}
+        <button
+            @click="selectedPeriod='week'"
+            :class="selectedPeriod === 'week'
+                ? 'bg-[#F58C98] text-white'
+                : 'bg-[#FCEDEF] text-[#4A3B35]'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
+        >
+            This Week
+        </button>
 
-                    <input
-                        type="date"
-                        x-model="startDate"
-                        :max="endDate || ''"
-                        class="w-full rounded-full bg-[#FFDDE3] px-4 py-2 outline-none text-[#4A3B35]"
-                    >
+        {{-- This Month --}}
+        <button
+            @click="selectedPeriod='month'"
+            :class="selectedPeriod === 'month'
+                ? 'bg-[#F58C98] text-white'
+                : 'bg-[#FCEDEF] text-[#4A3B35]'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
+        >
+            This Month
+        </button>
 
-                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    </div>
+        {{-- This Year --}}
+        <button
+            @click="selectedPeriod='year'"
+            :class="selectedPeriod === 'year'
+                ? 'bg-[#F58C98] text-white'
+                : 'bg-[#FCEDEF] text-[#4A3B35]'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
+        >
+            This Year
+        </button>
 
-                </div>
-            </div>
+        {{-- Custom --}}
+        <button
+            @click="selectedPeriod='custom'"
+            :class="selectedPeriod === 'custom'
+                ? 'bg-[#F58C98] text-white'
+                : 'bg-[#FCEDEF] text-[#4A3B35]'"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
+        >
+            Custom
+        </button>
 
-            {{-- ARROW --}}
-            <div class="text-[20px] leading-none text-gray-500 mt-6 hidden md:block">
-                →
-            </div>
+    </div>
 
-            {{-- END DATE --}}
-            <div class="w-full">
-                <label class="block text-sm text-gray-500 mb-2">
-                    End Date
-                </label>
+    {{-- CUSTOM DATE --}}
+    <div
+        x-show="selectedPeriod === 'custom'"
+        x-transition
+        class="flex flex-col md:flex-row items-center gap-4"
+    >
 
-                <div class="relative">
+        {{-- START DATE --}}
+        <div class="w-full">
+            <label class="block text-sm text-gray-500 mb-2">
+                Start Date
+            </label>
+
+            <input
+                type="date"
+                x-model="startDate"
+                :max="endDate || ''"
+                class="
+                    w-full
+                    rounded-full
+                    bg-[#FFDDE3]
+                    px-5
+                    py-2.5
+                    outline-none
+                    text-[#4A3B35]
+                "
+            >
+        </div>
+
+        {{-- ARROW --}}
+        <div class="hidden md:block text-gray-400 mt-6 text-lg">
+            →
+        </div>
+
+        {{-- END DATE --}}
+        <div class="w-full">
+            <label class="block text-sm text-gray-500 mb-2">
+                End Date
+            </label>
 
             <input
                 type="date"
                 x-model="endDate"
                 :min="startDate || ''"
-                class="w-full rounded-full bg-[#FFDDE3] px-4 py-2 outline-none text-[#4A3B35]"
+                class="
+                    w-full
+                    rounded-full
+                    bg-[#FFDDE3]
+                    px-5
+                    py-2.5
+                    outline-none
+                    text-[#4A3B35]
+                "
             >
-
-                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none">
-                    </div>
-
-                </div>
-            </div>
-
         </div>
 
+    </div>
+
         {{-- BUTTON --}}
-        <div class="flex justify-end gap-4 mt-8">
+        <div class="flex justify-end gap-4 mt-6">
 
             <button
                 @click="showModal = false"
@@ -299,19 +366,7 @@
             <div class="relative">
 
                 <button
-                    @click="
-                        if(exportMessage !== '') {
-                            showExportError = true
-
-                            setTimeout(() => {
-                                showExportError = false
-                            }, 3000)
-
-                            return
-                        }
-
-                        console.log('Export PDF')
-                    "
+                    @click="exportPDF()"
                     class="
                         px-8 py-3
                         rounded-full

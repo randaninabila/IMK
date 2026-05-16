@@ -33,10 +33,10 @@
                 @endif
             </a>
 
-            {{-- Specialist --}}
+            {{-- Employee --}}
             <a href="/employee"
                 class="relative hover:text-[#3E382D] {{ $current == 'employee' ? 'font-semibold text-[#3E382D]' : '' }}">
-                Employees
+                Employee
                 @if($current == 'employee')
                 <span class="absolute left-0 -bottom-1 w-full h-[2px] bg-[#3E382D] rounded"></span>
                 @endif

@@ -256,7 +256,7 @@
 
                 <thead class="text-left text-[#b04a4a] border-b border-[#d8c6c6] [&_th]:py-3 [&_th]:px-4 [&_th]:align-middle">
                     <tr>
-                        <th class="font-semibold">No</th>
+                        <th class="px-4 font-semibold text-center">No</th>
                         <th class="px-4 font-semibold">Service</th>
                         <th class="px-4 font-semibold">Category</th>
 
@@ -299,6 +299,7 @@
                             <a
                                 href="{{ $sortUrl('revenue') }}"
                                 class="sort-link {{ $isActive('revenue') ? 'active' : '' }}"
+                                text-center
                             >
                                 Revenue
                                 {!! $sortIcon('revenue') !!}
@@ -310,6 +311,7 @@
                             <a
                                 href="{{ $sortUrl('growth') }}"
                                 class="sort-link {{ $isActive('growth') ? 'active' : '' }}"
+                                text-center
                             >
                                 Growth
                                 {!! $sortIcon('growth') !!}

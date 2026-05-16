@@ -7,11 +7,55 @@
 <div 
     x-data="{
         showModal: false,
+        openBranch: false,
+
         selectedBranch: 'Semua',
         selectedReports: [],
+        selectedPeriod: 'month',
         startDate: '',
         endDate: '',
         showExportError: false,
+
+        exportPDF() {
+
+            this.showExportError = false;
+
+            // wajib pilih report
+            if (this.selectedReports.length === 0) {
+                this.showExportError = true;
+                return;
+            }
+
+            // kalau custom wajib isi tanggal
+            if (
+                this.selectedPeriod === 'custom' &&
+                (!this.startDate || !this.endDate)
+            ) {
+                this.showExportError = true;
+                return;
+            }
+
+            // validasi tanggal
+            if (
+                this.selectedPeriod === 'custom' &&
+                this.startDate > this.endDate
+            ) {
+                this.showExportError = true;
+                return;
+            }
+
+            const params = new URLSearchParams({
+                branch: this.selectedBranch,
+                reports: JSON.stringify(this.selectedReports),
+                period: this.selectedPeriod,
+                start_date: this.startDate,
+                end_date: this.endDate
+            });
+
+            window.open('/export-pdf?' + params, '_blank');
+
+            this.showModal = false;
+        },
 
         toggleReport(report) {
             if (this.selectedReports.includes(report)) {
@@ -23,19 +67,23 @@
         },
 
         get exportMessage() {
+
             if (this.selectedReports.length === 0) {
-                return 'Select at least one report type'
+                return 'Select at least one report type';
             }
 
-            if (!this.startDate || !this.endDate) {
-                return 'Select start and end date'
+            if (this.selectedPeriod === 'custom') {
+
+                if (!this.startDate || !this.endDate) {
+                    return 'Select start and end date';
+                }
+
+                if (this.startDate > this.endDate) {
+                    return 'Start date cannot exceed end date';
+                }
             }
 
-            if (this.startDate > this.endDate) {
-                return 'Start date cannot exceed end date'
-            }
-
-            return ''
+            return '';
         }
     }"
     class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative"
@@ -57,7 +105,7 @@
         <div class="flex gap-3">
 
             {{-- FILTER --}}
-            <div class="relative" x-data="{ openBranch: false }">
+            <div class="relative">
 
                 {{-- BUTTON --}}
                 <button
@@ -167,7 +215,15 @@
 
             {{-- BUTTON OPEN MODAL --}}
             <button
-                @click="showModal = true; document.body.classList.add('overflow-hidden')"
+                @click="
+                    showModal = true;
+                    selectedReports = [];
+                    selectedPeriod = 'month';
+                    startDate = '';
+                    endDate = '';
+                    showExportError = false;
+                    document.body.classList.add('overflow-hidden');
+                "
                 class="bg-[#f8cdd0] text-[#2d2a26] px-5 py-2.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-sm"
             >
                 <span>📥</span>
@@ -437,18 +493,21 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
         @forelse($staffPerformance as $staff)
             <div class="bg-[#FFE4E9]/80 px-5 py-4 rounded-3xl flex items-center gap-4 border border-white shadow-sm">
-                <div class="w-12 h-12 bg-[#FF8FA3] rounded-full flex-shrink-0 border-2 border-white flex items-center justify-center">
-                    <span class="text-white font-bold text-xs">{{ substr($staff['nama'], 0, 1) }}</span>
-                </div>
+                @if($staff->foto_profile)
+                    <img
+                        src="{{ asset('storage/' . $staff->foto_profile) }}"
+                        class="w-16 h-16 rounded-full object-cover border-2 border-white"
+                    >
+                @else
+                    <div class="w-16 h-16 rounded-full bg-[#F58C98] flex items-center justify-center text-white font-bold">
+                        {{ strtoupper(substr($staff->nama, 0, 1)) }}
+                    </div>
+                @endif
                 <div class="flex-1 min-w-0">
-                    <h5 class="font-bold text-xs text-gray-800 truncate">{{ $staff['nama'] }}</h5>
-                    <p class="text-[11px] text-gray-500 mb-1 truncate">{{ $staff['cabang'] }}</p>
-                    <div class="flex items-center text-yellow-500 text-xs gap-1">
-                        ★
-                        <span class="text-gray-800 font-bold">
-                            {{ $staff['rating'] ?? 0 }}
-                        </span>
-                        <span class="text-gray-500 font-normal ml-1">({{ $staff['total_booking'] }} bookings)</span>
+                    <h5 class="font-bold text-xs text-gray-800 truncate">{{ $staff->nama }}</h5>
+                    <p class="text-[11px] text-gray-500 mb-1 truncate">{{ $staff->cabang }}</p>
+                    <div class="flex items-center text-gray-500 text-xs gap-1">
+                        ({{ $staff->total_booking }} bookings)
                     </div>
                 </div>
             </div>
@@ -493,5 +552,16 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 });
+
+
+document.addEventListener('alpine:init', () => {
+    Alpine.data('dashboardFilter', () => ({
+        selectedCabang: @json($selectedCabang ?? null),
+        submitFilter() {
+            window.location.href = new URL(window.location.href).origin + 
+                '/owner/dashboard?cabang=' + (this.selectedCabang || '');
+        }
+    }))
+})
 </script>
 @endsection

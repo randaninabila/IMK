@@ -48,12 +48,54 @@ class AuthController extends Controller
             $request->boolean('remember')
         )) {
             $request->session()->regenerate();
+
             return $this->redirectByRole(Auth::user()->role);
         }
 
         return back()
             ->withInput($request->only('email'))
-            ->withErrors(['email' => 'Email atau password salah.']);
+            ->withErrors([
+                'email' => 'Email atau password salah.'
+            ]);
+
+        // Jika password lama (bukan Bcrypt), rehash otomatis ke Bcrypt
+        if (!str_starts_with($user->password, '$2y$') && !str_starts_with($user->password, '$2a$')) {
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return $this->redirectByRole($user->role);
+    }
+
+    // =====================
+    // HELPER — cek password support multi-algoritma
+    // =====================
+    private function checkPassword(string $plain, string $hashed): bool
+    {
+        // Bcrypt
+        if (str_starts_with($hashed, '$2y$') || str_starts_with($hashed, '$2a$')) {
+            return Hash::check($plain, $hashed);
+        }
+
+        // MD5 (32 char hex)
+        if (strlen($hashed) === 32 && ctype_xdigit($hashed)) {
+            return md5($plain) === $hashed;
+        }
+
+        // SHA1 (40 char hex)
+        if (strlen($hashed) === 40 && ctype_xdigit($hashed)) {
+            return sha1($plain) === $hashed;
+        }
+
+        // SHA256 (64 char hex)
+        if (strlen($hashed) === 64 && ctype_xdigit($hashed)) {
+            return hash('sha256', $plain) === $hashed;
+        }
+
+        return false;
     }
 
     // =====================

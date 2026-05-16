@@ -11,14 +11,10 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $table = 'users';
-
     protected $primaryKey = 'user_id';
-
-    protected $keyType = 'int';
-
-    public $incrementing = true;
-
     public $timestamps = true;
+    protected $keyType = 'int';
+    public $incrementing = true;
 
     protected $fillable = [
         'nama',
@@ -38,6 +34,7 @@ class User extends Authenticatable
     protected $casts = [
         'password' => 'hashed',
     ];
+
 
     // =========================
     // RELATIONS
@@ -112,4 +109,5 @@ class User extends Authenticatable
     {
         return $this->status_akun === 'aktif';
     }
+
 }

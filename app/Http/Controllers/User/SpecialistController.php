@@ -19,7 +19,7 @@ class SpecialistController extends Controller
             ->where('p.status_kerja', 'aktif')
             ->select(
                 'p.pegawai_id',
-                'u.foto_profile as foto', // kolom foto ada di tabel users
+                'u.foto_profile as foto',
                 'u.nama',
                 'u.no_hp'
             )
@@ -40,7 +40,7 @@ class SpecialistController extends Controller
             ->where('u.status_akun', 'aktif')
             ->select(
                 'p.pegawai_id',
-                'u.foto_profile as foto', // kolom foto ada di tabel users
+                'u.foto_profile as foto',
                 'p.cabang_id',
                 'u.nama',
                 'u.no_hp'
