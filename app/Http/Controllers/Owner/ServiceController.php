@@ -111,7 +111,7 @@ class ServiceController extends Controller
                 'cat'     => $item->nama_jenis,
                 'cover'   => $item->cover,
                 'total'   => $item->total,
-                'revenue' => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
+                'revenue' => number_format($item->total_revenue, 0, ',', '.'),
             ]);
     }
 
@@ -243,7 +243,7 @@ class ServiceController extends Controller
 
                 'selected_count'   => $item->total_count,
                 'selected_revenue' => number_format($item->total_revenue, 0, ',', '.'),
-                'revenue'          => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
+                'revenue'          => number_format($item->total_revenue, 0, ',', '.'),
                 'total_revenue_raw' => (float) $item->total_revenue,
                 'growth'           => $growth,
                 'growth_class'     => $growth >= 0 ? 'text-green-500' : 'text-red-500',

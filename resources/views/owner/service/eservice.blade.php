@@ -301,7 +301,7 @@
                                 class="sort-link {{ $isActive('revenue') ? 'active' : '' }}"
                                 text-center
                             >
-                                Revenue
+                                Revenue (Rp)
                                 {!! $sortIcon('revenue') !!}
                             </a>
                         </th>
@@ -340,7 +340,7 @@
                                     </span>
                                     <br>
                                     <span class="text-xs text-gray-400">
-                                        Rp {{ $item['branches'][$cabang->cabang_id]['revenue'] }}
+                                        {{ $item['branches'][$cabang->cabang_id]['revenue'] }}
                                     </span>
                                 </div>
                             </td>
@@ -350,7 +350,7 @@
                                 <div class="leading-6">
                                     <span class="font-medium">{{ $item['selected_count'] }} booking</span>
                                     <br>
-                                    <span class="text-xs text-gray-400">Rp {{ $item['selected_revenue'] }}</span>
+                                    <span class="text-xs text-gray-400">{{ $item['selected_revenue'] }}</span>
                                 </div>
                             </td>
                         @endif

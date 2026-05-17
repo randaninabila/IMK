@@ -453,7 +453,7 @@
 
                         @endif
 
-                        <th class="px-4 text-center">Revenue</th>
+                        <th class="px-4">Revenue (Rp)</th>
                         <th class="px-4 text-center">Growth</th>
                     </tr>
                 </thead>
