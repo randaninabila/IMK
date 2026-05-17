@@ -437,18 +437,17 @@ class DashboardController extends Controller
         $query = DB::table('pegawai')
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
             ->join('cabang', 'pegawai.cabang_id', '=', 'cabang.cabang_id')
-            ->leftJoin('booking_detail', 'pegawai.pegawai_id', '=', 'booking_detail.pegawai_id')
-            ->leftJoin('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
+            ->leftJoin('booking', function ($join) use ($dateRange) {
+                $join->on('pegawai.pegawai_id', '=', 'booking.pegawai_id')
+                    ->where('booking.status', '=', 'completed')
+                    ->whereBetween('booking.tanggal_booking', [
+                        $dateRange['start'],
+                        $dateRange['end']
+                    ]);
+            })
+            ->leftJoin('booking_detail', 'booking.booking_id', '=', 'booking_detail.booking_id')
             ->whereIn('users.role', ['pegawai', 'admin'])
-            ->where('pegawai.status_kerja', 'aktif')
-
-            ->where(function ($q) use ($dateRange) {
-                $q->whereNull('booking.booking_id')
-                ->orWhereBetween('booking.tanggal_booking', [
-                    $dateRange['start'],
-                    $dateRange['end']
-                ]);
-            });
+            ->where('pegawai.status_kerja', 'aktif');
 
         if ($branch !== 'Semua') {
             $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;

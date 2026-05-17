@@ -22,9 +22,12 @@
         }
         .header h1 {
             color: #3F342D;
-            font-size: 24px;
+            font-size: 28px;
             margin: 0;
-            font-weight: bold;
+            font-family: Georgia, "Times New Roman", serif;
+            font-style: italic;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
         .header p {
             color: #7A6A63;
@@ -34,15 +37,16 @@
             border-bottom: 1px solid #F7E9EB;
             padding-bottom: 18px;
             margin-bottom: 24px;
-            page-break-inside: avoid;
         }
         .section h2 {
             color: #3F342D;
-            font-size: 14px;
+            font-size: 15px;
             margin-bottom: 15px;
             padding-bottom: 8px;
             border-bottom: 2px solid #FCEDEF;
-            page-break-after: avoid;
+            font-family: Georgia, serif;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
         .section-desc {
             font-size: 11px;
@@ -182,7 +186,7 @@
     @foreach($reports as $report)
         @if($report === 'Financial' && isset($financial_data))
             <div class="section">
-                <h2>💳 Financial Summary</h2>
+                <h2>Financial Summary</h2>
 
                 <p class="section-desc">
                     Overview of salon revenue performance and transaction activity during the selected period.
@@ -240,7 +244,7 @@
 
         @if($report === 'Services' && isset($services_data))
             <div class="section">
-                <h2>✂️ Top Services</h2>
+                <h2>Top Services</h2>
 
                 <p class="section-desc">
                     Most booked services based on customer demand and booking frequency.
@@ -274,7 +278,7 @@
 
         @if($report === 'Employees' && isset($employees_data))
             <div class="section">
-                <h2>👨‍💼 Employee Performance</h2>
+                <h2>Employee Performance</h2>
 
                 <p class="section-desc">
                     Employee workload, service activity, and branch assignment during this reporting period.
@@ -311,7 +315,7 @@
 
         @if($report === 'Customers' && isset($customers_data))
             <div class="section">
-                <h2>👥 Customer Analytics</h2>
+                <h2>Customer Analytics</h2>
 
                 <p class="section-desc">
                     Customer growth, retention, and loyalty trends during this reporting period.

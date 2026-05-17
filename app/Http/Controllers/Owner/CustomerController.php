@@ -109,7 +109,7 @@ class CustomerController extends Controller
                 'u.user_id'
             )
 
-            ->where('b.status', 'selesai');
+            ->where('b.status', 'completed');
     }
 
     // =========================
