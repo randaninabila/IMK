@@ -83,7 +83,7 @@ class ServiceController extends Controller
             ->joinSub($this->revenueSubquery(), 'rev', function ($join) {
                 $join->on('bd.booking_detail_id', '=', 'rev.booking_detail_id');
             })
-            ->where('b.status', 'selesai')
+            ->where('b.status', 'completed')
             ->whereMonth('b.tanggal_booking', $parsedMonth->month)
             ->whereYear('b.tanggal_booking', $parsedMonth->year)
             ->select(
@@ -111,7 +111,7 @@ class ServiceController extends Controller
                 'cat'     => $item->nama_jenis,
                 'cover'   => $item->cover,
                 'total'   => $item->total,
-                'revenue' => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
+                'revenue' => number_format($item->total_revenue, 0, ',', '.'),
             ]);
     }
 
@@ -140,7 +140,7 @@ class ServiceController extends Controller
             ->joinSub($this->revenueSubquery(), 'rev', function ($join) {
                 $join->on('bd.booking_detail_id', '=', 'rev.booking_detail_id');
             })
-            ->where('b.status', 'selesai')
+            ->where('b.status', 'completed')
             ->whereMonth('b.tanggal_booking', $currentMonth->month)
             ->whereYear('b.tanggal_booking', $currentMonth->year);
 
@@ -210,7 +210,7 @@ class ServiceController extends Controller
             ->join('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
             ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
-            ->where('b.status', 'selesai')
+            ->where('b.status', 'completed')
             ->whereMonth('b.tanggal_booking', $prevMonth->month)
             ->whereYear('b.tanggal_booking', $prevMonth->year)
             ->when($cabangId != 'all', fn($q) => $q->where('c.cabang_id', $cabangId))
@@ -243,7 +243,7 @@ class ServiceController extends Controller
 
                 'selected_count'   => $item->total_count,
                 'selected_revenue' => number_format($item->total_revenue, 0, ',', '.'),
-                'revenue'          => 'Rp ' . number_format($item->total_revenue, 0, ',', '.'),
+                'revenue'          => number_format($item->total_revenue, 0, ',', '.'),
                 'total_revenue_raw' => (float) $item->total_revenue,
                 'growth'           => $growth,
                 'growth_class'     => $growth >= 0 ? 'text-green-500' : 'text-red-500',
@@ -294,7 +294,7 @@ class ServiceController extends Controller
         $query = DB::table('pembayaran')
             ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
             ->where('pembayaran.status', 'verified')
-            ->where('booking.status', 'selesai')
+            ->where('booking.status', 'completed')
             ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
             ->whereYear('booking.tanggal_booking', $parsedMonth->year);
 

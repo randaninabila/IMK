@@ -256,7 +256,7 @@
 
                     {{-- PAGINATION LINKS --}}
                     @if($employees instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                    <div>
+                    <div class="[&_p]:hidden">
                         {{ $employees->links() }}
                     </div>
                     @endif

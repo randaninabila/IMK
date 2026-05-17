@@ -453,7 +453,7 @@
 
                         @endif
 
-                        <th class="px-4 text-center">Revenue</th>
+                        <th class="px-4">Revenue (Rp)</th>
                         <th class="px-4 text-center">Growth</th>
                     </tr>
                 </thead>
@@ -729,11 +729,9 @@
 
                     {{-- PAGINATION --}}
                     @if($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator)
-
-                        <div>
-                            {{ $leaderboard->links() }}
-                        </div>
-
+                    <div class="[&_p]:hidden">
+                        {{ $leaderboard->links() }}
+                    </div>
                     @endif
 
                 </div>
