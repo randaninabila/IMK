@@ -32,7 +32,6 @@
                 Before
             </div>
         </div>
-        @endif
 
         {{-- AFTER --}}
         <div class="text-center">
@@ -49,10 +48,8 @@
             </div>
 
         </div>
-        @endif
 
     </div>
-    @endif
 
     {{-- ══════════════════════════════════════════
          FOTO HASIL (tipe = result)
@@ -62,10 +59,11 @@
         <h2 class="text-base font-semibold text-[#3e3a34] mb-4 text-center tracking-wide uppercase">
             Hasil Perawatan
         </h2>
+
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             @foreach($resultFotos as $foto)
             <img src="{{ asset($foto->url_foto) }}"
-                 alt="Hasil perawatan {{ $layanan->nama_layanan }}"
+                 alt="Hasil perawatan {{ $gallery->layanan->nama_layanan }}"
                  class="w-full h-44 object-cover rounded-xl shadow hover:scale-105 transition-transform duration-200"
                  onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
             @endforeach
@@ -78,19 +76,28 @@
     ══════════════════════════════════════════ --}}
     @if($layananCabang->isNotEmpty())
     <div class="mt-14 w-full max-w-2xl px-6">
+
         <h2 class="text-base font-semibold text-[#3e3a34] mb-4 text-center tracking-wide uppercase">
             Harga Layanan
         </h2>
+
         <div class="space-y-3">
+
             @foreach($layananCabang as $lc)
             <div class="bg-white rounded-xl px-6 py-4 shadow flex justify-between items-center gap-4">
 
                 {{-- Cabang info --}}
                 <div>
-                    <p class="font-semibold text-[#3e3a34] text-sm">{{ $lc->nama_cabang }}</p>
+                    <p class="font-semibold text-[#3e3a34] text-sm">
+                        {{ $lc->nama_cabang }}
+                    </p>
+
                     @if(!empty($lc->alamat))
-                    <p class="text-[11px] text-gray-400 mt-0.5">{{ $lc->alamat }}</p>
+                    <p class="text-[11px] text-gray-400 mt-0.5">
+                        {{ $lc->alamat }}
+                    </p>
                     @endif
+
                     @if($lc->harga_promo)
                     <p class="text-xs text-gray-400 line-through mt-1">
                         Rp {{ number_format($lc->harga, 0, ',', '.') }}
@@ -100,21 +107,28 @@
 
                 {{-- Harga --}}
                 <div class="text-right shrink-0">
+
                     @if($lc->harga_promo)
                         <p class="text-[#e9bcbc] font-bold text-lg">
                             Rp {{ number_format($lc->harga_promo, 0, ',', '.') }}
                         </p>
-                        <span class="text-[11px] bg-red-100 text-red-500 px-2 py-0.5 rounded-full">PROMO</span>
+
+                        <span class="text-[11px] bg-red-100 text-red-500 px-2 py-0.5 rounded-full">
+                            PROMO
+                        </span>
                     @else
                         <p class="text-[#3e3a34] font-bold text-lg">
                             Rp {{ number_format($lc->harga, 0, ',', '.') }}
                         </p>
                     @endif
+
                 </div>
 
             </div>
             @endforeach
+
         </div>
+
     </div>
     @endif
 
@@ -123,43 +137,59 @@
     ══════════════════════════════════════════ --}}
     @if($ulasan->isNotEmpty())
     <div class="mt-14 w-full max-w-2xl px-6">
+
         <h2 class="text-base font-semibold text-[#3e3a34] mb-4 text-center tracking-wide uppercase">
             Ulasan Pelanggan
         </h2>
+
         <div class="space-y-4">
+
             @foreach($ulasan as $review)
             <div class="bg-white rounded-xl px-6 py-4 shadow">
+
                 <div class="flex justify-between items-start">
-                    <p class="font-semibold text-sm text-[#3e3a34]">{{ $review->nama_pelanggan }}</p>
+
+                    <p class="font-semibold text-sm text-[#3e3a34]">
+                        {{ $review->nama_pelanggan }}
+                    </p>
+
                     <span class="text-yellow-400 text-sm tracking-widest">
                         @for($i = 1; $i <= 5; $i++)
                             {{ $i <= $review->rating ? '★' : '☆' }}
                         @endfor
                     </span>
+
                 </div>
+
                 @if($review->komentar)
-                <p class="text-xs text-gray-500 mt-2 leading-relaxed">{{ $review->komentar }}</p>
+                <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                    {{ $review->komentar }}
+                </p>
                 @endif
+
                 <p class="text-[10px] text-gray-300 mt-2">
                     {{ \Carbon\Carbon::parse($review->created_at)->diffForHumans() }}
                 </p>
+
             </div>
             @endforeach
+
         </div>
+
     </div>
     @endif
 
     {{-- Tidak ada ulasan --}}
     @if($ulasan->isEmpty())
-    <p class="mt-10 text-sm text-gray-400">Belum ada ulasan untuk layanan ini.</p>
+    <p class="mt-10 text-sm text-gray-400">
+        Belum ada ulasan untuk layanan ini.
+    </p>
     @endif
 
-    {{-- ══════════════════════════════════════════
-         TOMBOL KEMBALI
-    ══════════════════════════════════════════ --}}
+    {{-- BUTTON --}}
     <div class="mt-12">
         <a href="{{ route('gallery.index') }}"
-            class="bg-[#3e3a34] text-white px-8 py-3 rounded-full text-sm hover:opacity-80 transition">
+           class="bg-[#3e3a34] text-white px-8 py-3 rounded-full text-sm hover:opacity-80 transition">
             ← Kembali ke Galeri
         </a>
     </div>
