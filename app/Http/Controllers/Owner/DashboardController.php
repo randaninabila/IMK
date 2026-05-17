@@ -267,23 +267,20 @@ class DashboardController extends Controller
     {
         $staff = DB::table('pegawai')
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
+            ->leftJoin('booking', function ($join) {
+                $join->on('pegawai.pegawai_id', '=', 'booking.pegawai_id')
+                    ->whereYear('booking.tanggal_booking', 2026);
+            })
             ->whereIn('users.role', ['pegawai', 'admin'])
             ->where('pegawai.status_kerja', 'aktif')
-            ->leftJoin('booking_detail', 'pegawai.pegawai_id', '=', 'booking_detail.pegawai_id')
-            ->leftJoin('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
-            ->when($selectedCabang, fn($q) => $q->where('pegawai.cabang_id', $selectedCabang))
-            ->where(function ($q) {
-                $q->whereNull('booking.booking_id')
-                ->orWhereYear('booking.tanggal_booking', now()->year);
-            })
             ->select(
                 'pegawai.pegawai_id',
                 'pegawai.cabang_id',
-                'users.nama as nama_pegawai',
+                DB::raw('`users`.`nama` as nama_pegawai'),
                 'users.foto_profile',
                 DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
             )
-            ->groupBy('pegawai.pegawai_id', 'pegawai.cabang_id', 'users.nama')
+            ->groupBy('pegawai.pegawai_id', 'pegawai.cabang_id', 'users.nama', 'users.foto_profile')
             ->orderByDesc('total_booking')
             ->limit(4)
             ->get();
@@ -418,7 +415,7 @@ class DashboardController extends Controller
             ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
             ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
             ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
-            ->where('booking.status', 'selesai')
+            ->where('booking.status', 'completed')
             ->whereBetween('booking.tanggal_booking', [$dateRange['start'], $dateRange['end']]);
 
         if ($branch !== 'Semua') {

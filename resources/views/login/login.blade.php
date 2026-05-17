@@ -124,7 +124,7 @@ bg-[radial-gradient(circle_at_top_left,_#FFADB2_0%,_transparent_40%),radial-grad
             Dont have an Account ?
 
             <a
-                href="{{ url('/signin') }}"
+                href="{{ url('/register') }}"
                 class="font-semibold underline cursor-pointer hover:text-[#6b5b4d]">
 
                 Sign Up Here
@@ -185,7 +185,7 @@ bg-[radial-gradient(circle_at_top_left,_#FFADB2_0%,_transparent_40%),radial-grad
     // LOGIN REDIRECT
     function goToDashboard() {
 
-        window.location.href = "/signin";
+        window.location.href = "/register";
     }
 
 </script>

@@ -50,26 +50,22 @@ class EmployeeController extends Controller
 
     private function getEmployeePerformance($cabangId, $month, $perPage = 10)
     {
-        $parsedMonth  = Carbon::parse($month);
-        $currentMonth = $parsedMonth;
+        $parsedMonth = Carbon::parse($month);
 
         $query = DB::table('pegawai as p')
             ->join('users as u', 'p.user_id', '=', 'u.user_id')
             ->join('cabang as c', 'p.cabang_id', '=', 'c.cabang_id')
-            ->leftJoin('booking_detail as bd', 'p.pegawai_id', '=', 'bd.pegawai_id')
-            ->leftJoin('booking as b', 'bd.booking_id', '=', 'b.booking_id')
+            ->leftJoin('booking as b', function ($join) use ($parsedMonth) {
+                $join->on('p.pegawai_id', '=', 'b.pegawai_id')
+                    ->where('b.status', '=', 'completed')
+                    ->whereMonth('b.tanggal_booking', '=', $parsedMonth->month)
+                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year);
+            })
+            ->leftJoin('booking_detail as bd', 'b.booking_id', '=', 'bd.booking_id')
             ->leftJoin('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
             ->where('p.status_kerja', '!=', 'resign')
-            ->whereDate('u.created_at', '<=', $currentMonth->copy()->endOfMonth())
-            ->where(function ($q) use ($currentMonth) {
-                $q->whereNull('b.booking_id')
-                    ->orWhere(function ($query) use ($currentMonth) {
-                        $query->whereMonth('b.tanggal_booking', $currentMonth->month)
-                            ->whereYear('b.tanggal_booking', $currentMonth->year)
-                            ->where('b.status', 'selesai');
-                    });
-            });
+            ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth());
 
         if ($cabangId != 'all') {
             $query->where('c.cabang_id', $cabangId);
@@ -205,19 +201,16 @@ class EmployeeController extends Controller
         $query = DB::table('pegawai as p')
             ->join('users as u', 'p.user_id', '=', 'u.user_id')
             ->join('cabang as c', 'p.cabang_id', '=', 'c.cabang_id')
-            ->leftJoin('booking_detail as bd', 'p.pegawai_id', '=', 'bd.pegawai_id')
-            ->leftJoin('booking as b', 'bd.booking_id', '=', 'b.booking_id')
+            ->leftJoin('booking as b', function ($join) use ($parsedMonth) {
+                $join->on('p.pegawai_id', '=', 'b.pegawai_id')
+                    ->where('b.status', '=', 'completed')
+                    ->whereMonth('b.tanggal_booking', '=', $parsedMonth->month)
+                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year);
+            })
+            ->leftJoin('booking_detail as bd', 'b.booking_id', '=', 'bd.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
             ->where('p.status_kerja', '!=', 'resign')
-            ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth())
-            ->where(function ($q) use ($parsedMonth) {
-                $q->whereNull('b.booking_id')
-                    ->orWhere(function ($query) use ($parsedMonth) {
-                        $query->whereMonth('b.tanggal_booking', $parsedMonth->month)
-                            ->whereYear('b.tanggal_booking', $parsedMonth->year)
-                            ->where('b.status', 'selesai');
-                    });
-            });
+            ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth());
 
         if ($cabangId != 'all') {
             $query->where('c.cabang_id', $cabangId);

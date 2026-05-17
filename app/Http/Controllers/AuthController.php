@@ -43,28 +43,36 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt(
-            ['email' => $request->email, 'password' => $request->password],
-            $request->boolean('remember')
-        )) {
-            $request->session()->regenerate();
+        $user = User::where('email', $request->email)->first();
 
-            return $this->redirectByRole(Auth::user()->role);
+        // User tidak ditemukan
+        if (!$user) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Email atau password salah.'
+                ]);
         }
 
-        return back()
-            ->withInput($request->only('email'))
-            ->withErrors([
-                'email' => 'Email atau password salah.'
-            ]);
+        // Cek password support multi hash
+        if (!$this->checkPassword($request->password, $user->password)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Email atau password salah.'
+                ]);
+        }
 
-        // Jika password lama (bukan Bcrypt), rehash otomatis ke Bcrypt
-        if (!str_starts_with($user->password, '$2y$') && !str_starts_with($user->password, '$2a$')) {
+        // Rehash otomatis ke bcrypt jika masih hash lama
+        if (!str_starts_with($user->password, '$2y$')
+            && !str_starts_with($user->password, '$2a$')) {
+
             $user->password = Hash::make($request->password);
             $user->save();
         }
 
         Auth::login($user, $request->boolean('remember'));
+
         $request->session()->regenerate();
 
         return $this->redirectByRole($user->role);

@@ -729,11 +729,9 @@
 
                     {{-- PAGINATION --}}
                     @if($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator)
-
-                        <div>
-                            {{ $leaderboard->links() }}
-                        </div>
-
+                    <div class="[&_p]:hidden">
+                        {{ $leaderboard->links() }}
+                    </div>
                     @endif
 
                 </div>
