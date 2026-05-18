@@ -7,14 +7,36 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceDetailController extends Controller
 {
+    public function index()
+    {
+        // Ambil daftar jenis layanan
+        $jenisLayanan = DB::table('jenis_layanan')
+            ->orderBy('jenis_layanan_id')
+            ->get();
+
+        // Ambil cover foto untuk setiap jenis layanan
+        $covers = [];
+        foreach ($jenisLayanan as $jenis) {
+            $layanan = DB::table('layanan')
+                ->where('jenis_layanan_id', $jenis->jenis_layanan_id)
+                ->whereNotNull('cover_foto')
+                ->where('cover_foto', '!=', '')
+                ->first();
+
+            $covers[$jenis->jenis_layanan_id] = $layanan 
+                ? asset('storage/' . $layanan->cover_foto) 
+                : asset('storage/default.jpg');
+        }
+
+        return view('user.service.service', compact('covers', 'jenisLayanan'));
+    }
+
     public function show($jenis_layanan_id)
     {
-        // Data jenis layanan (hero section)
         $jenisLayanan = DB::table('jenis_layanan')
             ->where('jenis_layanan_id', $jenis_layanan_id)
             ->firstOrFail();
 
-        // Layanan + harga cabang, foto dari kolom cover_foto tabel layanan
         $layananList = DB::table('layanan as l')
             ->join('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
             ->where('l.jenis_layanan_id', $jenis_layanan_id)
@@ -31,17 +53,30 @@ class ServiceDetailController extends Controller
                 'lc.harga',
                 'lc.harga_promo'
             )
-            ->get();
+            ->get()
+            ->map(function ($item) {
+                $item->cover_foto = !empty($item->cover_foto)
+                    ? 'storage/' . $item->cover_foto
+                    : 'storage/default.jpg';
+                return $item;
+            });
 
-        // Paket yang relevan dengan jenis layanan ini
         $paketList = DB::table('paket_layanan as pl')
             ->join('paket_detail as pd', 'pl.paket_id', '=', 'pd.paket_id')
             ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
             ->where('l.jenis_layanan_id', $jenis_layanan_id)
-            ->select('pl.paket_id', 'pl.nama_paket', 'pl.deskripsi')
+            ->select(
+                'pl.paket_id',
+                'pl.nama_paket',
+                'pl.deskripsi'
+            )
             ->distinct()
             ->get();
 
-        return view('user.service.sdetail', compact('jenisLayanan', 'layananList', 'paketList'));
+        return view('user.service.sdetail', compact(
+            'jenisLayanan',
+            'layananList',
+            'paketList'
+        ));
     }
 }

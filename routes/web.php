@@ -23,15 +23,7 @@ use App\Http\Controllers\User\LayananDetailController;
 // =====================
 
 // Home
-Route::get('/', function () {
-    $albums = Album::with(['layanan', 'fotos'])->get();
-    return view('user.gallery.gallery', compact('albums'));
-});
-
-Route::get('/gallery', function () {
-    $albums = Album::with(['layanan', 'fotos'])->get();
-    return view('user.gallery.gallery', compact('albums'));
-});
+Route::get('/', [GalleryController::class, 'index']);
 
 
 // Login & Register
@@ -47,11 +39,9 @@ Route::middleware('guest')->group(function () {
 });
 
 // Service list
-Route::get('/service', function () {
-    return view('user.service.service');
-});
+Route::get('/service', [ServiceDetailController::class, 'index']);
 
-// Service detail - DINAMIS berdasarkan jenis_layanan_id
+// Service detail
 Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
     ->name('service.detail')
     ->whereNumber('jenis_layanan_id');
@@ -61,7 +51,7 @@ Route::get('/specialist', [SpecialistController::class, 'index']);
 Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'show'])
     ->name('service.layanan');
 
-// Detail specialist - dari database
+// Detail specialist
 Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
     ->name('specialist.show')
     ->whereNumber('pegawai_id');
@@ -69,11 +59,11 @@ Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
 // =====================
 // GALLERY DETAIL
 // =====================
-Route::get('/gallery/{id}', function ($id) {
-    $gallery = Album::with(['layanan', 'fotos'])->findOrFail($id);
-    return view('user.gallery.gdetail', compact('gallery'));
+Route::get('/gallery', [GalleryController::class, 'index'])
+    ->name('gallery.index');
 
-})->name('gallery.detail');
+Route::get('/gallery/{slug}', [GalleryController::class, 'show'])
+    ->name('gallery.detail');
 
 // =====================
 // SPECIALIST DETAIL

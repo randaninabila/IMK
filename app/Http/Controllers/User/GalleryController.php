@@ -41,6 +41,7 @@ class GalleryController extends Controller
                 'jl.nama_jenis',
                 'a.album_id',
                 'a.deskripsi as album_deskripsi',
+                'l.cover_foto as layanan_cover',
                 DB::raw('af.cover_foto as cover_foto')
             )
             ->orderBy('jl.jenis_layanan_id')
@@ -54,6 +55,7 @@ class GalleryController extends Controller
 
         return view('user.gallery.gallery', compact('albums'));
     }
+
 
     public function show(string $slug)
     {
@@ -79,13 +81,25 @@ class GalleryController extends Controller
         $resultFotos = collect();
 
         if ($album) {
-            $allFotos = DB::table('album_foto')
-                ->where('album_id', $album->album_id)
-                ->get();
+            $allFotos = DB::table('album_foto as af')
+                ->join('album as a', 'af.album_id', '=', 'a.album_id')
+                ->where('a.layanan_id', $layanan->layanan_id)
+                ->select('af.*')
+                ->get()
+                ->map(function ($foto) {
+                    $foto->url_foto = !empty($foto->url_foto)
+                        ? 'storage/' . $foto->url_foto
+                        : 'storage/default.jpg';
+                    return $foto;
+                });
 
             $beforeFoto  = $allFotos->firstWhere('tipe', 'before');
             $afterFoto   = $allFotos->firstWhere('tipe', 'after');
             $resultFotos = $allFotos->where('tipe', 'result')->values();
+
+            if (!$afterFoto && !empty($layanan->cover_foto)) {
+                $afterFoto = (object)['url_foto' => 'storage/' . $layanan->cover_foto];
+            }
         }
 
         $layananCabang = DB::table('layanan_cabang as lc')

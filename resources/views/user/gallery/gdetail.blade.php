@@ -2,16 +2,20 @@
 
 @section('content')
 
+@php
+    $resultFotos = $resultFotos ?? collect();
+@endphp
+
 <div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white flex flex-col items-center pb-24">
 
     {{-- TITLE --}}
     <div class="mt-28 text-center">
         <h1 class="text-5xl md:text-6xl text-[#3e3a34] font-bold">
-            {{ $gallery->layanan->nama_layanan }}
+            {{ $layanan->nama_layanan }}
         </h1>
 
         <p class="mt-4 text-gray-600 max-w-2xl">
-            {{ $gallery->deskripsi }}
+            {{ $layanan->deskripsi }}
         </p>
     </div>
 
@@ -21,12 +25,11 @@
         {{-- BEFORE --}}
         <div class="text-center">
 
-            @php
-                $before = $gallery->fotos->where('tipe', 'before')->first();
-            @endphp
-
-            <img src="{{ asset($before->url_foto ?? 'images/default.jpg') }}"
-                 class="w-[320px] h-[220px] object-cover rounded-md mx-auto">
+            <img src="{{ $beforeFoto?->url_foto 
+                ? asset($beforeFoto->url_foto)
+                : asset('storage/default.jpg') }}"
+                class="w-[320px] h-[220px] object-cover rounded-md mx-auto"
+                onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
 
             <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4">
                 Before
@@ -36,12 +39,11 @@
         {{-- AFTER --}}
         <div class="text-center">
 
-            @php
-                $after = $gallery->fotos->where('tipe', 'after')->first();
-            @endphp
-
-            <img src="{{ asset($after->url_foto ?? 'images/default.jpg') }}"
-                 class="w-[320px] h-[220px] object-cover rounded-md mx-auto">
+            <img src="{{ $afterFoto?->url_foto 
+                ? asset($afterFoto->url_foto)
+                : asset('storage/default.jpg') }}"
+                class="w-[320px] h-[220px] object-cover rounded-md mx-auto"
+                onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
 
             <div class="bg-[#3e3a34] text-white px-6 py-2 rounded-md inline-block mt-4">
                 After
@@ -62,10 +64,10 @@
 
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
             @foreach($resultFotos as $foto)
-            <img src="{{ asset($foto->url_foto) }}"
-                 alt="Hasil perawatan {{ $gallery->layanan->nama_layanan }}"
-                 class="w-full h-44 object-cover rounded-xl shadow hover:scale-105 transition-transform duration-200"
-                 onerror="this.onerror=null; this.src='{{ asset('images/placeholder.jpg') }}'">
+            <img src="{{ $foto->url_foto ? asset($foto->url_foto) : asset('storage/default.jpg') }}"
+                alt="Hasil perawatan {{ $layanan->nama_layanan }}"
+                class="w-full h-44 object-cover rounded-xl shadow hover:scale-105 transition-transform duration-200"
+                onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
             @endforeach
         </div>
     </div>

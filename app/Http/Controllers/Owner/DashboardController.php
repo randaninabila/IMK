@@ -86,7 +86,8 @@ class DashboardController extends Controller
         $staffForCabang = function($cabangId) {
             return Pegawai::join('users', 'pegawai.user_id', '=', 'users.user_id')
                 ->where('pegawai.status_kerja', 'aktif')
-                ->whereIn('users.role', ['pegawai', 'admin'])
+                // ->whereIn('users.role', ['pegawai', 'admin'])
+                ->where('users.role', 'pegawai')
                 ->where('pegawai.cabang_id', $cabangId)
                 ->count();
         };
@@ -271,7 +272,8 @@ class DashboardController extends Controller
                 $join->on('pegawai.pegawai_id', '=', 'booking.pegawai_id')
                     ->whereYear('booking.tanggal_booking', 2026);
             })
-            ->whereIn('users.role', ['pegawai', 'admin'])
+            // ->whereIn('users.role', ['pegawai', 'admin'])
+            ->where('users.role', 'pegawai')
             ->where('pegawai.status_kerja', 'aktif')
             ->select(
                 'pegawai.pegawai_id',
@@ -446,7 +448,8 @@ class DashboardController extends Controller
                     ]);
             })
             ->leftJoin('booking_detail', 'booking.booking_id', '=', 'booking_detail.booking_id')
-            ->whereIn('users.role', ['pegawai', 'admin'])
+            // ->whereIn('users.role', ['pegawai', 'admin'])
+            ->where('users.role', 'pegawai')
             ->where('pegawai.status_kerja', 'aktif');
 
         if ($branch !== 'Semua') {

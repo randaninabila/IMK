@@ -9,12 +9,13 @@
     ============================================================ --}}
     <section class="relative h-[450px] flex items-center overflow-hidden">
         <div class="absolute inset-0">
-            @php
+            @php 
                 $heroFoto = $layananList->first()?->cover_foto;
             @endphp
-            <img src="{{ $heroFoto ? asset($heroFoto) : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=1200' }}"
-                 alt="{{ $jenisLayanan->nama_jenis }}"
-                 class="w-full h-full object-cover">
+            <img src="{{ asset($heroFoto ?? 'storage/default.jpg') }}"
+                alt="{{ $jenisLayanan->nama_jenis }}"
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
             <div class="absolute inset-0 bg-black/40"></div>
         </div>
 
@@ -63,11 +64,10 @@
                     <div class="bg-white rounded-3xl overflow-hidden shadow-lg border border-gray-100 flex flex-col">
 
                         {{-- Foto layanan: dari kolom cover_foto tabel layanan --}}
-                        <img src="{{ $layanan->cover_foto
-                                    ? asset($layanan->cover_foto)
-                                    : 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?q=80&w=500' }}"
-                             class="w-full h-56 object-cover"
-                             alt="{{ $layanan->nama_layanan }}">
+                        <img src="{{ asset($layanan->cover_foto) }}"
+                            class="w-full h-56 object-cover"
+                            alt="{{ $layanan->nama_layanan }}"
+                            onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
 
                         <div class="p-6 flex flex-col flex-grow">
 

@@ -377,10 +377,10 @@
                         </td>
 
                         {{-- CLIENTS --}}
-                        <td class="px-4 text-center font-medium">{{ number_format($employee['total_clients']) }}</td>
+                        <td class="px-4 text-center font-medium">{{ is_numeric($employee['total_clients']) ? number_format($employee['total_clients']) : '-' }}</td>
 
                         {{-- SERVICES --}}
-                        <td class="px-4 text-center font-medium">{{ number_format($employee['total_services']) }}</td>
+                        <td class="px-4 text-center font-medium">{{ is_numeric($employee['total_services']) ? number_format($employee['total_services']) : '-' }}</td>
 
                         {{-- SINCE --}}
                         <td class="px-4 text-center whitespace-nowrap text-[#5f5347]">{{ $employee['since_joined'] }}</td>

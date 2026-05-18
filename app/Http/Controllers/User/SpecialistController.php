@@ -62,7 +62,8 @@ class SpecialistController extends Controller
         $layananList = DB::table('layanan as l')
             ->join('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
             ->join('booking_detail as bd', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-            ->where('bd.pegawai_id', $pegawai_id)
+            ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
+            ->where('b.pegawai_id', $pegawai_id)
             ->select('l.layanan_id', 'l.nama_layanan')
             ->distinct()
             ->get();

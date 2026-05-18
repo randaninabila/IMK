@@ -68,14 +68,29 @@
         <div class="grid md:grid-cols-3 gap-6" id="galleryGrid">
             @foreach ($albums as $index => $item)
             <div class="gallery-item bg-white rounded-xl p-3 shadow hover:shadow-lg transition"
-                data-role="{{ $item->layanan->nama_layanan }}" data-index="{{ $index }}">
-                <img src="{{ asset($item->fotos->first()->url_foto ?? 'images/default.jpg') }}" class="rounded-lg mb-3 w-full h-56 object-cover">
-                <span
-                    class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ $item->layanan->nama_layanan }}</span>
-                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">{{ $item->layanan->nama_layanan }}</h3>
-                <p class="text-xs text-[#3E382D] mt-1 mb-3">{{ $item->deskripsi }}</p>
+                data-role="{{ strtolower($item->nama_jenis ?? '') }}"
+                data-name="{{ strtolower($item->nama_layanan ?? '') }}"
+                data-desc="{{ strtolower($item->album_deskripsi ?? '') }}"
+                data-index="{{ $index }}">
+
+                <img src="{{ $item->cover_foto ? asset('storage/' . $item->cover_foto) : ($item->layanan_cover ? asset('storage/' . $item->layanan_cover) : asset('storage/default.jpg')) }}"
+                    class="rounded-lg mb-3 w-full h-56 object-cover"
+                    onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
+
+                <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                    {{ $item->nama_jenis }}
+                </span>
+
+                <h3 class="font-semibold text-sm text-[#3E382D] mt-2">
+                    {{ $item->nama_layanan }}
+                </h3>
+
+                <p class="text-xs text-[#3E382D] mt-1 mb-3">
+                    {{ $item->album_deskripsi }}
+                </p>
+
                 <div class="flex justify-end">
-                    <a href="{{ url('/gallery/' . $item->album_id) }}"
+                    <a href="{{ route('gallery.detail', $item->slug) }}"
                         class="bg-[#e9bcbc] hover:bg-[#dca9a9] text-white text-xs py-1 px-3 rounded">
                         View Detail
                     </a>

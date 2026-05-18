@@ -100,8 +100,8 @@ class EmployeeController extends Controller
                 'status_kerja'  => $item->status_kerja,
                 'today_status'  => $item->today_status,
                 'nama_cabang'   => $item->nama_cabang,
-                'total_clients' => $item->total_clients,
-                'total_services'=> $item->total_services,
+                'total_clients' => $item->role === 'admin' ? '-' : $item->total_clients,
+                'total_services'=> $item->role === 'admin' ? '-' : $item->total_services,
                 'since_joined'  => $item->since_joined,
             ];
         };
@@ -282,8 +282,8 @@ class EmployeeController extends Controller
                 'today_status'    => $item->today_status,
                 'nama_cabang'     => $item->nama_cabang,
                 'cabang_id'       => $item->cabang_id,
-                'total_clients'   => (int) $item->total_clients,
-                'total_services'  => (int) $item->total_services,
+                'total_clients' => $item->role === 'admin' ? '-' : (int) $item->total_clients,
+                'total_services' => $item->role === 'admin' ? '-' : (int) $item->total_services,
                 'since_joined'    => $item->since_joined,
                 'created_at_raw'  => $item->created_at,
                 'branches'        => $cabangList->mapWithKeys(function ($cabang) use ($item) {
