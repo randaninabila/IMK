@@ -34,12 +34,12 @@
             {{-- HEADER CALENDAR --}}
             <div class="flex items-center justify-between mb-8">
                 <h2 class="text-[24px] font-bold text-[#3B302D]">
-                    April 2026
+                    {{ $bulanLabel }} {{ $tahunKalender }}
                 </h2>
 
                 <div class="flex items-center gap-4 text-4xl text-[#3B302D]">
-                    <button>‹</button>
-                    <button>›</button>
+                    <a href="{{ route('pegawai.dashboard', ['bulan' => $bulanSebelumnya, 'tahun' => $tahunSebelumnya]) }}">‹</a>
+                    <a href="{{ route('pegawai.dashboard', ['bulan' => $bulanBerikutnya, 'tahun' => $tahunBerikutnya]) }}">›</a>
                 </div>
             </div>
 
@@ -55,74 +55,36 @@
             </div>
 
             {{-- DATE --}}
-            <div id="calendar"
-                class="grid grid-cols-7 gap-y-5">
+            <div id="calendar" class="grid grid-cols-7 gap-y-5">
 
-                @php
-                    $dates = [
-                        ['date' => 30, 'muted' => true],
-                        ['date' => 31, 'muted' => true],
-                        ['date' => 1, 'muted' => true],
-                        ['date' => 2, 'muted' => true],
-                        ['date' => 3, 'muted' => true],
-                        ['date' => 4, 'muted' => true],
-                        ['date' => 5, 'muted' => true],
-
-                        ['date' => 6],
-                        ['date' => 7],
-                        ['date' => 8],
-                        ['date' => 9],
-                        ['date' => 10],
-                        ['date' => 11],
-                        ['date' => 12],
-
-                        ['date' => 13],
-                        ['date' => 14],
-                        ['date' => 15],
-                        ['date' => 16],
-                        ['date' => 17],
-                        ['date' => 18],
-                        ['date' => 19],
-
-                        ['date' => 20],
-                        ['date' => 21],
-                        ['date' => 22],
-                        ['date' => 23],
-                        ['date' => 24],
-                        ['date' => 25],
-                        ['date' => 26],
-
-                        ['date' => 27],
-                        ['date' => 28],
-                        ['date' => 29],
-                        ['date' => 30],
-                        ['date' => 1, 'muted' => true],
-                        ['date' => 2, 'muted' => true],
-                    ];
-                @endphp
-
-                @foreach ($dates as $item)
-
+                @foreach ($kalender as $item)
                     <div class="flex items-center justify-center">
 
-                        <button
-                            class="calendar-date w-[54px] h-[54px] rounded-[14px]
-                            flex flex-col items-center justify-center
-                            transition-all duration-200
+                        @if ($item['muted'])
+                            <div class="w-[54px] h-[54px] rounded-[14px] flex flex-col items-center justify-center text-[#E7D4D4]">
+                                <span class="text-[17px] font-medium">{{ $item['date'] }}</span>
+                                <div class="w-1.5 h-1.5 mt-1"></div>
+                            </div>
+                        @else
+                            <a href="{{ route('pegawai.jadwal-kerja', ['tanggal' => $item['full_date']]) }}"
+                               class="calendar-date w-[54px] h-[54px] rounded-[14px]
+                                      flex flex-col items-center justify-center
+                                      transition-all duration-200 text-[#3B302D]
+                                      {{ $item['full_date'] === now()->toDateString() ? 'bg-[#FF6678] text-white shadow-md scale-105' : '' }}
+                                      hover:bg-[#FF6678] hover:text-white hover:shadow-md hover:scale-105">
 
-                            {{ isset($item['muted']) ? 'text-[#E7D4D4]' : 'text-[#3B302D]' }}"
-                        >
+                                <span class="text-[17px] font-medium">{{ $item['date'] }}</span>
 
-                            <span class="text-[17px] font-medium">
-                                {{ $item['date'] }}
-                            </span>
+                                {{-- Titik jika ada jadwal --}}
+                                <div class="w-1.5 h-1.5 rounded-full mt-1
+                                    {{ $item['has_jadwal'] ? 'bg-[#FF6678]' : 'invisible' }}
+                                    {{ $item['full_date'] === now()->toDateString() ? 'bg-white' : '' }}">
+                                </div>
 
-                            <div class="dot w-1.5 h-1.5 rounded-full bg-white mt-1 hidden"></div>
-
-                        </button>
+                            </a>
+                        @endif
 
                     </div>
-
                 @endforeach
 
             </div>
@@ -242,54 +204,6 @@
 
                 </div>
 
-                {{-- CARD 2 --}}
-                <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex gap-5">
-
-                    <div class="w-20 h-20 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[26px] font-semibold leading-none">25</span>
-                        <span class="text-[15px]">April</span>
-                    </div>
-
-                    <div>
-                        <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
-                            10:30-11:20
-                        </h3>
-
-                        <p class="text-[#B56B6B] text-[15px]">
-                            Totok Wajah
-                        </p>
-
-                        <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
-                            Mbak Putri
-                        </p>
-                    </div>
-
-                </div>
-
-                {{-- CARD 3 --}}
-                <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex gap-5">
-
-                    <div class="w-20 h-20 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[26px] font-semibold leading-none">25</span>
-                        <span class="text-[15px]">April</span>
-                    </div>
-
-                    <div>
-                        <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
-                            16:20-17:10
-                        </h3>
-
-                        <p class="text-[#B56B6B] text-[15px] ">
-                            Pewarnaan Rambut
-                        </p>
-
-                        <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
-                            Mbak Zulaeka
-                        </p>
-                    </div>
-
-                </div>
-
             </div>
 
         </div>
@@ -297,44 +211,5 @@
     </div>
 
 </div>
-
-{{-- SCRIPT ACTIVE CALENDAR --}}
-<script>
-
-    const dates = document.querySelectorAll('.calendar-date');
-
-    dates.forEach(date => {
-
-        date.addEventListener('click', () => {
-
-            // reset semua
-            dates.forEach(item => {
-
-                item.classList.remove(
-                    'bg-[#FF6678]',
-                    'text-white',
-                    'shadow-md',
-                    'scale-105'
-                );
-
-                item.querySelector('.dot').classList.add('hidden');
-
-            });
-
-            // active baru
-            date.classList.add(
-                'bg-[#FF6678]',
-                'text-white',
-                'shadow-md',
-                'scale-105'
-            );
-
-            date.querySelector('.dot').classList.remove('hidden');
-
-        });
-
-    });
-
-</script>
 
 @endsection

@@ -13,9 +13,9 @@
             </a>
 
             {{-- DASHBOARD --}}
-            <a href="{{ url('/udin') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('udin') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ route('pegawai.dashboard') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->routeIs('pegawai.dashboard*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Dashboard</span>
             </a>
 
@@ -27,9 +27,9 @@
             </a>
 
             {{-- JADWAL KERJA --}}
-            <a href="{{ url('/jkb') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('jkb') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ url('/pegawai/jadwal') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->is('pegawai/jadwal*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Jadwal Kerja</span>
             </a>
 

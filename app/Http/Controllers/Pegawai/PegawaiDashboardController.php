@@ -1,0 +1,143 @@
+<?php
+
+namespace App\Http\Controllers\Pegawai;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\JadwalPegawai;
+use Carbon\Carbon;
+
+class PegawaiDashboardController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+     
+    $pegawaiId = auth()->user()->pegawai->pegawai_id;
+
+    // Bulan & tahun yang ditampilkan (default: bulan ini)
+    $bulan = $request->get('bulan', now()->month);
+    $tahun = $request->get('tahun', now()->year);
+
+    $carbonBulan = Carbon::createFromDate($tahun, $bulan, 1);
+
+    // Ambil semua tanggal yang ada jadwal di bulan ini dari DB
+    $tanggalAdaJadwal = JadwalPegawai::where('pegawai_id', $pegawaiId)
+        ->whereYear('tanggal', $tahun)
+        ->whereMonth('tanggal', $bulan)
+        ->pluck('tanggal')
+        ->map(fn($t) => Carbon::parse($t)->toDateString())
+        ->unique()
+        ->toArray();
+
+    // Bangun array kalender
+    $kalender = [];
+
+    // Hari pertama bulan ini (0=Minggu, 1=Senin, dst)
+    // Kalender kita mulai dari Senin, jadi hitung offset
+    $hariPertama = $carbonBulan->copy()->startOfMonth();
+    $offsetAwal = ($hariPertama->dayOfWeek === 0) ? 6 : $hariPertama->dayOfWeek - 1;
+
+    // Isi tanggal dari bulan sebelumnya (muted)
+    $bulanSebelum = $carbonBulan->copy()->subMonth();
+    $hariAkhirBulanLalu = $bulanSebelum->daysInMonth;
+    for ($i = $offsetAwal - 1; $i >= 0; $i--) {
+        $kalender[] = [
+            'date'       => $hariAkhirBulanLalu - $i,
+            'muted'      => true,
+            'full_date'  => null,
+            'has_jadwal' => false,
+        ];
+    }
+
+    // Isi tanggal bulan ini
+    $hariDalamBulan = $carbonBulan->daysInMonth;
+    for ($d = 1; $d <= $hariDalamBulan; $d++) {
+        $fullDate = Carbon::createFromDate($tahun, $bulan, $d)->toDateString();
+        $kalender[] = [
+            'date'       => $d,
+            'muted'      => false,
+            'full_date'  => $fullDate,
+            'has_jadwal' => in_array($fullDate, $tanggalAdaJadwal),
+        ];
+    }
+
+    // Isi sisa kotak dengan bulan berikutnya (muted), sampai genap 7 kolom
+    $sisaKotak = count($kalender) % 7;
+    if ($sisaKotak !== 0) {
+        $sisaKotak = 7 - $sisaKotak;
+        for ($i = 1; $i <= $sisaKotak; $i++) {
+            $kalender[] = [
+                'date'       => $i,
+                'muted'      => true,
+                'full_date'  => null,
+                'has_jadwal' => false,
+            ];
+        }
+    }
+
+    // Navigasi bulan
+    $bulanBerikutnya  = $carbonBulan->copy()->addMonth();
+    $bulanSebelumnya  = $carbonBulan->copy()->subMonth();
+
+    return view('pegawai.dashboard', [
+        'kalender'        => $kalender,
+        'bulanLabel'      => $carbonBulan->translatedFormat('F'), // pakai locale ID jika diset
+        'tahunKalender'   => $tahun,
+        'bulanSebelumnya' => $bulanSebelumnya->month,
+        'tahunSebelumnya' => $bulanSebelumnya->year,
+        'bulanBerikutnya' => $bulanBerikutnya->month,
+        'tahunBerikutnya' => $bulanBerikutnya->year,
+    ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        //
+    }
+}

@@ -17,7 +17,8 @@ use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
 
-
+use App\Http\Controllers\Pegawai\PegawaiDashboardController;
+use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 // =====================
 // PUBLIC / USER
 // =====================
@@ -200,9 +201,8 @@ Route::middleware(['auth', 'role:pegawai'])
     ->name('pegawai.')
     ->group(function () {
 
-        Route::get('/dashboard', function () {
-            return view('pegawai.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
+        ->name('dashboard');
 
         Route::get('/history', function () {
             return view('pegawai.history.his1');
@@ -216,9 +216,8 @@ Route::middleware(['auth', 'role:pegawai'])
             return view('pegawai.profile.prof1');
         })->name('profile');
 
-        Route::get('/jadwal', function () {
-            return view('pegawai.jk.jkb');
-        })->name('jadwal');
+        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
+        ->name('jadwal-kerja');
 
         Route::get('/booking', function () {
             return view('pegawai.booking.book1');
