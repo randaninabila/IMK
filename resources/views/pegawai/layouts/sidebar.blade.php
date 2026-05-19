@@ -20,9 +20,9 @@
             </a>
 
             {{-- HISTORY --}}
-            <a href="{{ url('/his1') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('his1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ route('pegawai.history') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->routeIs('pegawai.history*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>History</span>
             </a>
 
@@ -34,16 +34,16 @@
             </a>
 
             {{-- BOOKING --}}
-            <a href="{{ url('/book1') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('book1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ route('pegawai.booking') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->routeIs('pegawai.booking*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Booking</span>
             </a>
 
             {{-- NOTIFIKASI --}}
-            <a href="{{ url('/not1') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('not1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ route('pegawai.notifikasi') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->routeIs('pegawai.notifikasi*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Notifikasi</span>
             </a>
 

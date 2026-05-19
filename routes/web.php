@@ -19,6 +19,8 @@ use App\Http\Controllers\User\LayananDetailController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
+use App\Http\Controllers\Pegawai\PBookingController;
+use App\Http\Controllers\NotifikasiController;
 // =====================
 // PUBLIC / USER
 // =====================
@@ -204,13 +206,13 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
         ->name('dashboard');
 
-        Route::get('/history', function () {
-            return view('pegawai.history.his1');
-        })->name('history');
+        Route::get('/pegawai/history', [PBookingController::class, 'history'])
+        ->name('history')
+        ->middleware('auth');
 
-        Route::get('/notification', function () {
-            return view('pegawai.notifikasi.not1');
-        })->name('notification');
+        // routes/web.php
+        Route::get('/notifikasi', [NotifikasiController::class, 'index'])
+        ->name('notifikasi');
 
         Route::get('/profile', function () {
             return view('pegawai.profile.prof1');
@@ -219,9 +221,9 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
         ->name('jadwal-kerja');
 
-        Route::get('/booking', function () {
-            return view('pegawai.booking.book1');
-        })->name('booking');
+        Route::get('/pegawai/booking', [PBookingController::class, 'index'])
+        ->name('booking');
+
 
     });
 

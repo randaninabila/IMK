@@ -14,4 +14,9 @@ class Layanan extends Model
     {
         return $this->hasMany(Album::class, 'layanan_id', 'layanan_id');
     }
+
+    public function jenisLayanan()
+    {
+        return $this->belongsTo(JenisLayanan::class, 'jenis_layanan_id');
+    }
 }

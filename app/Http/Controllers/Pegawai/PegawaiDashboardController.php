@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Pegawai;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\JadwalPegawai;
+use App\Models\Booking;
+use App\Models\Notifikasi;
 use Carbon\Carbon;
 
 class PegawaiDashboardController extends Controller
@@ -23,6 +25,7 @@ class PegawaiDashboardController extends Controller
 
     $carbonBulan = Carbon::createFromDate($tahun, $bulan, 1);
 
+    $today = now()->toDateString();
     // Ambil semua tanggal yang ada jadwal di bulan ini dari DB
     $tanggalAdaJadwal = JadwalPegawai::where('pegawai_id', $pegawaiId)
         ->whereYear('tanggal', $tahun)
@@ -82,17 +85,69 @@ class PegawaiDashboardController extends Controller
     $bulanBerikutnya  = $carbonBulan->copy()->addMonth();
     $bulanSebelumnya  = $carbonBulan->copy()->subMonth();
 
-    return view('pegawai.dashboard', [
-        'kalender'        => $kalender,
-        'bulanLabel'      => $carbonBulan->translatedFormat('F'), // pakai locale ID jika diset
-        'tahunKalender'   => $tahun,
-        'bulanSebelumnya' => $bulanSebelumnya->month,
-        'tahunSebelumnya' => $bulanSebelumnya->year,
-        'bulanBerikutnya' => $bulanBerikutnya->month,
-        'tahunBerikutnya' => $bulanBerikutnya->year,
-    ]);
-    }
+    // ── ONGOING ──────────────────────────────────────────────
+    $ongoing = Booking::with([
+                'bookingDetails.layananCabang.layanan.jenisLayanan',
+                'pelanggan.user',
+            ])
+            ->where('pegawai_id', $pegawaiId)
+            ->whereDate('tanggal_booking', $today)
+            ->whereIn('status', ['pending','completed','cancelled','confirmed'])
+            ->orderBy('jam_booking')
+            ->first();
 
+     // ── UPCOMING ──────────────────────────────────────────────
+        $upcoming = Booking::with([
+                'bookingDetails.layananCabang.layanan',
+                'pelanggan.user',
+            ])
+            ->where('pegawai_id', $pegawaiId)
+            ->whereDate('tanggal_booking', $today)
+            ->where('status', 'pending')
+            ->orderBy('jam_booking')
+            ->get();
+
+        // ── SUMMARY HARI INI ──────────────────────────────────────
+        $totalBooking   = Booking::where('pegawai_id', $pegawaiId)
+                            ->whereDate('tanggal_booking', $today)->count();
+        $totalSelesai   = Booking::where('pegawai_id', $pegawaiId)
+                            ->whereDate('tanggal_booking', $today)
+                            ->where('status', 'completed')->count();
+        $totalBerjalan  = Booking::where('pegawai_id', $pegawaiId)
+                            ->whereDate('tanggal_booking', $today)
+                            ->where('status', 'confirmed')->count();
+        $totalMenunggu  = Booking::where('pegawai_id', $pegawaiId)
+                            ->whereDate('tanggal_booking', $today)
+                            ->where('status', 'pending')->count();
+
+    // ── NOTIFIKASI ──────────────────────────────────────                      
+    $notifikasi = Notifikasi::where('user_id', auth()->id())
+    ->where('status_baca', false)
+    ->latest()
+    ->take(5)
+    ->get();
+
+        return view('pegawai.dashboard', [
+            // kalender
+            'kalender'        => $kalender,
+            'bulanLabel'      => $carbonBulan->locale('id')->translatedFormat('F'),
+            'tahunKalender'   => $tahun,
+            'bulanSebelumnya' => $bulanSebelumnya->month,
+            'tahunSebelumnya' => $bulanSebelumnya->year,
+            'bulanBerikutnya' => $bulanBerikutnya->month,
+            'tahunBerikutnya' => $bulanBerikutnya->year,
+            // booking
+            'ongoing'         => $ongoing,
+            'upcoming'        => $upcoming,
+            // summary
+            'totalBooking'    => $totalBooking,
+            'totalSelesai'    => $totalSelesai,
+            'totalBerjalan'   => $totalBerjalan,
+            'totalMenunggu'   => $totalMenunggu,
+            //notifikasi
+            'notifikasi'      => $notifikasi,
+        ]);
+    }
     /**
      * Show the form for creating a new resource.
      */

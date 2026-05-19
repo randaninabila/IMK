@@ -14,13 +14,13 @@
             </h1>
 
             <div class="mt-2 text-[#5B4D4D] text-[16px] flex gap-4 flex-wrap">
-                <span>Total Booking hari ini : 6 Booking</span>
+                <span>Total Booking hari ini : {{ $totalBooking }} Booking</span>
                 <span>|</span>
-                <span>2 Selesai</span>
+                <span>{{ $totalSelesai }} Selesai</span>
                 <span>|</span>
-                <span>1 Berjalan</span>
+                <span>{{ $totalBerjalan }} Berjalan</span>
                 <span>|</span>
-                <span>3 Menunggu</span>
+                <span>{{ $totalMenunggu }} Menunggu</span>
             </div>
 
             <p class="text-[#5B4D4D] text-[16px]">
@@ -100,115 +100,172 @@
 
             <div class="space-y-4">
 
-                <div class="bg-[#F5A6AF] text-white rounded-[22px] px-7 py-4 flex items-center gap-5 text-[17px] font-semibold shadow-sm">
-                    <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
-                    Customer sudah check-in
-                </div>
+    @forelse($notifikasi as $notif)
 
-                <div class="bg-[#F5A6AF] text-white rounded-[22px] px-7 py-4 flex items-center gap-5 text-[17px] font-semibold shadow-sm">
-                    <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
-                    Next Appointment in 1 Hour and 30 Minutes
-                </div>
+    <div class="bg-[#F5A6AF] text-white rounded-[22px] px-7 py-4 flex items-center gap-5 text-[17px] font-semibold shadow-sm">
 
-            </div>
+        <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
+
+        <div>
+            <p>{{ $notif->judul }}</p>
+
+            @if($notif->pesan)
+                <p class="text-[14px] font-normal text-white/90 mt-1">
+                    {{ $notif->pesan }}
+                </p>
+            @endif
+        </div>
+
+    </div>
+
+    @empty
+
+    <div class="bg-white border border-[#F1A9B1] rounded-[22px] px-7 py-6 text-center text-[#B7A4A4] text-[15px]">
+        Belum ada notifikasi.
+    </div>
+
+    @endforelse
+
+</div>
 
         </div>
 
     </div>
 
     {{-- RIGHT SIDE --}}
-    <div class="w-[360px] pt-17">
+<div class="w-[360px] pt-17">
 
-        {{-- ONGOING --}}
-        <div>
+    {{-- ONGOING --}}
+    <div>
 
-            <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
-                Ongoing
-            </h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
+            Ongoing
+        </h3>
 
-            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm">
+        @if ($ongoing)
+        @php
+            $jamMulai   = \Carbon\Carbon::parse($ongoing->jam_booking);
+            $totalDurasi = $ongoing->bookingDetails->sum(
+                fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
+            );
+            $jamSelesai = $jamMulai->copy()->addMinutes($totalDurasi);
+        @endphp
 
-                <div class="flex gap-5">
+        <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm">
 
-                    <div class="w-16 h-16 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[20px] font-semibold text-[#3B302D] leading-none">25</span>
-                        <span class="text-[12px] text-[#3B302D]">April</span>
-                    </div>
+            <div class="flex gap-5">
 
-                    <div>
-                        <h2 class="text-[17px] font-bold text-[#934A4A] leading-none">
-                            09:00-09:40
-                        </h2>
-
-                        <p class="text-[14px] text-[#B56B6B]">
-                            Gunting Rambut
-                        </p>
-
-                        <p class="text-[14px] text-[#934A4A] mt-2 font-medium">
-                            Mbak Andini | Langganan
-                        </p>
-                    </div>
-
+                {{-- DATE BUBBLE --}}
+                <div class="w-16 h-16 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
+                    <span class="text-[20px] font-semibold text-[#3B302D] leading-none">
+                        {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->format('d') }}
+                    </span>
+                    <span class="text-[12px] text-[#3B302D]">
+                        {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->locale('id')->translatedFormat('M') }}
+                    </span>
                 </div>
 
-                <div class="space-y-2 mt-6">
+                <div>
+                    <h2 class="text-[17px] font-bold text-[#934A4A] leading-none">
+                        {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
+                    </h2>
 
-                    <button class="w-full bg-[#F5A6AF] text-white rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
-                        Start Service
-                    </button>
+                    {{-- Layanan pertama --}}
+                    <p class="text-[14px] text-[#B56B6B]">
+                        {{ $ongoing->bookingDetails->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                    </p>
 
-                    <button class="w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#B7B1B1] text-[16px]">
-                        Mark as Done
-                    </button>
-
-                    <button class="w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#A05B5B] text-[16px]">
-                        View Detail
-                    </button>
-
+                    <p class="text-[14px] text-[#934A4A] mt-2 font-medium">
+                        {{ $ongoing->pelanggan?->user?->nama ?? '-' }}
+                    </p>
                 </div>
 
+            </div>
+
+            <div class="space-y-2 mt-6">
+                <button class="w-full bg-[#F5A6AF] text-white rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
+                    Start Service
+                </button>
+                <button class="w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#B7B1B1] text-[16px]">
+                    Mark as Done
+                </button>
+                <a href="{{ route('pegawai.booking') }}"
+                   class="block w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#A05B5B] text-[16px] text-center">
+                    View Detail
+                </a>
             </div>
 
         </div>
 
-        {{-- UPCOMING --}}
-        <div class="mt-8">
+        @else
 
-            <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
-                Upcoming Events
-            </h3>
+        <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm text-center text-[#C4AAAA] text-[15px] py-8">
+            Tidak ada booking berjalan.
+        </div>
 
-            <div class="space-y-5">
+        @endif
 
-                {{-- CARD 1 --}}
-                <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex gap-5">
+    </div>
 
-                    <div class="w-20 h-20 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
-                        <span class="text-[26px] font-semibold leading-none">25</span>
-                        <span class="text-[15px]">April</span>
-                    </div>
+    {{-- UPCOMING --}}
+    <div class="mt-8">
 
-                    <div>
-                        <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
-                            10:30-11:20
-                        </h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
+            Upcoming Events
+        </h3>
 
-                        <p class="text-[#B56B6B] text-[15px]">
-                            Totok Wajah
-                        </p>
+        <div class="space-y-5">
 
-                        <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
-                            Mbak Putri
-                        </p>
-                    </div>
+            @forelse ($upcoming as $booking)
+            @php
+                $jamMulaiUp   = \Carbon\Carbon::parse($booking->jam_booking);
+                $durasiUp     = $booking->bookingDetails->sum(
+                    fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
+                );
+                $jamSelesaiUp = $jamMulaiUp->copy()->addMinutes($durasiUp);
+            @endphp
 
+            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex gap-5">
+
+                {{-- DATE BUBBLE --}}
+                <div class="w-20 h-20 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
+                    <span class="text-[26px] font-semibold leading-none">
+                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->format('d') }}
+                    </span>
+                    <span class="text-[15px]">
+                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('M') }}
+                    </span>
+                </div>
+
+                <div>
+                    <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
+                        {{ $jamMulaiUp->format('H:i') }} – {{ $jamSelesaiUp->format('H:i') }}
+                    </h3>
+
+                    <p class="text-[#B56B6B] text-[15px]">
+                        {{ $booking->bookingDetails->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                    </p>
+
+                    <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
+                        {{ $booking->pelanggan?->user?->nama ?? '-' }}
+                    </p>
                 </div>
 
             </div>
+
+            @empty
+
+            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-6 text-center text-[#C4AAAA] text-[15px]">
+                Tidak ada upcoming booking hari ini.
+            </div>
+
+            @endforelse
 
         </div>
 
     </div>
+
+</div>
 
 </div>
 
