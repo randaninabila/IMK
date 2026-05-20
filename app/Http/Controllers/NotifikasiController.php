@@ -17,24 +17,40 @@ public function index(Request $request)
     $userId = auth()->id();
 
     $query = Notifikasi::where('user_id', $userId)
-                       ->orderBy('created_at', 'desc');
+        ->orderBy('created_at', 'desc');
 
     // Filter
     if ($filter === 'belum-dibaca') {
-        $query->where('status_baca', false);
+        $query->where('status_baca', 'belum');
     } elseif (in_array($filter, ['booking', 'jadwal', 'sistem'])) {
         $query->where('tipe', $filter);
     }
 
     $notifikasi = $query->get();
 
-    // Pisah belum dibaca & sebelumnya
-    $belumDibaca = $notifikasi->where('status_baca', false);
-    $sebelumnya  = $notifikasi->where('status_baca', true);
+    // Pisah notifikasi
+    $belumDibaca = $notifikasi->where('status_baca', 'belum');
 
-    return view('pegawai.notifikasi.not1', compact('belumDibaca', 'sebelumnya', 'filter'));
+    $sebelumnya = $notifikasi->where('status_baca', 'dibaca');
+
+    return view('pegawai.notifikasi.not1', compact(
+        'belumDibaca',
+        'sebelumnya',
+        'filter'
+    ));
 }
 
+public function markAsRead($id)
+{
+    $notif = Notifikasi::where('notifikasi_id', $id)
+        ->where('user_id', auth()->id())
+        ->firstOrFail();
+
+    $notif->status_baca = 'dibaca';
+    $notif->saveQuietly(); // tidak trigger timestamps
+
+    return back();
+}
     /**
      * Show the form for creating a new resource.
      */

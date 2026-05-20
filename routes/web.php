@@ -214,6 +214,13 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi');
 
+        Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
+        ->name('notifikasi.dibaca');
+
+        Route::get('/notifikasi/{id}/dibaca', function () {
+        return redirect()->route('pegawai.notifikasi');
+        });
+
         Route::get('/profile', function () {
             return view('pegawai.profile.prof1');
         })->name('profile');

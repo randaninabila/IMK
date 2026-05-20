@@ -107,13 +107,13 @@
         <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
 
         <div>
-            <p>{{ $notif->judul }}</p>
+            <p>{{ $notif->pesan }}</p>
 
-            @if($notif->pesan)
+            <!-- @if($notif->pesan)
                 <p class="text-[14px] font-normal text-white/90 mt-1">
                     {{ $notif->pesan }}
                 </p>
-            @endif
+            @endif -->
         </div>
 
     </div>

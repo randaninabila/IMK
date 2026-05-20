@@ -122,9 +122,9 @@ class PegawaiDashboardController extends Controller
 
     // ── NOTIFIKASI ──────────────────────────────────────                      
     $notifikasi = Notifikasi::where('user_id', auth()->id())
-    ->where('status_baca', false)
+    ->where('status_baca', 'belum')
     ->latest()
-    ->take(5)
+    ->take(3)
     ->get();
 
         return view('pegawai.dashboard', [

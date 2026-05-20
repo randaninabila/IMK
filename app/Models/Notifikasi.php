@@ -10,12 +10,13 @@ class Notifikasi extends Model
     protected $table      = 'notifikasi';
     protected $primaryKey = 'notifikasi_id';
 
+    public $timestamps = false;
+    
     protected $fillable = [
         'user_id', 'pesan', 'tipe', 'status_baca',
     ];
 
     protected $casts = [
-        'status_baca' => 'boolean',
         'created_at'  => 'datetime',
     ];
 
