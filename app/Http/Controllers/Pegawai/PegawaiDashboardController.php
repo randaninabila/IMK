@@ -87,7 +87,7 @@ class PegawaiDashboardController extends Controller
 
     // ── ONGOING ──────────────────────────────────────────────
     $ongoing = Booking::with([
-                'bookingDetails.layananCabang.layanan.jenisLayanan',
+                'details.layananCabang.layanan.jenisLayanan',
                 'pelanggan.user',
             ])
             ->where('pegawai_id', $pegawaiId)
@@ -98,7 +98,7 @@ class PegawaiDashboardController extends Controller
 
      // ── UPCOMING ──────────────────────────────────────────────
         $upcoming = Booking::with([
-                'bookingDetails.layananCabang.layanan',
+                'details.layananCabang.layanan',
                 'pelanggan.user',
             ])
             ->where('pegawai_id', $pegawaiId)

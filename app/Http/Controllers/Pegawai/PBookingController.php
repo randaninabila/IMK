@@ -17,7 +17,7 @@ class PBookingController extends Controller
 
     // Ongoing: confirmed = sedang dijadwalkan / berjalan hari ini
     $ongoing = Booking::with([
-            'bookingDetails.layananCabang.layanan.jenisLayanan',
+            'details.layananCabang.layanan.jenisLayanan',
             'pelanggan.user',
         ])
         ->where('pegawai_id', $pegawaiId)
@@ -28,7 +28,7 @@ class PBookingController extends Controller
 
     // Upcoming: pending = menunggu konfirmasi / belum mulai
     $upcoming = Booking::with([
-            'bookingDetails.layananCabang.layanan.jenisLayanan',
+            'details.layananCabang.layanan.jenisLayanan',
             'pelanggan.user',
         ])
         ->where('pegawai_id', $pegawaiId)
@@ -54,7 +54,7 @@ public function history(Request $request)
     */
 
     $query = Booking::with([
-            'bookingDetails.layananCabang.layanan',
+            'details.layananCabang.layanan',
             'pelanggan.user',
         ])
         ->where('pegawai_id', $pegawaiId)
@@ -97,7 +97,7 @@ public function history(Request $request)
 
             })
 
-            ->orWhereHas('bookingDetails.layananCabang.layanan', function ($q2) use ($search) {
+            ->orWhereHas('details.layananCabang.layanan', function ($q2) use ($search) {
 
                 $q2->where('nama_layanan', 'like', "%{$search}%");
 
@@ -141,7 +141,7 @@ public function history(Request $request)
     ->where('status', 'completed')
     ->sum(function ($b) {
 
-        return $b->bookingDetails->sum(function ($d) {
+        return $b->details->sum(function ($d) {
 
             return optional($d->layananCabang->layanan)->durasi ?? 0;
         });
@@ -156,7 +156,7 @@ public function history(Request $request)
         ->where('status', 'completed')
         ->sum(function ($b) {
 
-            return $b->bookingDetails->sum(function ($d) {
+            return $b->details->sum(function ($d) {
 
                 return optional($d->layananCabang)->harga ?? 0;
             });

@@ -1,7 +1,7 @@
 @php
     $pelanggan  = $booking->pelanggan;
     $user       = $pelanggan?->user;
-    $details    = $booking->bookingDetails;
+    $details    = $booking->details;
 
     $totalDurasi = $details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
     $jamMulai    = \Carbon\Carbon::parse($booking->jam_booking);

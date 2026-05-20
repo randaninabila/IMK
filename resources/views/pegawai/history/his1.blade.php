@@ -135,7 +135,7 @@
 
                 $foto = $booking->pelanggan->user->foto ?? null;
 
-                $layanan = $booking->bookingDetails
+                $layanan = $booking->details
                     ->map(fn($d) =>
                         optional(optional($d->layananCabang)->layanan)->nama_layanan
                     )
@@ -145,7 +145,7 @@
                 $jamMulai = Carbon\Carbon::parse($booking->jam_booking)
                     ->format('H.i');
 
-                $durasi = $booking->bookingDetails
+                $durasi = $booking->details
                     ->sum(fn($d) =>
                         optional(optional($d->layananCabang)->layanan)->durasi ?? 0
                     );

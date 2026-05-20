@@ -145,7 +145,7 @@
         @if ($ongoing)
         @php
             $jamMulai   = \Carbon\Carbon::parse($ongoing->jam_booking);
-            $totalDurasi = $ongoing->bookingDetails->sum(
+            $totalDurasi = $ongoing->details->sum(
                 fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
             );
             $jamSelesai = $jamMulai->copy()->addMinutes($totalDurasi);
@@ -172,7 +172,7 @@
 
                     {{-- Layanan pertama --}}
                     <p class="text-[14px] text-[#B56B6B]">
-                        {{ $ongoing->bookingDetails->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                        {{ $ongoing->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
                     </p>
 
                     <p class="text-[14px] text-[#934A4A] mt-2 font-medium">
@@ -219,7 +219,7 @@
             @forelse ($upcoming as $booking)
             @php
                 $jamMulaiUp   = \Carbon\Carbon::parse($booking->jam_booking);
-                $durasiUp     = $booking->bookingDetails->sum(
+                $durasiUp     = $booking->details->sum(
                     fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
                 );
                 $jamSelesaiUp = $jamMulaiUp->copy()->addMinutes($durasiUp);
@@ -243,7 +243,7 @@
                     </h3>
 
                     <p class="text-[#B56B6B] text-[15px]">
-                        {{ $booking->bookingDetails->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                        {{ $booking->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
                     </p>
 
                     <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
