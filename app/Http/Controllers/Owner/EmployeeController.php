@@ -414,7 +414,7 @@ class EmployeeController extends Controller
             $pegawai = DB::table('pegawai')->where('pegawai_id', $pegawai_id)->first();
             if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 
-            // Hanya update status_kerja di pegawai — TIDAK mengubah status_akun di users
+            // Hanya update status_kerja di pegawai — tidak mengubah status_akun di users
             DB::table('pegawai')->where('pegawai_id', $pegawai_id)->update(['status_kerja' => 'resign']);
 
             DB::commit();

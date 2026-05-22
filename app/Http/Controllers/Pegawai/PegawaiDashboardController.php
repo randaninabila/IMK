@@ -26,7 +26,7 @@ class PegawaiDashboardController extends Controller
     $carbonBulan = Carbon::createFromDate($tahun, $bulan, 1);
 
     $today = now()->toDateString();
-    // Ambil semua tanggal yang ada jadwal di bulan ini dari DB
+    // Ambil semua tanggal yang ada jadwal di bulan ini
     $tanggalAdaJadwal = JadwalPegawai::where('pegawai_id', $pegawaiId)
         ->whereYear('tanggal', $tahun)
         ->whereMonth('tanggal', $bulan)
@@ -38,7 +38,6 @@ class PegawaiDashboardController extends Controller
     // Bangun array kalender
     $kalender = [];
 
-    // Hari pertama bulan ini (0=Minggu, 1=Senin, dst)
     // Kalender kita mulai dari Senin, jadi hitung offset
     $hariPertama = $carbonBulan->copy()->startOfMonth();
     $offsetAwal = ($hariPertama->dayOfWeek === 0) ? 6 : $hariPertama->dayOfWeek - 1;

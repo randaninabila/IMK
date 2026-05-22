@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -52,7 +53,7 @@ class ProfileController extends Controller
             return $booking;
         });
 
-        return view('user.profile', compact('user', 'pelanggan', 'bookings'));
+        return view('user.profile.profile', compact('user', 'pelanggan', 'bookings'));
     }
 
     // ========================
@@ -65,38 +66,88 @@ class ProfileController extends Controller
             'no_hp'         => 'nullable|string|max:20',
             'alamat'        => 'nullable|string',
             'tanggal_lahir' => 'nullable|date',
+            'foto_profile'  => 'nullable|image|max:2048',
         ]);
 
         $user = Auth::user();
 
-        // Update tabel users
-        DB::table('users')
+        // Default foto lama
+        $path = $user->foto_profile;
+
+        // Upload foto baru
+        if ($request->hasFile('foto_profile')) {
+
+            $path = $request->file('foto_profile')
+                ->store('profile', 'public');
+
+            // Hapus foto lama
+            if (
+                $user->foto_profile &&
+                Storage::disk('public')->exists($user->foto_profile)
+            ) {
+                Storage::disk('public')
+                    ->delete($user->foto_profile);
+            }
+        }
+
+        // Update users
+        $userUpdated = DB::table('users')
             ->where('user_id', $user->user_id)
             ->update([
-                'nama'       => $request->nama,
-                'no_hp'      => $request->no_hp,
-                'updated_at' => now(),
+                'nama'         => $request->nama,
+                'no_hp'        => $request->no_hp,
+                'foto_profile' => $path,
+                'updated_at'   => now(),
             ]);
 
-        // Update atau insert tabel pelanggan
-        $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
+        // cek pelanggan
+        // cek pelanggan
+        $pelanggan = DB::table('pelanggan')
+            ->where('user_id', $user->user_id)
+            ->first();
+
+        $pelangganUpdated = 0;
 
         if ($pelanggan) {
-            DB::table('pelanggan')
+
+            $pelangganUpdated = DB::table('pelanggan')
                 ->where('user_id', $user->user_id)
                 ->update([
                     'alamat'        => $request->alamat,
                     'tanggal_lahir' => $request->tanggal_lahir,
                 ]);
+
         } else {
-            DB::table('pelanggan')->insert([
-                'user_id'       => $user->user_id,
-                'alamat'        => $request->alamat,
-                'tanggal_lahir' => $request->tanggal_lahir,
-            ]);
+
+            DB::table('pelanggan')
+                ->insert([
+                    'user_id'       => $user->user_id,
+                    'alamat'        => $request->alamat,
+                    'tanggal_lahir' => $request->tanggal_lahir,
+                    // 'created_at'    => now(),
+                    // 'updated_at'    => now(),
+                    
+                ]);
+
+            $pelangganUpdated = 1;
         }
 
-        return back()->with('success', 'Profile berhasil diperbarui.');
+        if (
+            $userUpdated ||
+            $pelangganUpdated ||
+            $request->hasFile('foto_profile')
+        ) {
+
+            return back()->with(
+                'success',
+                'Profile berhasil diperbarui.'
+            );
+        }
+
+        return back()->with(
+            'error',
+            'Tidak ada data yang diubah.'
+        );
     }
 
     // ========================
@@ -106,13 +157,41 @@ class ProfileController extends Controller
     {
         $request->validate([
             'password_lama' => 'required',
-            'password_baru' => 'required|min:6|confirmed',
+
+            'password_baru' => [
+                'required',
+                'min:6',
+                'different:password_lama',
+                'confirmed'
+            ],
+        ], [
+            'password_baru.different' =>
+                'Password baru tidak boleh sama dengan password lama.',
+
+            'password_baru.confirmed' =>
+                'Konfirmasi password baru tidak cocok.',
+
+            'password_baru.min' =>
+                'Password baru minimal 6 karakter.',
         ]);
 
         $user = Auth::user();
 
-        if (!Hash::check($request->password_lama, $user->password)) {
+        $passwordValid = Hash::check($request->password_lama, $user->password)
+            || hash('sha256', $request->password_lama) === $user->password;
+
+        if (!$passwordValid) {
             return back()->withErrors(['password_lama' => 'Password lama tidak sesuai.'])->withFragment('password');
+        }
+
+        if ($request->password_lama === $request->password_baru) {
+
+            return back()
+                ->withErrors([
+                    'password_baru' =>
+                        'Password baru tidak boleh sama dengan password lama.'
+                ])
+                ->withFragment('password');
         }
 
         DB::table('users')

@@ -1,51 +1,133 @@
-@extends('user.app')
+@extends(
+    auth()->user()->role === 'owner'
+        ? 'owner.app'
+        : 'user.app'
+)
 
 @section('content')
 
 <div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white pt-28 pb-16 px-4">
     <div class="max-w-4xl mx-auto">
 
-        {{-- ALERT SUCCESS --}}
-        @if(session('success'))
-        <div class="mb-6 bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-            {{ session('success') }}
-        </div>
-        @endif
+    <form action="{{ route('profile.update') }}"
+      method="POST"
+      enctype="multipart/form-data">
 
-        @if(session('success_password'))
-        <div class="mb-6 bg-green-50 border border-green-300 text-green-700 px-4 py-3 rounded-lg text-sm">
-            {{ session('success_password') }}
-        </div>
-        @endif
+    @csrf
+    @method('PUT')
 
         {{-- HEADER PROFILE --}}
         <div class="flex items-center gap-6 mb-10">
-            <img src="https://ui-avatars.com/api/?name={{ urlencode($user->nama) }}&background=FFE4E6&color=3E382D&size=120"
-                 class="w-20 h-20 rounded-full border-4 border-pink-200 object-cover"
-                 alt="{{ $user->nama }}">
+
+            {{-- FOTO --}}
+            <label
+                for="foto_profile"
+                class="relative group cursor-pointer shrink-0"
+            >
+
+                <img
+                    id="preview-foto"
+                    src="{{ $user->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=FFE4E6&color=3E382D&size=120' }}"
+                    class="
+                        w-24 h-24
+                        rounded-full
+                        border-4 border-pink-200
+                        object-cover
+                        shadow-md
+                        transition
+                        group-hover:brightness-75
+                    "
+                    alt="{{ $user->nama }}"
+                >
+
+                {{-- OVERLAY --}}
+                <div class="
+                    absolute inset-0
+                    rounded-full
+                    bg-black/40
+                    flex items-center justify-center
+                    opacity-0
+                    group-hover:opacity-100
+                    transition
+                ">
+
+                    <span class="
+                        text-white
+                        text-[11px]
+                        font-medium
+                    ">
+                        Edit Profile
+                    </span>
+
+                </div>
+
+            </label>
+
+            {{-- HIDDEN INPUT --}}
+            <input
+                type="file"
+                id="foto_profile"
+                name="foto_profile"
+                accept="image/*"
+                class="hidden"
+            >
+
+            {{-- INFO --}}
             <div>
-                <h1 class="text-3xl font-bold text-[#3E382D]">{{ $user->nama }}</h1>
-                <p class="text-gray-500 text-sm mt-1">{{ $user->email }}</p>
-                <span class="inline-block mt-2 text-[10px] uppercase bg-rose-100 text-rose-600 px-2 py-1 rounded-full font-bold">
+
+                <h1 class="
+                    text-3xl
+                    font-bold
+                    text-[#3E382D]
+                ">
+                    {{ $user->nama }}
+                </h1>
+
+                <p class="
+                    text-gray-500
+                    text-sm
+                    mt-1
+                ">
+                    {{ $user->email }}
+                </p>
+
+                <span class="
+                    inline-block mt-2
+                    text-[10px]
+                    uppercase
+                    bg-rose-100
+                    text-rose-600
+                    px-2 py-1
+                    rounded-full
+                    font-bold
+                ">
                     {{ $user->role }}
                 </span>
+
             </div>
+
         </div>
 
         {{-- TAB NAVIGATION --}}
         <div class="flex gap-2 border-b border-gray-200 mb-8" id="tabNav">
-            <button onclick="switchTab('profile')" id="tab-profile"
+
+            <button type="button" onclick="switchTab('profile')" id="tab-profile"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-[#3E382D] text-[#3E382D] transition">
                 Data Diri
             </button>
-            <button onclick="switchTab('booking')" id="tab-booking"
+
+            @if($user->role === 'pelanggan')
+            <button type="button" onclick="switchTab('booking')" id="tab-booking"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
                 Riwayat Booking
             </button>
-            <button onclick="switchTab('password')" id="tab-password"
+            @endif
+
+            <button type="button" onclick="switchTab('password')" id="tab-password"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
                 Ganti Password
             </button>
+
         </div>
 
         {{-- ================================
@@ -54,10 +136,6 @@
         <div id="tab-content-profile">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <h2 class="text-lg font-bold text-[#3E382D] mb-6">Edit Data Diri</h2>
-
-                <form action="{{ route('profile.update') }}" method="POST">
-                    @csrf
-                    @method('PUT')
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -111,13 +189,13 @@
                             Simpan Perubahan
                         </button>
                     </div>
-                </form>
             </div>
         </div>
-
+    </form>
         {{-- ================================
              TAB 2: RIWAYAT BOOKING
         ================================ --}}
+        @if($user->role === 'pelanggan')
         <div id="tab-content-booking" class="hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
                 <h2 class="text-lg font-bold text-[#3E382D] mb-6">Riwayat Booking</h2>
@@ -177,6 +255,7 @@
                 @endif
             </div>
         </div>
+        @endif
 
         {{-- ================================
              TAB 3: GANTI PASSWORD
@@ -234,27 +313,85 @@
 </div>
 
 <script>
+
 function switchTab(tab) {
-    // Sembunyikan semua konten
+
     ['profile', 'booking', 'password'].forEach(t => {
-        document.getElementById('tab-content-' + t).classList.add('hidden');
-        const btn = document.getElementById('tab-' + t);
-        btn.classList.remove('border-[#3E382D]', 'text-[#3E382D]');
-        btn.classList.add('border-transparent', 'text-gray-400');
+
+        const content =
+            document.getElementById('tab-content-' + t);
+
+        const btn =
+            document.getElementById('tab-' + t);
+
+        if(content) {
+            content.classList.add('hidden');
+        }
+
+        if(btn) {
+
+            btn.classList.remove(
+                'border-[#3E382D]',
+                'text-[#3E382D]'
+            );
+
+            btn.classList.add(
+                'border-transparent',
+                'text-gray-400'
+            );
+        }
     });
 
-    // Tampilkan tab yang dipilih
-    document.getElementById('tab-content-' + tab).classList.remove('hidden');
-    const activeBtn = document.getElementById('tab-' + tab);
-    activeBtn.classList.add('border-[#3E382D]', 'text-[#3E382D]');
-    activeBtn.classList.remove('border-transparent', 'text-gray-400');
+    const activeContent =
+        document.getElementById('tab-content-' + tab);
+
+    const activeBtn =
+        document.getElementById('tab-' + tab);
+
+    if(activeContent) {
+        activeContent.classList.remove('hidden');
+    }
+
+    if(activeBtn) {
+
+        activeBtn.classList.add(
+            'border-[#3E382D]',
+            'text-[#3E382D]'
+        );
+
+        activeBtn.classList.remove(
+            'border-transparent',
+            'text-gray-400'
+        );
+    }
 }
 
-// Buka tab password otomatis jika ada error password
-@if(session('success_password') || $errors->has('password_lama') || $errors->has('password_baru'))
+// Auto open password tab
+window.addEventListener('DOMContentLoaded', () => {
+
+    if (window.location.hash === '#password') {
+        switchTab('password');
+    }
+
+});
+
+document.getElementById('foto_profile')
+?.addEventListener('change', function(e) {
+
+    const file = e.target.files[0];
+
+    if(file) {
+
+        document.getElementById('preview-foto')
+            .src = URL.createObjectURL(file);
+    }
+});
+
+@if(
+    $errors->has('password_lama') ||
+    $errors->has('password_baru')
+)
     switchTab('password');
-@elseif(session('success'))
-    switchTab('profile');
 @endif
 </script>
 
