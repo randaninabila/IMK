@@ -16,12 +16,14 @@ use App\Http\Controllers\User\GalleryController;
 use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
+use App\Http\Controllers\User\ProfileController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 use App\Http\Controllers\Pegawai\PBookingController;
 use App\Http\Controllers\Pegawai\ProfileController;
 use App\Http\Controllers\NotifikasiController;
+
 // =====================
 // PUBLIC / USER
 // =====================
@@ -253,3 +255,10 @@ Route::middleware(['auth', 'role:pelanggan'])
         })->name('bookings');
 
     });
+
+// =====================
+// PROFILE
+// =====================
+Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
