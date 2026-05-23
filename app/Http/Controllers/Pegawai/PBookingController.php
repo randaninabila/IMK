@@ -40,11 +40,10 @@ class PBookingController extends Controller
         ->limit(3)  // ← Hanya 3 terdekat
         ->get();
 
-
         return view('pegawai.booking.book1', compact('ongoing', 'upcoming'));
     }
 
-    public function history(Request $request)
+     public function history(Request $request)
 {
     $pegawaiId = auth()->user()->pegawai->pegawai_id;
 

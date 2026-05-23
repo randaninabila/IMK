@@ -221,7 +221,7 @@ Route::middleware(['auth', 'role:pegawai'])
         ->name('notifikasi.dibaca');
 
         Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
-        
+
         Route::get('/notifikasi/{id}/dibaca', function () {
         return redirect()->route('pegawai.notifikasi');
         });
@@ -236,8 +236,11 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/pegawai/booking', [PBookingController::class, 'index'])
         ->name('booking');
 
-        Route::post('/booking/{booking}/update-status', [PBookingController::class, 'updateStatus'])
-        ->name('booking.updateStatus');
+        // routes/web.php
+// Ganti Route::post menjadi Route::match agar terima POST & PATCH
+Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
+    PBookingController::class, 'updateStatus'
+])->name('booking.updateStatus');
     });
 
 // =====================

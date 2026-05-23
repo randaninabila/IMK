@@ -90,6 +90,7 @@ class PegawaiDashboardController extends Controller
     ->where('status', 'ongoing')
     ->orderBy('jam_booking')
     ->first();
+    
 
     // Upcoming: confirmed = telah ditugaskan, masuk jadwal pegawai, belum mulai
     $upcoming = Booking::with([
@@ -103,7 +104,7 @@ class PegawaiDashboardController extends Controller
         ->orderBy('jam_booking', 'asc')
         ->limit(3)  // ← Hanya 3 terdekat
         ->get();
-        
+
         // ── SUMMARY HARI INI ──────────────────────────────────────
         $totalBooking   = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)->count();
