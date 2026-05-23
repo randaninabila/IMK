@@ -31,10 +31,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'password' => 'hashed',
-    ];
-
 
     // =========================
     // RELATIONS
