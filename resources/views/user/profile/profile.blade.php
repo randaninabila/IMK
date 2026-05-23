@@ -17,60 +17,196 @@
     @method('PUT')
 
         {{-- HEADER PROFILE --}}
-        <div class="flex items-center gap-6 mb-10">
+        <div class="flex items-center gap-8 mb-10">
 
-            {{-- FOTO --}}
-            <label
-                for="foto_profile"
-                class="relative group cursor-pointer shrink-0"
-            >
+            {{-- FOTO AREA --}}
+            <div class="relative shrink-0" x-data="{ open:false }">
 
-                <img
-                    id="preview-foto"
-                    src="{{ $user->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=FFE4E6&color=3E382D&size=120' }}"
+                {{-- FOTO --}}
+                <button
+                    type="button"
+                    @click="open = !open"
+
                     class="
-                        w-24 h-24
-                        rounded-full
-                        border-4 border-pink-200
-                        object-cover
-                        shadow-md
-                        transition
-                        group-hover:brightness-75
+                        relative
+                        group
+                        cursor-pointer
                     "
-                    alt="{{ $user->nama }}"
                 >
 
-                {{-- OVERLAY --}}
-                <div class="
-                    absolute inset-0
-                    rounded-full
-                    bg-black/40
-                    flex items-center justify-center
-                    opacity-0
-                    group-hover:opacity-100
-                    transition
-                ">
+                    <img
+                        id="preview-foto"
+                        src="{{ $user->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($user->nama) . '&background=FFE4E6&color=3E382D&size=120' }}"
+                        class="
+                            w-24 h-24
+                            rounded-full
+                            border-4 border-pink-200
+                            object-cover
+                            shadow-md
+                            transition
+                            group-hover:brightness-75
+                        "
+                        alt="{{ $user->nama }}"
+                    >
 
-                    <span class="
-                        text-white
-                        text-[11px]
-                        font-medium
+                    {{-- OVERLAY --}}
+                    <div class="
+                        absolute inset-0
+                        rounded-full
+                        bg-black/40
+                        flex items-center justify-center
+                        opacity-0
+                        group-hover:opacity-100
+                        transition
                     ">
-                        Edit Profile
-                    </span>
+
+                        <span class="
+                            text-white
+                            text-[11px]
+                            font-medium
+                        ">
+                            Edit Profile
+                        </span>
+
+                    </div>
+
+                </button>
+
+                {{-- GALERI --}}
+                <input
+                    type="file"
+                    id="foto_profile"
+                    name="foto_profile"
+                    accept="image/*"
+                    class="hidden"
+                >
+
+                {{-- CAMERA --}}
+                <input
+                    type="file"
+                    id="camera_profile"
+                    name="camera_profile"
+                    accept="image/*"
+                    capture="user"
+                    class="hidden"
+                >
+
+                <input
+                    type="hidden"
+                    id="hapus_foto"
+                    name="hapus_foto"
+                    value="0"
+                >
+
+                    {{-- FLOATING MENU --}}
+                    <div
+                        x-show="open"
+                        @click.outside="open = false"
+                        x-transition
+
+                        class="
+                            absolute left-1/2 -translate-x-1/2 top-28
+                            w-40
+                            bg-white/95
+                            backdrop-blur-md
+                            rounded-2xl
+                            shadow-xl
+                            border border-[#F3E3E3]
+                            p-1
+                            z-50
+                            space-y-0
+                        "
+                    >
+
+                    {{-- CAMERA --}}
+                    <button
+                        type="button"
+                        @click="open = false; document.getElementById('camera_profile').click();"
+
+                        class="
+                            w-full
+                            flex items-center gap-1.5
+                            px-2 py-1.5
+                            rounded-xl
+                            hover:bg-[#FFF4F4]
+                            text-[13px]
+                            text-[#3E382D]
+                            transition
+                            leading-none
+                        "
+                    >
+
+                        <span class="text-[13px]">
+                            📷
+                        </span>
+
+                        <span>
+                            Ambil Foto
+                        </span>
+
+                    </button>
+
+                    {{-- GALERI --}}
+                    <button
+                        type="button"
+                        @click="open = false; document.getElementById('foto_profile').click();"
+
+                        class="
+                            w-full
+                            flex items-center gap-1.5
+                            px-2 py-1.5
+                            rounded-xl
+                            hover:bg-[#FFF4F4]
+                            text-[13px]
+                            text-[#3E382D]
+                            transition
+                            leading-none
+                        "
+                    >
+
+                        <span class="text-[13px]">
+                            🖼️
+                        </span>
+
+                        <span>
+                            Pilih Galeri
+                        </span>
+
+                    </button>
+                    
+                    {{-- HAPUS --}}
+                    @if($user->foto_profile)
+                    <button
+                        type="button"
+                        @click="open = false; hapusFotoProfile();"
+
+                        class="
+                            w-full
+                            flex items-center gap-1.5
+                            px-2 py-1.5
+                            rounded-xl
+                            hover:bg-red-50
+                            text-[13px]
+                            text-red-500
+                            transition
+                            leading-none
+                        "
+                    >
+
+                        <span class="text-[13px]">
+                            🗑️
+                        </span>
+
+                        <span>
+                            Hapus Foto
+                        </span>
+
+                    </button>
+                    @endif
 
                 </div>
+            </div>
 
-            </label>
-
-            {{-- HIDDEN INPUT --}}
-            <input
-                type="file"
-                id="foto_profile"
-                name="foto_profile"
-                accept="image/*"
-                class="hidden"
-            >
 
             {{-- INFO --}}
             <div>
@@ -313,7 +449,6 @@
 </div>
 
 <script>
-
 function switchTab(tab) {
 
     ['profile', 'booking', 'password'].forEach(t => {
@@ -375,17 +510,35 @@ window.addEventListener('DOMContentLoaded', () => {
 
 });
 
-document.getElementById('foto_profile')
-?.addEventListener('change', function(e) {
+['foto_profile', 'camera_profile']
+.forEach(id => {
 
-    const file = e.target.files[0];
+    document.getElementById(id)
+    ?.addEventListener('change', function(e) {
 
-    if(file) {
+        const file = e.target.files[0];
 
-        document.getElementById('preview-foto')
-            .src = URL.createObjectURL(file);
-    }
+        if(file) {
+
+            document.getElementById('hapus_foto')
+                .value = '0';
+
+            document.getElementById('preview-foto')
+                .src = URL.createObjectURL(file);
+        }
+    });
+
 });
+
+function hapusFotoProfile() {
+
+    document.getElementById('preview-foto')
+        .src =
+        'https://ui-avatars.com/api/?name={{ urlencode($user->nama) }}&background=FFE4E6&color=3E382D&size=120';
+
+    document.getElementById('hapus_foto')
+        .value = '1';
+}
 
 @if(
     $errors->has('password_lama') ||

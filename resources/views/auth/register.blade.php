@@ -207,12 +207,12 @@
                             <i data-feather="user" class="w-4 h-4"></i>
                         </span>
                         <input
-                            id="name"
-                            name="name"
+                            id="nama"
+                            name="nama"
                             type="text"
-                            value="{{ old('name') }}"
+                            value="{{ old('nama') }}"
                             placeholder="Masukkan nama lengkap Anda"
-                            autocomplete="name"
+                            autocomplete="nama"
                             class="form-input w-full pl-11 pr-4 py-3 rounded-xl
                                 border border-[#3D352F]/50
                                 bg-white/40 backdrop-blur-md
@@ -264,8 +264,8 @@
                             <i data-feather="phone" class="w-4 h-4"></i>
                         </span>
                         <input
-                            id="phone"
-                            name="phone"
+                            id="no_hp"
+                            name="no_hp"
                             type="tel"
                             value="{{ old('phone') }}"
                             placeholder="08xxxxxxxxxx"
@@ -436,7 +436,6 @@
                     <button
                         type="submit"
                         id="submitBtn"
-                        onclick="return validateStep2()"
                         class="flex-1 py-3.5 rounded-2xl text-white text-base font-semibold
                             bg-gradient-to-r from-[#3d352f] to-[#6b5b4d]
                             hover:scale-[1.02] active:scale-[0.98] transition duration-300
@@ -461,6 +460,11 @@
     // ========================
     function goToStep2() {
         if (!validateStep1()) return;
+
+        // Reset submit button state
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = false;
+        btn.innerHTML = `<i data-feather="user-check" class="w-5 h-5"></i> Buat Akun`;
 
         const s1 = document.getElementById('step1');
         const s2 = document.getElementById('step2');
@@ -504,16 +508,16 @@
     function validateStep1() {
         let valid = true;
 
-        const name = document.getElementById('name').value.trim();
+        const nama = document.getElementById('nama').value.trim();
         const email = document.getElementById('email').value.trim();
         const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
         // Name
-        if (!name) {
-            showError('nameError', 'name');
+        if (!nama) {
+            showError('nameError', 'nama');
             valid = false;
         } else {
-            hideError('nameError', 'name');
+            hideError('nameError', 'nama');
         }
 
         // Email
@@ -559,17 +563,7 @@
             hideError('agreeError', null);
         }
 
-        if (!valid) return false;
-
-        // Show loading state
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.innerHTML = `<svg class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg> Memproses...`;
-
-        return true;
+        return valid;
     }
 
     // ========================
@@ -688,13 +682,13 @@
     // ========================
     // ENTER KEY NAVIGATION
     // ========================
-    document.getElementById('name').addEventListener('keydown', e => {
+    document.getElementById('nama').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); document.getElementById('email').focus(); }
     });
     document.getElementById('email').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('phone').focus(); }
+        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('no_hp').focus(); }
     });
-    document.getElementById('phone').addEventListener('keydown', e => {
+    document.getElementById('no_hp').addEventListener('keydown', e => {
         if (e.key === 'Enter') { e.preventDefault(); goToStep2(); }
     });
     document.getElementById('password').addEventListener('keydown', e => {
@@ -938,6 +932,19 @@
             closeModal('modalTerms');
             closeModal('modalPrivacy');
         }
+    });
+
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        if (!validateStep2()) {
+            e.preventDefault();
+            return;
+        }
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg> Memproses...`;
     });
 </script>
 

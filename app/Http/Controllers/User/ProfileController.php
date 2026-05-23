@@ -72,15 +72,34 @@ class ProfileController extends Controller
         $user = Auth::user();
 
         // Default foto lama
-        $path = $user->foto_profile;
+        $path = $user->foto_profile ?? null;
+
+        // Hapus foto
+        if ($request->hapus_foto) {
+
+            if (
+                $user->foto_profile &&
+                Storage::disk('public')->exists($user->foto_profile)
+            ) {
+
+                Storage::disk('public')
+                    ->delete($user->foto_profile);
+            }
+
+            $path = null;
+        }
 
         // Upload foto baru
-        if ($request->hasFile('foto_profile')) {
+        elseif (
+            $request->hasFile('foto_profile') ||
+            $request->hasFile('camera_profile')
+        ) {
 
-            $path = $request->file('foto_profile')
-                ->store('profile', 'public');
+            $file = $request->file('foto_profile')
+                ?? $request->file('camera_profile');
 
-            // Hapus foto lama
+            $path = $file->store('profile', 'public');
+
             if (
                 $user->foto_profile &&
                 Storage::disk('public')->exists($user->foto_profile)
@@ -100,7 +119,10 @@ class ProfileController extends Controller
                 'updated_at'   => now(),
             ]);
 
-        // cek pelanggan
+        Auth::setUser(
+            \App\Models\User::find($user->user_id)
+        );
+
         // cek pelanggan
         $pelanggan = DB::table('pelanggan')
             ->where('user_id', $user->user_id)
