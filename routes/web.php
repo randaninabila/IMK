@@ -20,6 +20,7 @@ use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 use App\Http\Controllers\Pegawai\PBookingController;
+use App\Http\Controllers\Pegawai\ProfileController;
 use App\Http\Controllers\NotifikasiController;
 // =====================
 // PUBLIC / USER
@@ -221,9 +222,9 @@ Route::middleware(['auth', 'role:pegawai'])
         return redirect()->route('pegawai.notifikasi');
         });
 
-        Route::get('/profile', function () {
-            return view('pegawai.profile.prof1');
-        })->name('profile');
+        Route::get('/pegawai/profile', [ProfileController::class, 'index'])->name('profile');
+        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
         ->name('jadwal-kerja');

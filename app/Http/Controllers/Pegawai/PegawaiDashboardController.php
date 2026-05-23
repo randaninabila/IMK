@@ -85,28 +85,27 @@ class PegawaiDashboardController extends Controller
     $bulanBerikutnya  = $carbonBulan->copy()->addMonth();
     $bulanSebelumnya  = $carbonBulan->copy()->subMonth();
 
-    // ── ONGOING ──────────────────────────────────────────────
-    $ongoing = Booking::with([
-                'details.layananCabang.layanan.jenisLayanan',
-                'pelanggan.user',
-            ])
-            ->where('pegawai_id', $pegawaiId)
-            ->whereDate('tanggal_booking', $today)
-            ->whereIn('status', ['pending','completed','cancelled','confirmed'])
-            ->orderBy('jam_booking')
-            ->first();
+    // Ongoing: confirmed = sedang dijadwalkan / berjalan hari ini
+    $ongoing = Booking::where('pegawai_id', $pegawaiId)
+    ->whereDate('tanggal_booking', $today)
+    ->where('status', 'confirmed')
+    ->orderBy('jam_booking')
+    ->first();
 
-     // ── UPCOMING ──────────────────────────────────────────────
-        $upcoming = Booking::with([
-                'details.layananCabang.layanan',
-                'pelanggan.user',
-            ])
-            ->where('pegawai_id', $pegawaiId)
-            ->whereDate('tanggal_booking', $today)
-            ->where('status', 'pending')
-            ->orderBy('jam_booking')
-            ->get();
-
+    // Upcoming: pending = menunggu konfirmasi / belum mulai
+    $upcoming = Booking::with([
+        'details.layananCabang.layanan.jenisLayanan',
+        'pelanggan.user',
+    ])
+    ->where('pegawai_id', $pegawaiId)
+    ->whereDate('tanggal_booking', '>=', $today)
+    ->whereIn('status', ['pending', 'confirmed']) // optional kalau mau lebih realistis
+    ->when($ongoing, function ($q) use ($ongoing) {
+        $q->where('booking_id', '!=', $ongoing->booking_id);
+    })
+    ->orderBy('tanggal_booking') // 🔥 penting
+    ->orderBy('jam_booking')
+    ->get();
         // ── SUMMARY HARI INI ──────────────────────────────────────
         $totalBooking   = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)->count();

@@ -6,9 +6,9 @@
         <div class="space-y-1">
 
             {{-- PROFILE --}}
-            <a href="{{ url('/prof1') }}"
-               class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
-               {{ request()->is('prof1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+            <a href="{{ route('pegawai.profile') }}"
+                class="flex items-center gap-4 px-5 py-2.5 rounded-2xl text-[16px] font-medium transition
+                {{ request()->routeIs('pegawai.profile*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Profile</span>
             </a>
 

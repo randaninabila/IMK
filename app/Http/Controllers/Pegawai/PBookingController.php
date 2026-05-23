@@ -16,27 +16,26 @@ class PBookingController extends Controller
     $today     = now()->toDateString();
 
     // Ongoing: confirmed = sedang dijadwalkan / berjalan hari ini
-    $ongoing = Booking::with([
-            'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
-        ])
-        ->where('pegawai_id', $pegawaiId)
-        ->whereDate('tanggal_booking', $today)
-        ->where('status', 'confirmed')
-        ->orderBy('jam_booking')
-        ->first();
+    $ongoing = Booking::where('pegawai_id', $pegawaiId)
+    ->whereDate('tanggal_booking', $today)
+    ->where('status', 'confirmed')
+    ->orderBy('jam_booking')
+    ->first();
 
     // Upcoming: pending = menunggu konfirmasi / belum mulai
     $upcoming = Booking::with([
-            'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
-        ])
-        ->where('pegawai_id', $pegawaiId)
-        ->whereDate('tanggal_booking', $today)
-        ->where('status', 'pending')
-        ->orderBy('jam_booking')
-        ->get();
-
+        'details.layananCabang.layanan.jenisLayanan',
+        'pelanggan.user',
+    ])
+    ->where('pegawai_id', $pegawaiId)
+    ->whereDate('tanggal_booking', '>=', $today)
+    ->whereIn('status', ['pending', 'confirmed']) // optional kalau mau lebih realistis
+    ->when($ongoing, function ($q) use ($ongoing) {
+        $q->where('booking_id', '!=', $ongoing->booking_id);
+    })
+    ->orderBy('tanggal_booking') // 🔥 penting
+    ->orderBy('jam_booking')
+    ->get();
     return view('pegawai.booking.book1', compact('ongoing', 'upcoming'));
 }
 

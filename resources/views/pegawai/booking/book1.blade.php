@@ -31,7 +31,7 @@
         <h2 class="text-[18px] font-bold mb-2">Upcoming Events</h2>
 
         @forelse ($upcoming as $booking)
-            @include('pegawai.partials.booking-card', ['booking' => $booking, 'isOngoing' => false])
+            @include('pegawai.partial.booking-card', ['booking' => $booking, 'isOngoing' => false])
         @empty
             <div class="bg-white border-[3px] border-[#EAB7BF] rounded-[30px] px-8 py-10 text-center text-[#C4AAAA] text-[16px]">
                 Tidak ada upcoming booking hari ini.
