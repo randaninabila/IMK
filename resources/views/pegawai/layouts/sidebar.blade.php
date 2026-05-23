@@ -1,7 +1,7 @@
-<aside class="w-[300px] p-6 font-sans">
+<aside class="fixed top-[70px] left-0 w-[300px] h-[calc(100vh-70px)] p-6 font-sans overflow-y-auto z-40">
 
     {{-- MENU --}}
-    <div class="bg-white rounded-[22px] border-[3px] border-[#9B6D75] px-3 py-4 shadow-sm mt-4">
+    <div class="bg-white rounded-[22px] border-[3px] border-[#9B6D75] px-3 py-4 shadow-sm mt-16">
 
         <div class="space-y-1">
 
@@ -49,64 +49,33 @@
 
         </div>
 
-        {{-- HELP CARD --}}
-        <div class="mt-12 bg-[#FFDDE2] border-[2px] border-[#F5A6AF] rounded-[28px] p-3">
+        {{-- SPACER --}}
+        <div class="h-10"></div>
 
-            <div class="flex items-start gap-2">
-
-                <div class="w-[37px] h-[36px] rounded-full border-[4px] border-[#7A7A7A]
-                            flex items-center justify-center text-[#7A7A7A]
-                            text-[22px] font-bold">
-                    ?
-                </div>
-
-                <div>
-                    <h2 class="text-[16px] font-semibold text-black leading-tight">
-                        Butuh Bantuan?
-                    </h2>
-
-                    <p class="text-[11px] text-[#5C5C5C] leading-snug">
-                        Pusat bantuan & FAQ
-                    </p>
-                </div>
-
-            </div>
-
-            <button
-                class="w-full mt-3 border-[2px] border-[#FF244D]
-                       rounded-[20px] py-1.5 text-[14px]
-                       text-[#FF244D] font-semibold
-                       hover:bg-white transition">
-                Buka Bantuan
-            </button>
-
-        </div>
-
-        {{-- LOGOUT --}}
-        <div class="mt-4 pt-4 border-t-[2px] border-black">
-
-            <a href="#"
-               class="flex items-center gap-3 px-3 text-black text-[18px] font-medium">
-
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="w-6 h-7 text-[#FF0040]"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke="currentColor"
-                     stroke-width="2.5">
-
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
-                </svg>
-
-                <h2 class="text-[16px] font-semibold text-black leading-tight">
-                    Keluar Akun
-                </h2>
-
-            </a>
-
-        </div>
+        {{-- LOGOUT  dengan form POST + CSRF --}}
+<div class="mt-4 pt-4 border-t-[2px] border-black">
+    <form method="POST" action="{{ route('logout') }}" class="w-full">
+        @csrf
+        <button type="submit"
+                class="w-full flex items-center gap-3 px-3 text-black text-[18px] font-medium hover:text-[#F1A9B1] transition cursor-pointer">
+            
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-6 h-7 text-[#FF0040]"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="2.5">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+            </svg>
+            
+            <h2 class="text-[16px] font-semibold text-black leading-tight">
+                Keluar Akun
+            </h2>
+        </button>
+    </form>
+</div>
 
     </div>
 

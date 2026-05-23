@@ -7,18 +7,20 @@
     $jamMulai    = \Carbon\Carbon::parse($booking->jam_booking);
     $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
 
-    // Sesuai status DB: pending, confirmed, completed, cancelled
+    // Status: pending = menunggu ditugaskan, confirmed = telah ditugaskan, ongoing = sedang berjalan, completed = selesai, cancelled = dibatalkan
     $statusLabel = match($booking->status) {
-        'confirmed'  => 'Ongoing',
-        'pending'    => 'Waiting',
-        'completed'  => 'Done',
-        'cancelled'  => 'Cancelled',
+        'pending'    => 'Menunggu',
+        'confirmed'  => 'Terjadwal',
+        'ongoing'    => 'Sedang Berjalan',
+        'completed'  => 'Selesai',
+        'cancelled'  => 'Dibatalkan',
         default      => ucfirst($booking->status),
     };
 
     $statusColor = match($booking->status) {
-        'confirmed'  => 'bg-[#A8D5A2] text-[#2D6A27]',
-        'pending'    => 'bg-[#E8B1B6] text-[#3E382D]',
+        'pending'    => 'bg-[#FDE68A] text-[#92400E]',
+        'confirmed'  => 'bg-[#E8B1B6] text-[#3E382D]',
+        'ongoing'    => 'bg-[#A8D5A2] text-[#2D6A27]',
         'completed'  => 'bg-[#B5D5F5] text-[#1D4E89]',
         'cancelled'  => 'bg-[#F5C6CB] text-[#7B2D32]',
         default      => 'bg-[#E8E1E1] text-[#3B302D]',
@@ -66,17 +68,70 @@
 
             {{-- Waktu --}}
             <h4 class="text-[17px] font-semibold mt-2 mb-4">
-                Waktu : {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
-            </h4>
+    Waktu : {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('l, d M') }} | {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
+</h4>
 
             {{-- Tombol Aksi --}}
+            @php
+                $nowTime    = \Carbon\Carbon::now();
+                $jamBooking = \Carbon\Carbon::parse(
+                    $booking->tanggal_booking . ' ' . $booking->jam_booking
+                );
+                $bisaStart  = $nowTime->gte($jamBooking);
+            @endphp
+
             <div class="space-y-2 w-[340px]">
-                <button class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:opacity-90 transition">
-                    Start Service
-                </button>
-                <button class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
-                    Cancel
-                </button>
+
+                @if($booking->status === 'confirmed')
+
+                    {{-- START SERVICE: aktif hanya kalau jam sekarang >= jam booking --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="status" value="ongoing">
+                        @if($bisaStart)
+                            <button type="submit"
+                                    class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:opacity-90 transition">
+                                Mulai Servis
+                            </button>
+                        @else
+                            <button type="button" disabled
+                                    title="Layanan bisa dimulai pukul {{ $jamBooking->format('H:i') }}"
+                                    class="w-full h-[40px] rounded-xl bg-[#F5A6AF]/40 text-white font-semibold cursor-not-allowed flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Mulai pukul {{ $jamBooking->format('H:i') }}
+                            </button>
+                        @endif
+                    </form>
+
+                    {{-- BATALKAN BOOKING: kembalikan ke pending supaya booking bisa ditugaskan ke pegawai lain --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}"
+                          onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="status" value="pending">
+                        <button type="submit"
+                                class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
+                            Batalkan Booking
+                        </button>
+                    </form>
+
+                @elseif($booking->status === 'ongoing')
+
+                    {{-- SELESAI: ongoing → completed. Tidak ada tombol cancel. --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
+                        @csrf @method('PATCH')
+                        <input type="hidden" name="completed" value="completed">
+                        <input type="hidden" name="status" value="completed">
+                        <button type="submit"
+                                class="w-full h-[40px] rounded-xl bg-[#A8D5A2] text-[#2D6A27] font-semibold hover:opacity-90 transition">
+                            Selesai
+                        </button>
+                    </form>
+
+                @endif
+
             </div>
 
         </div>

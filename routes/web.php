@@ -21,7 +21,7 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 use App\Http\Controllers\Pegawai\PBookingController;
-use App\Http\Controllers\Pegawai\ProfileController;
+use App\Http\Controllers\Pegawai\PProfileController;
 use App\Http\Controllers\NotifikasiController;
 
 // =====================
@@ -220,13 +220,15 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
         ->name('notifikasi.dibaca');
 
+        Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
+        
         Route::get('/notifikasi/{id}/dibaca', function () {
         return redirect()->route('pegawai.notifikasi');
         });
 
-        Route::get('/pegawai/profile', [ProfileController::class, 'index'])->name('profile');
-        Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
+        Route::get('/profile/edit', [PProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
         ->name('jadwal-kerja');
@@ -234,7 +236,8 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/pegawai/booking', [PBookingController::class, 'index'])
         ->name('booking');
 
-
+        Route::post('/booking/{booking}/update-status', [PBookingController::class, 'updateStatus'])
+        ->name('booking.updateStatus');
     });
 
 // =====================

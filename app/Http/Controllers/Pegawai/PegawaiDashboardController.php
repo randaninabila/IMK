@@ -16,7 +16,7 @@ class PegawaiDashboardController extends Controller
      */
     public function index(Request $request)
     {
-     
+     Carbon::setLocale('id');
     $pegawaiId = auth()->user()->pegawai->pegawai_id;
 
     // Bulan & tahun yang ditampilkan (default: bulan ini)
@@ -84,27 +84,26 @@ class PegawaiDashboardController extends Controller
     $bulanBerikutnya  = $carbonBulan->copy()->addMonth();
     $bulanSebelumnya  = $carbonBulan->copy()->subMonth();
 
-    // Ongoing: confirmed = sedang dijadwalkan / berjalan hari ini
+    // Ongoing: status 'ongoing' = sedang berjalan (setelah tekan mulai servis)
     $ongoing = Booking::where('pegawai_id', $pegawaiId)
     ->whereDate('tanggal_booking', $today)
-    ->where('status', 'confirmed')
+    ->where('status', 'ongoing')
     ->orderBy('jam_booking')
     ->first();
 
-    // Upcoming: pending = menunggu konfirmasi / belum mulai
+    // Upcoming: confirmed = telah ditugaskan, masuk jadwal pegawai, belum mulai
     $upcoming = Booking::with([
-        'details.layananCabang.layanan.jenisLayanan',
-        'pelanggan.user',
-    ])
-    ->where('pegawai_id', $pegawaiId)
-    ->whereDate('tanggal_booking', '>=', $today)
-    ->whereIn('status', ['pending', 'confirmed']) // optional kalau mau lebih realistis
-    ->when($ongoing, function ($q) use ($ongoing) {
-        $q->where('booking_id', '!=', $ongoing->booking_id);
-    })
-    ->orderBy('tanggal_booking') // 🔥 penting
-    ->orderBy('jam_booking')
-    ->get();
+            'details.layananCabang.layanan.jenisLayanan',
+            'pelanggan.user',
+        ])
+        ->where('pegawai_id', $pegawaiId)
+        ->where('status', 'confirmed')
+        ->whereDate('tanggal_booking', '>=', $today)  // ← Hari ini dan setelahnya
+        ->orderBy('tanggal_booking', 'asc')
+        ->orderBy('jam_booking', 'asc')
+        ->limit(3)  // ← Hanya 3 terdekat
+        ->get();
+        
         // ── SUMMARY HARI INI ──────────────────────────────────────
         $totalBooking   = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)->count();
@@ -113,10 +112,53 @@ class PegawaiDashboardController extends Controller
                             ->where('status', 'completed')->count();
         $totalBerjalan  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
-                            ->where('status', 'confirmed')->count();
+                            ->where('status', 'ongoing')->count();
         $totalMenunggu  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
-                            ->where('status', 'pending')->count();
+                            ->where('status', 'confirmed')->count();
+        $jadwalBerikutnya = JadwalPegawai::where('pegawai_id', auth()->id())
+    ->where('status_ketersediaan', 'tersedia')
+    ->where(function ($q) {
+        $q->where('tanggal', '>', now()->toDateString())
+          ->orWhere(function ($q2) {
+              $q2->where('tanggal', now()->toDateString())
+                 ->where('jam_mulai', '>=', now()->format('H:i:s'));
+          });
+    })
+    ->orderBy('tanggal')
+    ->orderBy('jam_mulai')
+    ->first();
+
+$jadwalText = $jadwalBerikutnya
+    ? Carbon::parse($jadwalBerikutnya->jam_mulai)->format('H:i')
+        . ' - ' .
+      Carbon::parse($jadwalBerikutnya->jam_selesai)->format('H:i')
+    : 'Tidak ada jadwal';
+
+    if ($jadwalBerikutnya) {
+
+    $tanggalJadwal = Carbon::parse($jadwalBerikutnya->tanggal);
+
+    $jam = Carbon::parse($jadwalBerikutnya->jam_mulai)->format('H:i')
+        . ' - ' .
+        Carbon::parse($jadwalBerikutnya->jam_selesai)->format('H:i');
+
+    if ($tanggalJadwal->isToday()) {
+
+        $jadwalText = $jam;
+
+    } else {
+
+        $jadwalText =
+            $tanggalJadwal->translatedFormat('l, d M')
+            . ' • ' .
+            $jam;
+    }
+
+} else {
+
+    $jadwalText = 'Tidak ada jadwal';
+}
 
     // ── NOTIFIKASI ──────────────────────────────────────                      
     $notifikasi = Notifikasi::where('user_id', auth()->id())
@@ -142,6 +184,7 @@ class PegawaiDashboardController extends Controller
             'totalSelesai'    => $totalSelesai,
             'totalBerjalan'   => $totalBerjalan,
             'totalMenunggu'   => $totalMenunggu,
+            'jadwalText'    => $jadwalText,
             //notifikasi
             'notifikasi'      => $notifikasi,
         ]);

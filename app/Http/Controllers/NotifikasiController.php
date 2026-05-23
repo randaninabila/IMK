@@ -48,6 +48,7 @@ class NotifikasiController extends Controller
         return back();
     }
 
+    
     /**
      * Show the form for creating a new resource.
      */
