@@ -169,7 +169,6 @@
 
     {{-- BUTTON --}}
                 <div>
-                    <a href="/prof2">
                     <button
                         class="mt-6 border-[3px] border-[#F1A9B1] rounded-xl px-6 h-[56px] flex items-center gap-3 text-[16px] font-medium text-[#3B302D] hover:bg-[#FFF4F5] transition">
 
@@ -185,9 +184,8 @@
                                 d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
                         </svg>
 
-                        Edit Profil
+                        Update Changes
                     </button>
-                    </a>
                 </div>
 
     {{-- LOGOUT --}}

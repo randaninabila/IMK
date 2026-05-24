@@ -27,6 +27,18 @@ Route::middleware('guest')->group(function () {
 
 });
 
+Route::get('/forgotpw', function () {
+        return view('login.forgotpw');
+    });
+
+Route::get('/verif', function () {
+        return view('login.verif');
+    });
+
+Route::get('/newpw', function () {
+        return view('login.newpw');
+    });
+
 // Service
 Route::get('/service', function () {
     return view('user.service.service');
@@ -274,6 +286,10 @@ Route::get('/not1', function () {
 Route::get('/prof1', function () {
         return view('pegawai.profile.prof1');
     });
+Route::get('/prof2', function () {
+        return view('pegawai.profile.prof2');
+    });
+
 Route::get('/jkb', function () {
         return view('pegawai.jk.jkb');
     });
