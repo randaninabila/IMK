@@ -46,9 +46,21 @@
         Masukkan email untuk menerima kode reset password
       </p>
 
-      <!-- FORM -->
-      <form action="/signin" method="GET" class="space-y-6">
+      @if (session('status'))
+      <div class="mb-4 bg-green-100 border border-green-300 text-green-700 px-4 py-3 rounded-xl">
+          {{ session('status') }}
+      </div>
+      @endif
 
+      @if ($errors->any())
+      <div class="mb-4 bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-xl">
+          {{ $errors->first() }}
+      </div>
+      @endif
+
+      <!-- FORM -->
+      <form action="{{ route('password.email') }}" method="POST" class="space-y-6">
+          @csrf
         <!-- EMAIL -->
         <div>
           <label for="email" class="block mb-2 text-[#3d352f] font-medium">
