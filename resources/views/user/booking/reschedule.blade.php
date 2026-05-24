@@ -130,35 +130,48 @@
     </div>
 </div>
 
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const tanggalInput = document.getElementById('newTanggal');
-    const jamSelect = document.getElementById('newJam');
+    const jamSelect    = document.getElementById('newJam');
     const jamOperasional = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-    
-    const oldJam = @json(old('new_jam') ?? '');
-    const oldTanggal = @json(old('new_tanggal') ?? '');
+
+    const savedJam      = @json(old('new_jam') ?? '');
+    const bookingTanggal = @json($booking->tanggal_booking);           // tanggal lama
+    const bookingJam     = @json(substr($booking->jam_booking, 0, 5)); // jam lama format HH:MM
 
     function updateJamOptions() {
         const selectedDate = tanggalInput.value;
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-        
+        const today        = new Date().toISOString().split('T')[0];
+        const now          = new Date();
+        const currentTime  = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
         jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih jam --</option>';
-        
+
         jamOperasional.forEach(jam => {
-            const isToday = selectedDate === today;
-            const isPast = isToday && jam <= currentTime;
-            const option = document.createElement('option');
-            option.value = jam + ':00';
-            option.textContent = jam + ' WIB' + (isPast ? ' (Sudah lewat)' : '');
-            if (isPast) option.disabled = true;
+            const jamValue     = jam + ':00';
+            const isToday      = selectedDate === today;
+            const isPast       = isToday && jam <= currentTime;
+            const isSameAsOld  = selectedDate === bookingTanggal && jam === bookingJam; // ✅
+
+            const option       = document.createElement('option');
+            option.value       = jamValue;
+
+            if (isPast) {
+                option.textContent = jam + ' WIB (Sudah lewat)';
+                option.disabled    = true;
+            } else if (isSameAsOld) {
+                option.textContent = jam + ' WIB (Jadwal lama)'; // ✅
+                option.disabled    = true;
+            } else {
+                option.textContent = jam + ' WIB';
+                if (savedJam && jamValue === savedJam) option.selected = true;
+            }
+
             jamSelect.appendChild(option);
         });
     }
-    
+
     updateJamOptions();
     tanggalInput.addEventListener('change', updateJamOptions);
 });

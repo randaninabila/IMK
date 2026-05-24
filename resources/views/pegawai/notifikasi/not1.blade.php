@@ -39,7 +39,7 @@
            {{ request('filter') == 'booking'
                 ? 'bg-[#F1A9B1] text-white'
                 : 'bg-white text-[#3B302D]' }}">
-            Booking
+            Pesanan
         </a>
 
         <a href="{{ url()->current() }}?filter=jadwal"
@@ -117,7 +117,7 @@
                             </p>
 
                             <p class="text-[13px] text-[#9B8B87] mt-1">
-                                {{ $notif->created_at->format('d M Y, H:i') }} WIB
+                                {{ $notif->created_at->locale('id')->translatedFormat('d F Y, H:i') }} WIB
                             </p>
 
                         </div>
@@ -190,7 +190,7 @@
                             </p>
 
                             <p class="text-[13px] text-[#9B8B87] mt-1">
-                                {{ $notif->created_at->format('d M Y, H:i') }} WIB
+                                {{ $notif->created_at->locale('id')->translatedFormat('d F Y, H:i') }} WIB
                             </p>
 
                         </div>

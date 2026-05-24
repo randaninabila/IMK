@@ -2,6 +2,11 @@
 
 @section('content')
 
+@php
+    $testimonials = $testimonials ?? collect();
+    $faqs = $faqs ?? [];
+@endphp
+
 <div class="min-h-screen bg-gradient-to-b from-[#FBE7EA] via-[#FFF4F5] to-[#FFFFFF] text-[#3A372E] pt-[94px]">
 
     {{-- TESTIMONI --}}
@@ -41,150 +46,45 @@
 
 
     {{-- FAQ --}}
-    <section class="px-[34px] pt-[40px] pb-[120px]">
-        <div class="max-w-[1360px] mx-auto grid grid-cols-1 lg:grid-cols-[520px_1fr] gap-[70px] items-start">
+    <section class="px-[34px] pt-[32px] pb-[90px]">
+        <div class="max-w-[1120px] mx-auto grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-[42px] items-start">
 
             {{-- LEFT --}}
-            <div class="pt-[120px]">
-                <h2 class="text-[78px] font-extrabold tracking-[-0.04em] leading-[1.05]">
+            <div class="pt-[42px]">
+                <h2 class="text-[48px] font-extrabold tracking-[-0.04em] leading-[1.05]">
                     Pertanyaan<br>
                     Umum
                 </h2>
 
-                <p class="text-[22px] leading-[1.1] mt-[25px] text-[#5E5454] max-w-[430px]">
-                    Semua yang perlu Anda ketahui sebelum<br>
-                    memulai perawatan
+                <p class="text-[16px] leading-[1.35] mt-[18px] text-[#5E5454] max-w-[330px]">
+                    Semua yang perlu Anda ketahui sebelum memulai perawatan
                 </p>
             </div>
 
             {{-- RIGHT FAQ LIST --}}
-            <div class="pt-[18px] space-y-[10px]">
+            <div class="pt-[8px] space-y-[8px] max-w-[760px]">
 
-                {{-- FAQ 1 --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah perawatan ini aman dan cocok untuk semua jenis kulit?
-                        </span>
+                @foreach($faqs as $faq)
+                    <div class="faq-item bg-[#6A604F] rounded-[8px] overflow-hidden shadow-[0_8px_18px_rgba(58,55,46,0.10)]">
+                        <button type="button"
+                                onclick="toggleFaq(this)"
+                                class="faq-question w-full flex items-center justify-between gap-4 px-[16px] py-[12px] text-left">
+                            <span class="text-white text-[15px] font-semibold leading-snug">
+                                {{ $faq['question'] }}
+                            </span>
 
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▲
-                        </span>
-                    </button>
+                            <span class="faq-arrow text-white/80 text-[16px] leading-none shrink-0">
+                                {{ $faq['open'] ? '▼' : '▲' }}
+                            </span>
+                        </button>
 
-                    <div class="faq-answer hidden px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Sebagian besar perawatan aman untuk berbagai jenis kulit. Namun, kondisi kulit setiap orang berbeda, sehingga kami tetap menyarankan konsultasi singkat sebelum perawatan dimulai.
-                        </p>
+                        <div class="faq-answer {{ $faq['open'] ? '' : 'hidden' }} px-[16px] pb-[14px]">
+                            <p class="text-white/95 text-[12px] leading-[1.45] font-medium max-w-[680px]">
+                                {{ $faq['answer'] }}
+                            </p>
+                        </div>
                     </div>
-                </div>
-
-                {{-- FAQ 2 --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah saya perlu konsultasi sebelum memulai perawatan?
-                        </span>
-
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▲
-                        </span>
-                    </button>
-
-                    <div class="faq-answer hidden px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Ya, konsultasi sangat disarankan agar terapis dapat menyesuaikan layanan dengan kebutuhan kulit, keluhan, dan hasil yang Anda inginkan.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- FAQ 3 OPEN --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah ada waktu pemulihan atau efek samping setelah perawatan?
-                        </span>
-
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▼
-                        </span>
-                    </button>
-
-                    <div class="faq-answer px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Sebagian besar perawatan tidak memerlukan waktu pemulihan. Anda mungkin mengalami kemerahan ringan atau sensitivitas setelah sesi perawatan, tetapi biasanya akan hilang dalam waktu singkat.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- FAQ 4 --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah ruangan perawatan benar-benar private untuk muslimah?
-                        </span>
-
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▲
-                        </span>
-                    </button>
-
-                    <div class="faq-answer hidden px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Ya, Salon Dina Muslimah mengutamakan kenyamanan dan privasi tamu muslimah dengan area perawatan yang dibuat lebih tertutup dan aman.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- FAQ 5 --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah saya bisa memilih jadwal dan cabang salon sendiri?
-                        </span>
-
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▲
-                        </span>
-                    </button>
-
-                    <div class="faq-answer hidden px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Bisa. Anda dapat memilih cabang, tanggal, dan jam perawatan yang tersedia melalui halaman booking sesuai kebutuhan Anda.
-                        </p>
-                    </div>
-                </div>
-
-                {{-- FAQ 6 --}}
-                <div class="faq-item bg-[#6A604F] rounded-[7px] overflow-hidden">
-                    <button type="button"
-                            onclick="toggleFaq(this)"
-                            class="faq-question w-full flex items-center justify-between gap-6 px-[20px] py-[18px] text-left">
-                        <span class="text-white text-[22px] font-medium leading-tight">
-                            Apakah pembayaran bisa dilakukan setelah perawatan?
-                        </span>
-
-                        <span class="faq-arrow text-white/80 text-[23px] leading-none">
-                            ▲
-                        </span>
-                    </button>
-
-                    <div class="faq-answer hidden px-[20px] pb-[22px]">
-                        <p class="text-white text-[14px] leading-[1.15] font-bold max-w-[760px]">
-                            Bisa. Untuk metode pembayaran cash, pembayaran dilakukan setelah perawatan selesai di salon.
-                        </p>
-                    </div>
-                </div>
+                @endforeach
 
             </div>
 
@@ -194,21 +94,29 @@
 </div>
 
 <script>
+    const databaseTestimonials = @json($testimonials->values());
+
     const defaultTestimonials = [
         {
             name: 'Alya Safitri',
             comment: 'Tempatnya nyaman, bersih, dan pelayanannya ramah. Saya merasa lebih tenang karena privasi benar-benar dijaga.',
-            photo: null
+            photo: null,
+            rating: 5,
+            service: 'Ulasan pelanggan'
         },
         {
             name: 'Zahra Aulia',
             comment: 'Hasil facialnya terasa lebih fresh dan kulit jadi halus. Terapisnya juga menjelaskan setiap proses dengan baik.',
-            photo: null
+            photo: null,
+            rating: 5,
+            service: 'Ulasan pelanggan'
         },
         {
             name: 'Nabila Shafira',
             comment: 'Bookingnya mudah dan jadwalnya jelas. Cocok banget untuk muslimah yang ingin perawatan dengan nyaman.',
-            photo: null
+            photo: null,
+            rating: 5,
+            service: 'Ulasan pelanggan'
         }
     ];
 
@@ -218,6 +126,17 @@
         } catch (error) {
             return [];
         }
+    }
+
+    function createStars(rating) {
+        const totalRating = Number(rating || 5);
+        let stars = '';
+
+        for (let i = 1; i <= 5; i++) {
+            stars += i <= totalRating ? '★' : '☆';
+        }
+
+        return stars;
     }
 
     function createTestimonialCard(item, isBottomCard = false) {
@@ -235,6 +154,11 @@
             card.appendChild(image);
         }
 
+        const stars = document.createElement('p');
+        stars.className = 'text-[18px] tracking-[0.1em] font-black text-[#D58A9A] mb-[14px]';
+        stars.textContent = createStars(item.rating);
+        card.appendChild(stars);
+
         const comment = document.createElement('p');
         comment.className = 'text-[19px] leading-[1.15] text-[#6B5C5C]';
         comment.textContent = item.comment || 'Ulasan pelanggan belum tersedia.';
@@ -249,7 +173,7 @@
 
         const status = document.createElement('p');
         status.className = 'text-[12px] tracking-[0.06em] font-bold text-[#9A6B76] leading-none mt-[6px]';
-        status.textContent = 'Ulasan pelanggan';
+        status.textContent = item.service || 'Ulasan pelanggan';
 
         identityWrapper.appendChild(name);
         identityWrapper.appendChild(status);
@@ -263,11 +187,15 @@
         const topGrid = document.getElementById('testimonialTopGrid');
         const bottomGrid = document.getElementById('testimonialBottomGrid');
 
-        const approvedReviews = safeJsonParse('dinaSalonApprovedReviews');
+        const localStorageReviews = safeJsonParse('dinaSalonApprovedReviews');
 
-        const testimonials = approvedReviews.length > 0
-            ? approvedReviews.slice(0, 3)
-            : defaultTestimonials;
+        const testimonials = databaseTestimonials.length > 0
+            ? databaseTestimonials.slice(0, 3)
+            : (
+                localStorageReviews.length > 0
+                    ? localStorageReviews.slice(0, 3)
+                    : defaultTestimonials
+            );
 
         topGrid.innerHTML = '';
         bottomGrid.innerHTML = '';

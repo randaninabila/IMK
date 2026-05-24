@@ -51,7 +51,6 @@ class AuthController extends Controller
         // User tidak ditemukan
         if (!$user) {
             return back()
-                ->withInput($request->only('email'))
                 ->withErrors([
                     'email' => 'Email atau password salah.'
                 ]);
@@ -60,7 +59,6 @@ class AuthController extends Controller
         // Cek password support multi hash
         if (!$this->checkPassword($request->password, $user->password)) {
             return back()
-                ->withInput($request->only('email'))
                 ->withErrors([
                     'email' => 'Email atau password salah.'
                 ]);
@@ -74,6 +72,12 @@ class AuthController extends Controller
             $user->save();
         }
 
+        if (!$user->email_verified_at) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => 'Email belum diverifikasi.'])
+                ->with('unverified_email', $request->email);
+        }
         Auth::login($user, $request->boolean('remember'));
 
         $request->session()->regenerate();
@@ -121,7 +125,7 @@ class AuthController extends Controller
             'no_hp'    => ['nullable', 'string', 'max:20'],
         ]);
 
-        $token = \Illuminate\Support\Str::random(64);
+        $otp = rand(100000, 999999);
 
         $user = User::create([
             'nama'               => $request->nama,
@@ -130,56 +134,16 @@ class AuthController extends Controller
             'no_hp'              => $request->no_hp,
             'role'               => 'pelanggan',
             'status_akun'        => 'aktif',
-            'email_verify_token' => $token,
+            'email_verified_at'  => now(),
+            'email_verify_token' => $otp,
             'token_expires_at'   => now()->addMinutes(60),
         ]);
 
         Pelanggan::create(['user_id' => $user->user_id]);
 
-        Mail::to($user->email)->send(new VerifyEmailMail($user));
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return redirect('/verify-email-notice');
-    }
-
-    // =====================
-    // QUICK REGISTER (saat booking)
-    // nama & email saja — auto create akun
-    // =====================
-    public function quickRegister(Request $request)
-    {
-        $request->validate([
-            'name'  => ['required', 'string'],
-            'email' => ['required', 'email'],
-        ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            $user = User::create([
-                'nama'        => $request->name,
-                'email'       => $request->email,
-                'password'    => Hash::make(Str::random(16)),
-                'role'        => 'pelanggan',
-                'status_akun' => 'aktif',
-            ]);
-
-            Pelanggan::create(['user_id' => $user->user_id]);
-        }
-
-        Auth::login($user);
-        $request->session()->regenerate();
-
-        return response()->json([
-            'success' => true,
-            'user'    => [
-                'id'    => $user->user_id,
-                'name'  => $user->nama,
-                'email' => $user->email,
-            ]
-        ]);
+        return redirect()
+            ->route('verification.notice')
+            ->with('success', 'Kode verifikasi telah dikirim ke email.');
     }
 
     // =====================
@@ -217,21 +181,25 @@ class AuthController extends Controller
         if (Auth::user()?->hasVerifiedEmail()) {
             return $this->redirectByRole(Auth::user()->role);
         }
-        return view('auth.verify-email');
+        return view('auth.verif');
     }
 
     // Handler klik link dari email
-    public function verifyEmail(string $token)
+    public function verifyEmail(string $otp)
     {
-        $user = User::where('email_verify_token', $token)->first();
+        $user = User::where('email_verify_token', $otp)->first();
 
         if (!$user) {
-            return redirect('/login')->withErrors(['email' => 'Link verifikasi tidak valid.']);
+            return redirect('/login')->withErrors([
+                'email' => 'Kode verifikasi tidak valid.'
+            ]);
         }
 
-        if ($user->token_expires_at->isPast()) {
-            return redirect('/verify-email-notice')
-                ->with('error', 'Link verifikasi sudah kadaluarsa. Silakan minta link baru.');
+        if ($user->token_expires_at && $user->token_expires_at->isPast()) {
+
+            return redirect('/login')->withErrors([
+                'email' => 'Kode verifikasi sudah kadaluarsa.'
+            ]);
         }
 
         $user->update([
@@ -240,11 +208,10 @@ class AuthController extends Controller
             'token_expires_at'   => null,
         ]);
 
-        if (!Auth::check()) {
-            Auth::login($user);
-        }
+        Auth::login($user);
 
-        return redirect('/')->with('success', 'Email berhasil diverifikasi! Selamat datang 🎉');
+        return redirect('/')
+            ->with('success', 'Email berhasil diverifikasi 🎉');
     }
 
     // Resend email verifikasi
@@ -256,14 +223,67 @@ class AuthController extends Controller
             return back()->with('info', 'Email kamu sudah terverifikasi.');
         }
 
-        $token = \Illuminate\Support\Str::random(64);
+        $otp = rand(100000, 999999);
         $user->update([
-            'email_verify_token' => $token,
+            'email_verify_token' => $otp,
             'token_expires_at'   => now()->addMinutes(60),
         ]);
 
         Mail::to($user->email)->send(new VerifyEmailMail($user));
 
         return back()->with('success', 'Email verifikasi baru telah dikirim.');
+    }
+
+    // Resend verifikasi untuk user yang belum login
+    public function resendVerificationGuest(Request $request)
+    {
+        $request->validate(['email' => ['required', 'email']]);
+
+        $user = User::where('email', $request->email)
+            ->whereNull('email_verified_at')
+            ->first();
+
+        if (!$user) {
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Email tidak ditemukan atau sudah terverifikasi.']);
+        }
+
+        $otp = rand(100000, 999999);
+        $user->update([
+            'email_verify_token' => $otp,
+            'token_expires_at'   => now()->addMinutes(60),
+        ]);
+
+        Mail::to($user->email)->send(new VerifyEmailMail($user));
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->route('verification.notice')
+            ->with('success', 'Kode verifikasi baru telah dikirim ke email kamu.');
+    }
+
+    // Verify OTP dari halaman ini
+    public function verifyEmailOtp(Request $request)
+    {
+        $request->validate(['otp' => ['required', 'string', 'size:6']]);
+
+        $user = Auth::user();
+
+        if ($user->email_verify_token !== $request->otp) {
+            return back()->withErrors(['otp' => 'Kode verifikasi tidak valid.']);
+        }
+
+        if ($user->token_expires_at && $user->token_expires_at->isPast()) {
+            return back()->withErrors(['otp' => 'Kode sudah kadaluarsa. Minta kode baru.']);
+        }
+
+        $user->update([
+            'email_verified_at'  => now(),
+            'email_verify_token' => null,
+            'token_expires_at'   => null,
+        ]);
+
+        return redirect('/')->with('success', 'Email berhasil diverifikasi!');
     }
 }

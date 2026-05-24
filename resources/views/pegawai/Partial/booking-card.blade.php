@@ -3,15 +3,22 @@
     $user       = $pelanggan?->user;
     $details    = $booking->details;
 
-    $totalDurasi = $details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
+$totalDurasi = $details->sum(function($d) {
+    if ($d->layanan_cabang_id) {
+        return $d->layananCabang?->layanan?->durasi ?? 0;
+    } else {
+        // Paket: sum durasi semua layanan dalam paket
+        return $d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0;
+    }
+});
     $jamMulai    = \Carbon\Carbon::parse($booking->jam_booking);
     $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
 
-    // Status: pending = menunggu ditugaskan, confirmed = telah ditugaskan, ongoing = sedang berjalan, completed = selesai, cancelled = dibatalkan
+    // Status labels & colors
     $statusLabel = match($booking->status) {
         'pending'    => 'Menunggu',
         'confirmed'  => 'Terjadwal',
-        'ongoing'    => 'Sedang Berjalan',
+        'in_progress'    => 'Sedang Berjalan',
         'completed'  => 'Selesai',
         'cancelled'  => 'Dibatalkan',
         default      => ucfirst($booking->status),
@@ -20,7 +27,7 @@
     $statusColor = match($booking->status) {
         'pending'    => 'bg-[#FDE68A] text-[#92400E]',
         'confirmed'  => 'bg-[#E8B1B6] text-[#3E382D]',
-        'ongoing'    => 'bg-[#A8D5A2] text-[#2D6A27]',
+        'in_progress'    => 'bg-[#A8D5A2] text-[#2D6A27]',
         'completed'  => 'bg-[#B5D5F5] text-[#1D4E89]',
         'cancelled'  => 'bg-[#F5C6CB] text-[#7B2D32]',
         default      => 'bg-[#E8E1E1] text-[#3B302D]',
@@ -44,7 +51,13 @@
 
         {{-- DETAIL --}}
         <div class="flex-1">
-
+            
+            <!-- <div class="bg-[#F5A6AF] rounded-xl px-3 py-2 inline-block"> -->
+    <p class="text-[#E8B1B6] text-sm font-bold mb-3">
+        No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+    </p>
+   
+<!-- </div> -->
             {{-- Nama + Status --}}
             <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-[17px] font-semibold">
@@ -55,21 +68,30 @@
                 </span>
             </div>
 
+
             {{-- Daftar Layanan --}}
-            @foreach ($details as $detail)
-            @php
-                $layanan      = $detail->layananCabang?->layanan;
-                $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis_layanan ?? 'Layanan';
-            @endphp
-            <p class="text-[14px]">
-                ● {{ $layanan?->nama_layanan ?? '-' }} | {{ $jenisLayanan }}
-            </p>
-            @endforeach
+@foreach ($details as $detail)
+@php
+    if ($detail->layanan_cabang_id) {
+        $layanan      = $detail->layananCabang?->layanan;
+        $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis ?? 'Layanan';
+        $namaLayanan  = $layanan?->nama_layanan ?? '-';
+    } else {
+        // Booking paket
+        $paketCabang  = $detail->paketCabang;
+        $namaLayanan  = $paketCabang?->paketLayanan?->nama_paket ?? 'Paket';
+        $jenisLayanan = 'Paket Layanan';
+    }
+@endphp
+<p class="text-[14px]">
+    ● {{ $namaLayanan }} | {{ $jenisLayanan }}
+</p>
+@endforeach
 
             {{-- Waktu --}}
             <h4 class="text-[17px] font-semibold mt-2 mb-4">
-    Waktu : {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('l, d M') }} | {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
-</h4>
+                Waktu : {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('l, d M') }} | {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
+            </h4>
 
             {{-- Tombol Aksi --}}
             @php
@@ -84,40 +106,37 @@
 
                 @if($booking->status === 'confirmed')
 
-                    {{-- START SERVICE: aktif hanya kalau jam sekarang >= jam booking --}}
-<form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
-    @csrf
-    <input type="hidden" name="status" value="ongoing">
-    
-    @if($bisaStart)
-        {{-- BUTTON AKTIF --}}
-        <button type="submit"
-                class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Mulai Servis
-        </button>
-    @else
-        {{-- BUTTON DISABLED (Off) --}}
-        <button type="button" 
-                disabled
-                title="Layanan bisa dimulai pukul {{ $jamBooking->format('H:i') }}"
-                class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Mulai pukul {{ $jamBooking->format('H:i') }}
-        </button>
-    @endif
-</form>
+                    {{-- START SERVICE: confirmed → in_progress --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
+                        @csrf
+                        <input type="hidden" name="status" value="in_progress">
+                        
+                        @if($bisaStart)
+                            <button type="submit"
+                                    class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Mulai Servis
+                            </button>
+                        @else
+                            <button type="button" disabled
+                                    title="Layanan bisa dimulai pukul {{ $jamBooking->format('H:i') }}"
+                                    class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                Mulai pukul {{ $jamBooking->format('H:i') }}
+                            </button>
+                        @endif
+                    </form>
 
-                    {{-- BATALKAN BOOKING: kembalikan ke pending supaya booking bisa ditugaskan ke pegawai lain --}}
-                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}"
+                    {{-- BATALKAN BOOKING: confirmed → pending --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}"
                           onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
                         @csrf 
                         <input type="hidden" name="status" value="pending">
@@ -127,12 +146,11 @@
                         </button>
                     </form>
 
-                @elseif($booking->status === 'ongoing')
+                @elseif($booking->status === 'in_progress')
 
-                    {{-- SELESAI: ongoing → completed. Tidak ada tombol cancel. --}}
-                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
+                    {{-- SELESAI: in_progress → completed --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
                         @csrf 
-                        <input type="hidden" name="completed" value="completed">
                         <input type="hidden" name="status" value="completed">
                         <button type="submit"
                                 class="w-full h-[40px] rounded-xl bg-[#A8D5A2] text-[#2D6A27] font-semibold hover:opacity-90 transition">
@@ -154,7 +172,6 @@
         <h3 class="text-[17px] font-semibold mb-4">Informasi Pelanggan</h3>
 
         <div class="flex gap-4 mb-4">
-
             {{-- Foto Profile --}}
             <img src="{{ $user?->foto_profile ? asset('storage/' . $user->foto_profile) : 'https://ui-avatars.com/api/?name=' . urlencode($user?->nama ?? 'P') . '&background=E8B1B6&color=3E382D' }}"
                  class="w-[70px] h-[70px] rounded-full object-cover">
@@ -167,7 +184,6 @@
                     No Telepon : {{ $user?->no_hp ?? '-' }}
                 </p>
             </div>
-
         </div>
 
         {{-- Notes --}}

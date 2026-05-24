@@ -7,64 +7,67 @@ use Illuminate\Support\Facades\DB;
 
 class SpecialistController extends Controller
 {
-    // ========================
-    // Halaman daftar specialist
-    // ========================
+    // Daftar semua specialist
     public function index()
     {
-        $specialists = DB::table('pegawai as p')
-            ->join('users as u', 'p.user_id', '=', 'u.user_id')
-            ->where('u.role', 'pegawai')
-            ->where('u.status_akun', 'aktif')
-            ->where('p.status_kerja', 'aktif')
+        $specialists = DB::table('pegawai')
+            ->join('users', 'pegawai.user_id', '=', 'users.user_id')
+            ->leftJoin('cabang', 'pegawai.cabang_id', '=', 'cabang.cabang_id')
+            ->where('users.role', 'pegawai')
+            ->where('pegawai.status_kerja', 'aktif')
             ->select(
-                'p.pegawai_id',
-                'u.foto_profile as foto',
-                'u.nama',
-                'u.no_hp'
+                'pegawai.pegawai_id',
+                'pegawai.cabang_id',
+                'users.nama',
+                'users.foto_profile as foto',
+                'cabang.nama_cabang'
             )
             ->get();
 
         return view('user.specialist.specialist', compact('specialists'));
     }
 
-    // ========================
-    // Halaman detail specialist
-    // ========================
+    // Detail satu specialist
     public function show($pegawai_id)
     {
-        // Data utama pegawai
-        $specialist = DB::table('pegawai as p')
-            ->join('users as u', 'p.user_id', '=', 'u.user_id')
-            ->where('p.pegawai_id', $pegawai_id)
-            ->where('u.status_akun', 'aktif')
+        // Data pegawai + user + cabang
+        $specialist = DB::table('pegawai')
+            ->join('users', 'pegawai.user_id', '=', 'users.user_id')
+            ->leftJoin('cabang', 'pegawai.cabang_id', '=', 'cabang.cabang_id')
+            ->where('pegawai.pegawai_id', $pegawai_id)
             ->select(
-                'p.pegawai_id',
-                'u.foto_profile as foto',
-                'p.cabang_id',
-                'u.nama',
-                'u.no_hp'
+                'pegawai.pegawai_id',
+                'pegawai.cabang_id',
+                'pegawai.status_kerja',
+                'users.nama',
+                'users.email',
+                'users.no_hp',
+                'users.foto_profile as foto',
+                'cabang.nama_cabang',
+                // jabatan & deskripsi jika ada di tabel pegawai (tambahkan jika tersedia)
+                DB::raw("NULL as jabatan"),
+                DB::raw("NULL as deskripsi")
             )
             ->firstOrFail();
 
-        // Jadwal kerja pegawai
+        // Jadwal pegawai yang tersedia (mulai dari hari ini)
         $jadwal = DB::table('jadwal_pegawai')
             ->where('pegawai_id', $pegawai_id)
-            ->where('tanggal', '>=', now()->toDateString())
             ->where('status_ketersediaan', 'tersedia')
+            ->where('tanggal', '>=', now()->toDateString())
             ->orderBy('tanggal')
             ->orderBy('jam_mulai')
-            ->select('tanggal', 'jam_mulai', 'jam_selesai')
             ->get()
-            ->groupBy('tanggal');
+            ->groupBy('tanggal'); // key: 'YYYY-MM-DD', value: collection sesi
 
-        // Layanan yang pernah dikerjakan
-        $layananList = DB::table('layanan as l')
-            ->join('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->join('booking_detail as bd', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-            ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->where('b.pegawai_id', $pegawai_id)
-            ->select('l.layanan_id', 'l.nama_layanan')
+        // Layanan yang pernah dikerjakan pegawai ini
+        // (melalui booking → booking_detail → layanan_cabang → layanan)
+        $layananList = DB::table('booking')
+            ->join('booking_detail', 'booking.booking_id', '=', 'booking_detail.booking_id')
+            ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+            ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
+            ->where('booking.pegawai_id', $pegawai_id)
+            ->select('layanan.layanan_id', 'layanan.nama_layanan')
             ->distinct()
             ->get();
 

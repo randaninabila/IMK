@@ -219,6 +219,31 @@
         </div>
     </section>
 
+    {{-- TESTIMONI CENTER BUTTON SECTION --}}
+    <section class="bg-white pt-[8px] pb-[72px]">
+        <div class="max-w-[1280px] mx-auto px-[64px]">
+            <div class="flex flex-col items-center justify-center text-center">
+                <p class="mb-[14px] text-[13px] font-bold uppercase tracking-[0.18em] text-[#B85C6A]">
+                    Cerita Pelanggan
+                </p>
+
+                <h2 class="mb-[18px] text-[34px] font-extrabold tracking-[-0.04em] text-[#3A372E]">
+                    Lihat Pengalaman Klien Kami
+                </h2>
+
+                <p class="mb-[28px] max-w-[520px] text-[14px] leading-[1.55] font-medium text-[#3A372E]/70">
+                    Temukan pengalaman pelanggan setelah menikmati layanan Salon Muslimah Dina.
+                </p>
+
+                <a href="{{ url('/testimoni') }}"
+                   class="inline-flex items-center justify-center rounded-full bg-[#E8A9B4] px-[34px] py-[15px] text-[16px] font-extrabold text-white shadow-[0_14px_30px_rgba(232,169,180,0.28)] hover:bg-[#D995A1] hover:-translate-y-1 transition-all duration-300">
+                    Lihat Testimoni
+                    <span class="ml-2 text-[18px]">→</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
 </div>
 
 <!-- SCROLL TOP BUTTON -->
@@ -286,12 +311,6 @@
 
         if (!modal || !posterImage || !emptyState) return;
 
-        /*
-            Urutan sumber poster:
-            1. backendPromoPosterUrl dari controller Laravel
-            2. localStorage dari halaman admin input promo untuk prototype frontend
-            3. empty state kalau belum ada poster
-        */
         const frontendSavedPoster = localStorage.getItem('dinaSalonPromoPoster');
         const activePoster = backendPromoPosterUrl || frontendSavedPoster;
 

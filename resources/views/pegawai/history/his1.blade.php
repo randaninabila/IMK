@@ -63,7 +63,7 @@
                    name="search"
                    id="inputSearch"
                    value="{{ request('search') }}"
-                   placeholder="Cari nama klien atau layanan..."
+                   placeholder="Cari nama klien, layanan, atau nomor pesanan..."
                    class="w-full h-full bg-transparent outline-none text-[16px] font-semibold text-[#3B302D] placeholder:text-[#C4B5B2] ml-4">
 
             @if(request('search'))
@@ -222,18 +222,26 @@
             @foreach($bookings as $booking)
 
             @php
-                $pelanggan = $booking->pelanggan->user->name ?? '-';
+                $booking_id = $booking->booking_id;
+                $pelanggan = $booking->pelanggan->user->nama ?? '-';
                 $foto      = $booking->pelanggan->user->foto ?? null;
 
                 $layanan = $booking->details
-                    ->map(fn($d) => optional(optional($d->layananCabang)->layanan)->nama_layanan)
+                    ->map(fn($d) => $d->layanan_cabang_id
+    ? optional(optional($d->layananCabang)->layanan)->nama_layanan
+    : $d->paketCabang?->paketLayanan?->nama_paket
+)
                     ->filter()->unique();
 
                 $jamMulai = Carbon\Carbon::parse($booking->jam_booking)->format('H.i');
 
-                $durasi = $booking->details->sum(
-                    fn($d) => optional(optional($d->layananCabang)->layanan)->durasi ?? 0
-                );
+                $durasi = $booking->details->sum(function($d) {
+    if ($d->layanan_cabang_id) {
+        return optional(optional($d->layananCabang)->layanan)->durasi ?? 0;
+    } else {
+        return $d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0;
+    }
+});
 
                 $jamSelesai = Carbon\Carbon::parse($booking->jam_booking)->addMinutes($durasi)->format('H.i');
                 $isCompleted = $booking->status === 'completed';
@@ -253,6 +261,9 @@
                     @endif
 
                     <div>
+                        <p class="text-[#E8B1B6] text-sm font-bold mb-2">
+    No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+</p>
                         <h2 class="text-[17px] font-semibold text-[#3B302D] leading-none">{{ $pelanggan }}</h2>
                         <p class="text-[14px] text-[#3B302D] mt-2 font-normal">
                             {{ $jamMulai }} - {{ $jamSelesai }} ({{ $durasi }} menit)
@@ -307,7 +318,7 @@
             Ringkasan {{ $judulFilter }}
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-5">
 
     {{-- Total Layanan --}}
     <div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">
@@ -321,6 +332,19 @@
             Sesi
         </span>
     </div>
+
+    {{-- Total Paket --}}
+<div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">
+    <p class="text-[15px] text-[#3B302D] font-normal mb-3">
+        Total Paket
+    </p>
+    <h1 class="text-[28px] font-bold text-[#3B302D] leading-tight">
+        {{ $totalPaket }}
+    </h1>
+    <span class="text-[14px] text-[#9B8B87] font-normal block mt-1">
+        Paket
+    </span>
+</div>
 
     {{-- Total Durasi --}}
     <div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">

@@ -23,7 +23,10 @@ class JadwalPegawaiController extends Controller
 
             $jadwals = Booking::with([
                 'pelanggan.user',
-                'details.layananCabang.layanan'
+                'details.layananCabang.layanan',
+                // Di kedua query yang ada 'details.layananCabang.layanan', tambah:
+'details.paketCabang.paketLayanan',
+'details.paketCabang.details.layanan',
             ])
                 ->where('pegawai_id', $pegawaiId)
                 ->whereDate('tanggal_booking', $tanggal)
@@ -59,7 +62,10 @@ class JadwalPegawaiController extends Controller
             // Jadwal di hari yang aktif dipilih
             $jadwals = Booking::with([
                 'pelanggan.user',
-                'details.layananCabang.layanan'
+                'details.layananCabang.layanan',
+                // Di kedua query yang ada 'details.layananCabang.layanan', tambah:
+'details.paketCabang.paketLayanan',
+'details.paketCabang.details.layanan',
             ])
                 ->where('pegawai_id', $pegawaiId)
                 ->whereDate('tanggal_booking', $tanggal)

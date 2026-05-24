@@ -6,8 +6,16 @@
 
 @section('content')
 
+@if(auth()->user()->role === 'owner')
+
+<div class="max-w-5xl">
+
+@else
+
 <div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white pt-28 pb-16 px-4">
     <div class="max-w-4xl mx-auto">
+
+@endif
 
     <form action="{{ route('profile.update') }}"
       method="POST"
@@ -254,7 +262,7 @@
 
             <button type="button" onclick="switchTab('password')" id="tab-password"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
-                Ganti Password
+                Ganti Kata Sandi
             </button>
 
         </div>
@@ -367,15 +375,23 @@
                     <div class="mt-8 flex justify-end">
                         <button type="submit"
                             class="bg-[#3E382D] text-white px-8 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition">
-                            Ubah Password
+                            Ubah Kata Sandi
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
+@if(auth()->user()->role === 'owner')
+
+</div>
+
+@else
+
     </div>
 </div>
+
+@endif
 
 <script>
 function switchTab(tab) {

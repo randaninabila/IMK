@@ -29,7 +29,7 @@ class EmployeeController extends Controller
             $month = Carbon::now()->subMonths($i);
             $months->push([
                 'value' => $month->format('Y-m'),
-                'label' => $month->translatedFormat('F Y'),
+                'label' => $month->locale('id')->translatedFormat('F Y'),
             ]);
         }
 
@@ -78,7 +78,7 @@ class EmployeeController extends Controller
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
             DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-            DB::raw('DATE_FORMAT(u.created_at, "%M %Y") as since_joined')
+            'u.created_at'
         )->groupBy(
             'p.pegawai_id', 'p.status_kerja',
             'u.nama', 'u.role', 'u.foto_profile', 'u.created_at',
@@ -102,7 +102,7 @@ class EmployeeController extends Controller
                 'nama_cabang'   => $item->nama_cabang,
                 'total_clients' => $item->role === 'admin' ? '-' : $item->total_clients,
                 'total_services'=> $item->role === 'admin' ? '-' : $item->total_services,
-                'since_joined'  => $item->since_joined,
+                'since_joined' => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
             ];
         };
 
@@ -233,7 +233,6 @@ class EmployeeController extends Controller
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
             DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-            DB::raw('DATE_FORMAT(u.created_at, "%M %Y") as since_joined'),
         ], $dynamicCabangSelect))
         ->groupBy(
             'p.pegawai_id', 'p.status_kerja',
@@ -284,7 +283,7 @@ class EmployeeController extends Controller
                 'cabang_id'       => $item->cabang_id,
                 'total_clients' => $item->role === 'admin' ? '-' : (int) $item->total_clients,
                 'total_services' => $item->role === 'admin' ? '-' : (int) $item->total_services,
-                'since_joined'    => $item->since_joined,
+                'since_joined' => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
                 'created_at_raw'  => $item->created_at,
                 'branches'        => $cabangList->mapWithKeys(function ($cabang) use ($item) {
                     return [$cabang->cabang_id => [
@@ -329,14 +328,15 @@ class EmployeeController extends Controller
             $plainPassword = Str::slug($validated['nama'], '.');
 
             $userId = DB::table('users')->insertGetId([
-                'nama'       => trim($validated['nama']),
-                'email'      => strtolower(trim($validated['email'])),
-                'password'   => Hash::make($plainPassword),
-                'no_hp'      => $phone,
-                'role'       => $validated['role'],
-                'status_akun'=> 'aktif',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'nama'              => trim($validated['nama']),
+                'email'             => strtolower(trim($validated['email'])),
+                'password'          => Hash::make($plainPassword),
+                'no_hp'             => $phone,
+                'role'              => $validated['role'],
+                'status_akun'       => 'aktif',
+                'email_verified_at' => now(),
+                'created_at'        => now(),
+                'updated_at'        => now(),
             ]);
 
             DB::table('pegawai')->insert([
@@ -480,7 +480,7 @@ class EmployeeController extends Controller
             $month = Carbon::now()->subMonths($i);
             $months->push([
                 'value' => $month->format('Y-m'),
-                'label' => $month->translatedFormat('F Y'),
+                'label' => $month->locale('id')->translatedFormat('F Y'),
             ]);
         }
         return $months;

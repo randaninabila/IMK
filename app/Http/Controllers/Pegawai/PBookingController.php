@@ -16,21 +16,21 @@ class PBookingController extends Controller
         $pegawaiId = auth()->user()->pegawai->pegawai_id;
         $today     = now()->toDateString();
 
-        // Ongoing: status 'ongoing' = sedang berjalan (setelah tekan mulai servis)
-        $ongoing = Booking::with([
+        // in_progress: status 'in_progress' = sedang berjalan (setelah tekan mulai servis)
+        $in_progress = Booking::with([
                 'details.layananCabang.layanan.jenisLayanan',
-                'pelanggan.user',
+                'pelanggan.user', 'details.paketCabang.paketLayanan',
             ])
             ->where('pegawai_id', $pegawaiId)
             ->whereDate('tanggal_booking', $today)
-            ->where('status', 'ongoing')
+            ->where('status', 'in_progress')
             ->orderBy('jam_booking')
             ->first();
 
         // Upcoming: confirmed = telah ditugaskan, masuk jadwal pegawai, belum mulai
         $upcoming = Booking::with([
             'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
+            'pelanggan.user', 'details.paketCabang.paketLayanan',
         ])
         ->where('pegawai_id', $pegawaiId)
         ->where('status', 'confirmed')
@@ -40,7 +40,7 @@ class PBookingController extends Controller
         ->limit(3)  // ← Hanya 3 terdekat
         ->get();
 
-        return view('pegawai.booking.book1', compact('ongoing', 'upcoming'));
+        return view('pegawai.booking.book1', compact('in_progress', 'upcoming'));
     }
 
      public function history(Request $request)
@@ -59,9 +59,11 @@ class PBookingController extends Controller
     */
 
     $query = Booking::with([
-            'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
-        ])
+    'details.layananCabang.layanan.jenisLayanan',
+    'details.paketCabang.paketLayanan',
+    'details.paketCabang.details.layanan', // ✅ untuk hitung durasi paket
+    'pelanggan.user',
+])
         ->where('pegawai_id', $pegawaiId)
         ->whereIn('status', ['completed', 'cancelled']);
 
@@ -99,10 +101,18 @@ class PBookingController extends Controller
     */
 
     if ($jenisLayananId) {
-        $query->whereHas('details.layananCabang.layanan.jenisLayanan', function ($q) use ($jenisLayananId) {
-            $q->where('jenis_layanan_id', $jenisLayananId);
+    $query->where(function ($q) use ($jenisLayananId) {
+        // Filter layanan single
+        $q->whereHas('details.layananCabang.layanan.jenisLayanan', function ($q2) use ($jenisLayananId) {
+            $q2->where('jenis_layanan_id', $jenisLayananId);
         });
-    }
+
+        // ✅ Filter paket — cari lewat layanan di dalam paket
+        $q->orWhereHas('details.paketCabang.details.layanan.jenisLayanan', function ($q2) use ($jenisLayananId) {
+            $q2->where('jenis_layanan_id', $jenisLayananId);
+        });
+    });
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -111,20 +121,27 @@ class PBookingController extends Controller
     */
 
     if ($search) {
-        $query->where(function ($q) use ($search) {
-            // Search nama klien
-            $q->whereHas('pelanggan.user', function ($q2) use ($search) {
-                $q2->where('nama', 'like', "%{$search}%");
-            });
-
-            // Search nama layanan
-            $q->orWhereHas('details', function ($q2) use ($search) {
-                $q2->whereHas('layananCabang.layanan', function ($q3) use ($search) {
-                    $q3->where('nama_layanan', 'like', "%{$search}%");
-                });
-            });
+    $query->where(function ($q) use ($search) {
+        // Search nama klien
+        $q->whereHas('pelanggan.user', function ($q2) use ($search) {
+            $q2->where('nama', 'like', "%{$search}%");
         });
-    }
+
+        // Search nama layanan (single)
+        $q->orWhereHas('details.layananCabang.layanan', function ($q2) use ($search) {
+            $q2->where('nama_layanan', 'like', "%{$search}%");
+        });
+
+        // ✅ Search nama paket
+        $q->orWhereHas('details.paketCabang.paketLayanan', function ($q2) use ($search) {
+            $q2->where('nama_paket', 'like', "%{$search}%");
+        });
+
+        // Search booking_id
+        $cleanId = ltrim(preg_replace('/[^0-9]/', '', $search), '0') ?: '0';
+        $q->orWhere('booking_id', $cleanId);
+    });
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -154,21 +171,36 @@ class PBookingController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    $totalSesi = $bookings->count();
-
     $totalDurasi = $bookings
-        ->where('status', 'completed')
-        ->sum(function ($b) {
-            return $b->details->sum(function ($d) {
+    ->where('status', 'completed')
+    ->sum(function ($b) {
+        return $b->details->sum(function ($d) {
+            if ($d->layanan_cabang_id) {
                 return optional($d->layananCabang->layanan)->durasi ?? 0;
-            });
+            } else {
+                return $d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0;
+            }
         });
+    });
 
     $totalKlien = $bookings
         ->pluck('pelanggan_id')
         ->unique()
         ->count();
 
+    $totalSesi = $bookings
+    ->where('status', 'completed')
+    ->filter(function ($b) {
+        return $b->details->contains(fn($d) => !is_null($d->layanan_cabang_id));
+    })
+    ->count();
+
+$totalPaket = $bookings
+    ->where('status', 'completed')
+    ->filter(function ($b) {
+        return $b->details->contains(fn($d) => !is_null($d->paket_cabang_id));
+    })
+    ->count();
     // $totalPendapatan = $bookings
     //     ->where('status', 'completed')
     //     ->sum(function ($b) {
@@ -190,6 +222,7 @@ class PBookingController extends Controller
         'totalSesi',
         'totalDurasi',
         'totalKlien',
+        'totalPaket',
         'filter',
         'jenisLayananList',
         'jenisLayananId',
@@ -200,7 +233,7 @@ class PBookingController extends Controller
     public function updateStatus(Request $request, $booking_id)
     {
         $request->validate([
-            'status' => ['required', 'in:confirmed,ongoing,completed,cancelled,pending'],
+            'status' => ['required', 'in:confirmed,in_progress,completed,cancelled,pending'],
         ]);
 
         $pegawaiId  = auth()->user()->pegawai->pegawai_id;
@@ -208,22 +241,22 @@ class PBookingController extends Controller
 
         $booking = Booking::where('booking_id', $booking_id)
             ->where('pegawai_id', $pegawaiId)
-            ->firstOrFail();
+            ->findOrFail($booking_id);
 
         // Validasi transisi status yang diizinkan
-        // confirmed → ongoing (mulai servis), pending (lepas dari pegawai ini, bisa ditugaskan ulang)
-        // ongoing   → completed (selesai)
+        // confirmed → in_progress (mulai servis), pending (lepas dari pegawai ini, bisa ditugaskan ulang)
+        // in_progress   → completed (selesai)
         $allowed = [
-            'confirmed' => ['ongoing', 'pending'],
-            'ongoing'   => ['completed'],
+            'confirmed' => ['in_progress', 'pending'],
+            'in_progress'   => ['completed'],
         ];
 
         if (!isset($allowed[$booking->status]) || !in_array($newStatus, $allowed[$booking->status])) {
             return back()->withErrors(['status' => 'Perubahan status tidak diizinkan.']);
         }
 
-        // Kalau mau mulai servis (confirmed → ongoing), cek jam booking belum terlewat
-        if ($booking->status === 'confirmed' && $newStatus === 'ongoing') {
+        // Kalau mau mulai servis (confirmed → in_progress), cek jam booking belum terlewat
+        if ($booking->status === 'confirmed' && $newStatus === 'in_progress') {
             $jamBooking = \Carbon\Carbon::parse(
                 $booking->tanggal_booking . ' ' . $booking->jam_booking
             );

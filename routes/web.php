@@ -2,15 +2,17 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
-use App\Http\Controllers\AuthController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Album;
-
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Http\Request;
+
+use App\Models\Album;
+
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ForgotPasswordController;
 
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
@@ -24,6 +26,8 @@ use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\BookingController;
 use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\HomeController;
+use App\Http\Controllers\User\GalleryController;
+use App\Http\Controllers\User\TestimoniController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -38,6 +42,11 @@ use App\Http\Controllers\Admin\PelangganAdminController;
 use App\Http\Controllers\Admin\UlasanAdminController;
 use App\Http\Controllers\Admin\PengaturanAdminController;
 use App\Http\Controllers\Admin\InputPromoAdminController;
+
+
+// =====================
+// PUBLIC / USER
+// =====================
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
@@ -69,19 +78,31 @@ Route::get('/contactsalon', function () {
     return view('user.contactsalon.contactsalon');
 })->name('contactsalon');
 
-Route::get('/testimoni', function () {
-    return view('user.testimoni.testimoni');
-})->name('testimoni');
+Route::get('/testimoni', [TestimoniController::class, 'index'])
+    ->name('testimoni');
 
 Route::get('/ulasan/inputulasan', function () {
     return view('user.ulasan.inputulasan');
 })->name('ulasan.inputulasan');
 
+
+// =====================
+// GALLERY
+// =====================
+
 Route::get('/gallery', function () {
+    if (class_exists(GalleryController::class)) {
+        return app(GalleryController::class)->index();
+    }
+
     $albums = Album::with(['layanan', 'fotos'])->get();
 
     return view('user.gallery.gallery', compact('albums'));
 })->name('gallery');
+
+Route::get('/gallery-index', function () {
+    return redirect()->route('gallery');
+})->name('gallery.index');
 
 Route::get('/gallery/detail/{identifier?}', function ($identifier = null) {
     if (!$identifier) {
@@ -108,11 +129,35 @@ Route::get('/gallery/detail/{identifier?}', function ($identifier = null) {
     abort(404);
 })->name('gallery.detail');
 
-Route::get('/gallery/{id}', function ($id) {
-    $gallery = Album::with(['layanan', 'fotos'])->findOrFail($id);
+Route::get('/gallery/{identifier}', function ($identifier) {
+    if (class_exists(GalleryController::class) && !is_numeric($identifier)) {
+        return app(GalleryController::class)->show($identifier);
+    }
 
-    return view('user.gallery.gdetail', compact('gallery'));
-})->name('gallery.show')->whereNumber('id');
+    $album = new Album();
+    $table = $album->getTable();
+
+    if (is_numeric($identifier)) {
+        $gallery = Album::with(['layanan', 'fotos'])->findOrFail($identifier);
+
+        return view('user.gallery.gdetail', compact('gallery'));
+    }
+
+    if (Schema::hasColumn($table, 'slug')) {
+        $gallery = Album::with(['layanan', 'fotos'])
+            ->where('slug', $identifier)
+            ->firstOrFail();
+
+        return view('user.gallery.gdetail', compact('gallery'));
+    }
+
+    abort(404);
+})->name('gallery.show');
+
+
+// =====================
+// LOGIN & REGISTER
+// =====================
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', function () {
@@ -123,6 +168,11 @@ Route::middleware('guest')->group(function () {
         return view('auth.register');
     })->name('register');
 });
+
+
+// =====================
+// FORGOT PASSWORD
+// =====================
 
 Route::get('/forgotpw', function () {
     return view('login.forgotpw');
@@ -136,11 +186,79 @@ Route::get('/newpw', function () {
     return view('login.newpw');
 });
 
-Route::get('/forgot-password', function () {
-    return view('login.forgotpw');
-})->name('password.request');
+if (class_exists(ForgotPasswordController::class)) {
+    Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
+        ->name('password.request');
 
-Route::post('/forgot-password', function (Request $request) {
+    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])
+        ->name('password.send-otp');
+
+    Route::get('/verify-otp', [ForgotPasswordController::class, 'showOtpForm'])
+        ->name('password.otp');
+
+    Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])
+        ->name('password.verify-otp');
+
+    Route::post('/resend-otp', [ForgotPasswordController::class, 'resendOtp'])
+        ->name('password.resend-otp');
+
+    Route::get('/reset-password', [ForgotPasswordController::class, 'showNewPasswordForm'])
+        ->name('password.reset.form');
+
+    Route::post('/reset-password', [ForgotPasswordController::class, 'updatePassword'])
+        ->name('password.update');
+} else {
+    Route::get('/forgot-password', function () {
+        return view('login.forgotpw');
+    })->name('password.request');
+
+    Route::post('/forgot-password', function (Request $request) {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('status', __($status))
+            : back()->withErrors(['email' => __($status)]);
+    })->name('password.email');
+
+    Route::get('/reset-password/{token}', function (string $token) {
+        return view('login.newpw', ['token' => $token]);
+    })->name('password.reset');
+
+    Route::post('/reset-password', function (Request $request) {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only(
+                'email',
+                'password',
+                'password_confirmation',
+                'token'
+            ),
+            function ($user, $password) {
+                $user->password = Hash::make($password);
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        return $status === Password::PASSWORD_RESET
+            ? redirect('/login')->with('status', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
+    })->name('password.update');
+}
+
+Route::post('/forgot-password-link', function (Request $request) {
     $request->validate([
         'email' => 'required|email',
     ]);
@@ -154,36 +272,14 @@ Route::post('/forgot-password', function (Request $request) {
         : back()->withErrors(['email' => __($status)]);
 })->name('password.email');
 
-Route::get('/reset-password/{token}', function (string $token) {
+Route::get('/reset-password-link/{token}', function (string $token) {
     return view('login.newpw', ['token' => $token]);
-})->name('password.reset');
+})->name('password.reset.link');
 
-Route::post('/reset-password', function (Request $request) {
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|min:8|confirmed',
-    ]);
 
-    $status = Password::reset(
-        $request->only(
-            'email',
-            'password',
-            'password_confirmation',
-            'token'
-        ),
-        function ($user, $password) {
-            $user->password = Hash::make($password);
-            $user->save();
-
-            event(new PasswordReset($user));
-        }
-    );
-
-    return $status === Password::PASSWORD_RESET
-        ? redirect('/login')->with('status', __($status))
-        : back()->withErrors(['email' => [__($status)]]);
-})->name('password.update');
+// =====================
+// SERVICE
+// =====================
 
 Route::get('/service', [ServiceDetailController::class, 'index'])
     ->name('service');
@@ -192,12 +288,25 @@ Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'sh
     ->name('service.layanan')
     ->whereNumber('layanan_id');
 
+Route::get('/service/{jenis_layanan_id}/paket/{paket_id}', [ServiceDetailController::class, 'showPaketDetail'])
+    ->name('service.paket.detail')
+    ->whereNumber(['jenis_layanan_id', 'paket_id']);
+
 Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
     ->name('service.detail')
     ->whereNumber('jenis_layanan_id');
 
+
+// =====================
+// SPECIALIST
+// =====================
+
 Route::get('/specialist', [SpecialistController::class, 'index'])
     ->name('specialist');
+
+Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
+    ->name('specialist.show')
+    ->whereNumber('pegawai_id');
 
 Route::get('/specialist/detail/{slug}', function ($slug) {
     $specialists = [
@@ -230,9 +339,14 @@ Route::get('/specialist/detail/{slug}', function ($slug) {
     return view('user.specialist.spdetail', compact('specialist'));
 })->name('specialist.detail');
 
-Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
-    ->name('specialist.show')
-    ->whereNumber('pegawai_id');
+Route::get('/specialist/slug/{slug}', function ($slug) {
+    return redirect()->route('specialist.detail', ['slug' => $slug]);
+})->name('specialist.detail.slug');
+
+
+// =====================
+// AUTH
+// =====================
 
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -262,16 +376,23 @@ Route::get('/logout-test', function () {
     return redirect('/login');
 });
 
+
+// =====================
+// EMAIL VERIFICATION
+// =====================
+
 Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', function () {
-        return view('auth.verify-email');
-    })->name('verification.notice');
+    Route::get('/email/verify', [AuthController::class, 'verifyEmailNotice'])
+        ->name('verification.notice');
+
+    Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])
+        ->name('verification.verify');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
 
         return redirect('/');
-    })->middleware('signed')->name('verification.verify');
+    })->middleware('signed')->name('verification.signed');
 
     Route::post('/email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();
@@ -288,6 +409,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
         ->name('verification.resend');
 });
+
+
+// =====================
+// OWNER
+// =====================
 
 Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -330,7 +456,13 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
         ->name('owner.customer');
 });
 
-Route::prefix('admin')
+
+// =====================
+// ADMIN
+// =====================
+
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [DashboardAdminController::class, 'index'])
@@ -405,6 +537,11 @@ Route::prefix('admin')
         })->name('ulasanadmin');
     });
 
+
+// =====================
+// PEGAWAI
+// =====================
+
 Route::middleware(['auth', 'role:pegawai'])
     ->prefix('pegawai')
     ->name('pegawai.')
@@ -414,6 +551,14 @@ Route::middleware(['auth', 'role:pegawai'])
 
         Route::get('/history', [PBookingController::class, 'history'])
             ->name('history');
+
+        Route::get('/booking', [PBookingController::class, 'index'])
+            ->name('booking');
+
+        Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
+            PBookingController::class,
+            'updateStatus',
+        ])->name('booking.updateStatus');
 
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
             ->name('notifikasi');
@@ -437,19 +582,19 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::put('/profile/update', [PProfileController::class, 'update'])
             ->name('profile.update');
 
+        Route::put('/profile/password-update', [PProfileController::class, 'updatePassword'])
+            ->name('profile.password');
+
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
             ->name('jadwal-kerja');
-
-        Route::get('/booking', [PBookingController::class, 'index'])
-            ->name('booking');
-
-        Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
-            PBookingController::class,
-            'updateStatus',
-        ])->name('booking.updateStatus');
     });
 
-Route::middleware(['auth', 'role:pelanggan'])
+
+// =====================
+// PELANGGAN
+// =====================
+
+Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
@@ -457,20 +602,15 @@ Route::middleware(['auth', 'role:pelanggan'])
             return view('pelanggan.profile');
         })->name('profile');
 
+        Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
+            ->name('booking.paket')
+            ->whereNumber(['paket_id', 'cabang_id']);
+
         Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
             ->name('booking.create');
 
         Route::post('/booking/store', [BookingController::class, 'store'])
             ->name('booking.store');
-
-        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
-            ->name('payment.show');
-
-        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
-            ->name('payment.process');
-
-        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
-            ->name('payment.success');
 
         Route::get('/bookings', [BookingController::class, 'history'])
             ->name('bookings');
@@ -483,7 +623,21 @@ Route::middleware(['auth', 'role:pelanggan'])
 
         Route::post('/booking/{booking_id}/reschedule', [BookingController::class, 'processReschedule'])
             ->name('booking.reschedule.process');
+
+        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
+            ->name('payment.show');
+
+        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
+            ->name('payment.process');
+
+        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
+            ->name('payment.success');
     });
+
+
+// =====================
+// PROFILE
+// =====================
 
 Route::get('/profile', [ProfileController::class, 'index'])
     ->name('profile');

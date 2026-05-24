@@ -59,42 +59,9 @@
 
             <div class="flex items-center gap-[22px]">
 
-                <div class="relative ml-[45px]">
-                    <button type="button"
-                            onclick="toggleDropdown('profileDropdown')"
-                            class="flex items-center gap-[18px]">
-                        <div class="w-[58px] h-[58px] bg-white rounded-full flex items-center justify-center shadow-sm overflow-hidden">
-                            @if($adminPhoto)
-                                <img src="{{ asset($adminPhoto) }}"
-                                     alt="Foto Admin"
-                                     class="w-full h-full object-cover">
-                            @else
-                                <span class="text-[25px]">👩🏻‍💼</span>
-                            @endif
-                        </div>
-
-                        <svg class="w-[22px] h-[22px]" viewBox="0 0 24 24" fill="none">
-                            <path d="M6 9L12 15L18 9" stroke="#4B3A36" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
-                    </button>
-
-                    <div id="profileDropdown"
-                         class="hidden absolute right-0 top-[64px] w-[190px] bg-white rounded-[12px] shadow-xl border border-[#F1D9DD] overflow-hidden z-50">
-                        <a href="{{ url('/admin/pengaturan') }}"
-                           class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36]">
-                            Profile Admin
-                        </a>
-
-                        <a href="{{ url('/admin/pengaturan') }}"
-                           class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36]">
-                            Pengaturan
-                        </a>
-
-                        <a href="{{ url('/') }}"
-                           class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#B85C6A]">
-                            Keluar
-                        </a>
-                    </div>
+                {{-- PROFILE DROPDOWN PARTIAL --}}
+                <div class="relative flex items-center">
+                    @include('admin.partial.dropdownadmin')
                 </div>
 
             </div>
@@ -295,7 +262,7 @@
 <script>
     function toggleDropdown(id) {
         const target = document.getElementById(id);
-        const dropdowns = ['profileDropdown'];
+        const dropdowns = [];
 
         dropdowns.forEach((dropdownId) => {
             const dropdown = document.getElementById(dropdownId);
@@ -323,11 +290,10 @@
     }
 
     document.addEventListener('click', function(event) {
-        const insideDropdown = event.target.closest('#profileDropdown');
+        const insideDropdown = null;
         const dropdownButton = event.target.closest('button[onclick^="toggleDropdown"]');
 
         if (!insideDropdown && !dropdownButton) {
-            document.getElementById('profileDropdown')?.classList.add('hidden');
         }
     });
 </script>

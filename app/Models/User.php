@@ -35,8 +35,9 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'token_expires_at'  => 'datetime',
+        'email_verified_at'      => 'datetime',
+        'token_expires_at'       => 'datetime',
+        'reset_token_expires_at' => 'datetime',
     ];
 
     // =========================

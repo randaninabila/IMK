@@ -4,10 +4,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative">
+<div class="relative">
 
     {{-- HEADER --}}
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
 
         <div>
 
@@ -17,20 +17,16 @@
                 mb-3
                 tracking-tight
             ">
-                Customer Insights
+                Tren Kunjungan Pelanggan
             </h2>
 
-            <p class="
-                text-gray-500
-                text-lg
-                italic
-            ">
-                Strategic overview of customer behavior.
+            <p class="text-gray-500 mt-2">
+                Ringkasan perilaku pelanggan dan tren reservasi.
             </p>
 
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
 
             {{-- CABANG --}}
             <div class="relative" x-data="{ openBranch: false }">
@@ -216,21 +212,21 @@
         $cards = [
 
         [
-        'title' => 'Active Customers',
+        'title' => 'Pelanggan Aktif Bulan Ini',
         'value' => $stats['active_customers'],
-        'desc' => 'Completed bookings',
+        'desc' => 'Pesanan selesai',
         'icon' => '👥'
         ],
 
         [
-        'title' => 'Before 12 PM',
+        'title' => 'Sebelum Pukul 12',
         'value' => $reservationHabits['morning'] . '%',
-        'desc' => 'Morning activity',
+        'desc' => 'Aktivitas pagi',
         'icon' => '☀️'
         ],
 
         [
-        'title' => 'After 12 PM',
+        'title' => 'Setelah Pukul 12',
         'value' =>
         (
         $reservationHabits['afternoon']
@@ -238,7 +234,7 @@
         $reservationHabits['evening']
         ) . '%',
 
-        'desc' => 'Afternoon & evening',
+        'desc' => 'Siang & malam',
         'icon' => '🌙'
         ],
 
@@ -334,15 +330,16 @@
         ">
 
             <div class="
-                flex justify-between
-                items-center
+                flex flex-col lg:flex-row
+                lg:items-start lg:justify-between
+                gap-6
                 mb-8
             ">
 
                 <div>
 
                     <h4 class="text-xl font-bold">
-                        Customer Growth
+                        Pertumbuhan Pelanggan
                     </h4>
 
                     <div class="mt-3 flex items-center gap-3">
@@ -379,7 +376,7 @@
                                     }}
                                 ">
 
-                                Daily
+                                Harian
 
                             </a>
 
@@ -406,7 +403,7 @@
                                     }}
                                 ">
 
-                                Monthly
+                                Bulanan
 
                             </a>
 
@@ -421,8 +418,8 @@
 
                             {{
                                 $viewType == 'monthly'
-                                    ? 'Monthly trend'
-                                    : 'Daily activity'
+                                    ? 'Tren bulanan'
+                                    : 'Aktivitas harian'
                             }}
 
                         </span>
@@ -432,20 +429,24 @@
                 </div>
 
                 <div class="
-                    flex flex-wrap
-                    gap-4
-                    text-xs
-                    font-bold
+                    flex flex-col
+                    gap-3
+                    text-sm
+                    font-semibold
+                    lg:pt-1
+                    lg:ml-auto
+                    lg:text-right
+                    shrink-0
                 ">
 
                     @foreach($customerGrowth['datasets'] as $dataset)
 
                     <span class="
-                        flex items-center gap-2
+                        flex items-center justify-end gap-2
                     ">
 
                         <div class="
-                                w-4 h-4
+                                w-3 h-3
                                 rounded-full
                             " style="
                                 background:
@@ -491,7 +492,7 @@
                     mb-2
                 ">
 
-                    No customer growth data
+                    Belum ada data pertumbuhan pelanggan
 
                 </h3>
 
@@ -500,8 +501,7 @@
                     text-gray-500
                 ">
 
-                    There is no customer activity for this period.
-
+                    Belum ada aktivitas pelanggan pada periode ini.
                 </p>
 
             </div>
@@ -554,23 +554,18 @@
                 $reservationHabits['evening']
                 )
 
-                Customers are more active during
-                morning hours, indicating stronger
-                daytime booking behavior.
+                Pelanggan lebih aktif melakukan pesanan pada pagi hingga siang hari.
 
                 @elseif(
                 $reservationHabits['evening'] >
                 $reservationHabits['morning']
                 )
 
-                Evening bookings dominate this period,
-                showing higher customer activity after
-                work hours.
+                Pesanan malam lebih dominan pada periode ini, menunjukkan tingginya aktivitas pelanggan setelah jam kerja.
 
                 @else
 
-                Customer activity is balanced between
-                morning and evening sessions.
+                Aktivitas pelanggan cukup seimbang antara sesi pagi dan malam.
 
                 @endif
 
@@ -588,7 +583,7 @@
     ">
 
         <h4 class="text-xl font-bold">
-            Reservation Habits
+            Kebiasaan Reservasi
         </h4>
 
         <p class="
@@ -597,7 +592,7 @@
             mb-8
         ">
 
-            When are customers most active?
+            Kapan pelanggan paling aktif melakukan pesanan?
 
         </p>
 
@@ -612,20 +607,20 @@
             $habits = [
 
             [
-            'label' => 'Morning',
-            'time' => 'Before 12 PM',
+            'label' => 'Pagi',
+            'time' => 'Sebelum Pukul 12',
             'val' => $reservationHabits['morning']
             ],
 
             [
-            'label' => 'Afternoon',
-            'time' => '12 PM - 6 PM',
+            'label' => 'Siang',
+            'time' => 'Pukul 12 - 18',
             'val' => $reservationHabits['afternoon']
             ],
 
             [
-            'label' => 'Evening',
-            'time' => 'After 6 PM',
+            'label' => 'Malam',
+            'time' => 'Setelah Pukul 18',
             'val' => $reservationHabits['evening']
             ],
 

@@ -168,18 +168,31 @@
                         <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                     </div>
                     <div class="p-6 space-y-4 text-sm">
-                        @foreach($layananList as $item)
+                        
+                        {{-- List Layanan --}}
+                        @forelse($layananList as $item)
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <p class="font-semibold text-[#3E382D]">{{ $item->nama_layanan }}</p>
                                     <p class="text-xs text-gray-400">{{ $item->durasi }} menit</p>
                                 </div>
-                                <p class="font-semibold text-[#3E382D] whitespace-nowrap">Rp {{ number_format($item->harga_promo > 0 ? $item->harga_promo : $item->harga, 0, ',', '.') }}</p>
+                                {{-- Harga hanya tampil jika ada kolom harga --}}
+                                @if(isset($item->harga))
+                                    <p class="font-semibold text-[#3E382D] whitespace-nowrap">
+                                        Rp {{ number_format($item->harga_promo > 0 ? $item->harga_promo : $item->harga, 0, ',', '.') }}
+                                    </p>
+                                @endif
                             </div>
-                        @endforeach
+                        @empty
+                            <p class="text-sm text-gray-500 italic">Layanan dalam paket</p>
+                        @endforelse
+                        
+                        {{-- TOTAL --}}
                         <div class="border-t border-pink-100 pt-4 flex items-center justify-between">
                             <p class="font-semibold text-[#3E382D]">Total Pembayaran</p>
-                            <p class="text-xl font-bold text-rose-400">Rp {{ number_format($total, 0, ',', '.') }}</p>
+                            <p class="text-xl font-bold text-rose-400">
+                                Rp {{ number_format($total ?? 0, 0, ',', '.') }} {{-- ✅ Fallback ke 0 jika null --}}
+                            </p>
                         </div>
                     </div>
                 </div>

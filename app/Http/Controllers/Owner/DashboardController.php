@@ -43,6 +43,7 @@ class DashboardController extends Controller
             return DB::table('pembayaran')
                 ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
                 ->where('pembayaran.status', 'verified')
+                ->where('booking.status', 'completed')
                 ->whereDate('booking.tanggal_booking', today())
                 ->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
@@ -57,7 +58,7 @@ class DashboardController extends Controller
         $bookingForCabang = function($cabangId) {
             return DB::table('booking')
                 ->whereDate('tanggal_booking', today())
-                ->where('status', '!=', 'batal')
+                ->where('status', 'completed')
                 ->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
                         ->from('booking_detail')
@@ -131,6 +132,7 @@ class DashboardController extends Controller
         $query = DB::table('pembayaran')
             ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
             ->where('pembayaran.status', 'verified')
+            ->where('booking.status', 'completed')
             ->whereDate('booking.tanggal_booking', today());
 
         if ($selectedCabang) {
@@ -150,7 +152,7 @@ class DashboardController extends Controller
     {
         $query = DB::table('booking')
             ->whereDate('tanggal_booking', today())
-            ->where('status', '!=', 'batal');
+            ->where('status', 'completed');
 
         if ($selectedCabang) {
             $query->whereExists(function ($sub) use ($selectedCabang) {
@@ -208,7 +210,7 @@ class DashboardController extends Controller
         $query = DB::table('pembayaran')
             ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
             ->where('pembayaran.status', 'verified')
-            ->where('booking.status', '!=', 'batal');
+            ->where('booking.status', 'completed');
 
         if ($selectedCabang) {
             $query->whereExists(function ($sub) use ($selectedCabang) {
@@ -243,7 +245,7 @@ class DashboardController extends Controller
             ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
             ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
             ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
-            ->where('booking.status', '!=', 'batal')
+            ->where('booking.status', 'completed')
             ->where(function ($q) {
                 $q->whereNull('booking.booking_id')
                 ->orWhereYear('booking.tanggal_booking', now()->year);
@@ -380,6 +382,7 @@ class DashboardController extends Controller
         $query = DB::table('pembayaran')
             ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
             ->where('pembayaran.status', 'verified')
+            ->where('booking.status', 'completed')
             ->whereBetween('booking.tanggal_booking', [$dateRange['start'], $dateRange['end']]);
 
         if ($branch !== 'Semua') {

@@ -32,11 +32,11 @@
                 text-[#3e382d]
                 tracking-tight
             ">
-                Add New Employee
+                Tambah Karyawan Baru
             </h2>
 
             <p class="text-gray-500 mt-2 text-sm">
-                Add a new specialist or admin to the team.
+                Tambahkan spesialis atau admin baru ke dalam tim.
             </p>
 
         </div>
@@ -88,7 +88,7 @@
                     font-semibold
                     text-[#2d2a26]
                 ">
-                    Full Name
+                    Nama Lengkap
                 </label>
 
                 <input
@@ -156,7 +156,7 @@
                     font-semibold
                     text-[#2d2a26]
                 ">
-                    Phone Number
+                    Nomor HP
                 </label>
 
                 <input
@@ -193,7 +193,7 @@
                         font-semibold
                         text-[#2d2a26]
                     ">
-                        Role
+                        Peran
                     </label>
 
                     <select
@@ -213,7 +213,7 @@
                         "
                     >
                         <option value="pegawai" {{ old('role') == 'pegawai' ? 'selected' : '' }}>
-                            Pegawai
+                            Spesialis
                         </option>
 
                         <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
@@ -234,7 +234,7 @@
                         font-semibold
                         text-[#2d2a26]
                     ">
-                        Branch
+                        Cabang
                     </label>
 
                     <select
@@ -295,14 +295,14 @@
                         transition
                     "
                 >
-                    Cancel
+                    Batal
                 </button>
 
                 {{-- SUBMIT --}}
                 <button
                     type="submit"
                     :disabled="loading"
-                    x-text="loading ? 'Adding...' : 'Add Employee'"
+                    x-text="loading ? 'Menambahkan...' : 'Tambah Pegawai'"
                     class="
                         px-6 py-2.5
                         rounded-full
