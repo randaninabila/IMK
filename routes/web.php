@@ -227,61 +227,40 @@ Route::middleware(['auth', 'role:pegawai'])
         ->name('dashboard');
 
         Route::get('/pegawai/history', [PBookingController::class, 'history'])
-        ->name('history')
-        ->middleware('auth');
+        ->name('history');
 
-    });
-Route::get('/udin', function () {
-        return view('pegawai.dashboard');
-    });
-    Route::get('/his1', function () {
-        return view('pegawai.history.his1');
-    });
-Route::get('/not1', function () {
-        return view('pegawai.notifikasi.not1');
-    });
-Route::get('/prof1', function () {
-        return view('pegawai.profile.prof1');
-    });
-Route::get('/prof2', function () {
-        return view('pegawai.profile.prof2');
-    });
-
-Route::get('/jkb', function () {
-        return view('pegawai.jk.jkb');
-    });
-Route::get('/book1', function () {
-        return view('pegawai.booking.book1');
-
-        // routes/web.php
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi');
-
+    
         Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
         ->name('notifikasi.dibaca');
-
+    
         Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
-
+    
         Route::get('/notifikasi/{id}/dibaca', function () {
         return redirect()->route('pegawai.notifikasi');
         });
-
+    
         Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
-        Route::get('/profile/edit', [PProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
-
+        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
+    
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
         ->name('jadwal-kerja');
-
+    
         Route::get('/pegawai/booking', [PBookingController::class, 'index'])
         ->name('booking');
+        Route::post('/booking/{booking}/update-status', [PBookingController::class, 'updateStatus'
+        ])->name('booking.updateStatus');
+    });
+
 
         // routes/web.php
 // Ganti Route::post menjadi Route::match agar terima POST & PATCH
 Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
     PBookingController::class, 'updateStatus'
 ])->name('booking.updateStatus');
-    });
+    
 
 // =====================
 // PELANGGAN

@@ -51,7 +51,7 @@
                             {{ $pegawai?->cabang?->nama_cabang ?? 'Cabang tidak ditemukan' }}
                         </p>
 
-                        {{-- EMAIL --}}
+                        <!-- {{-- EMAIL --}}
                         <p class="text-[14px] font-normal text-[#3B302D] mt-1">
                             {{ $user->email }}
                         </p>
@@ -59,7 +59,7 @@
                         {{-- NO HP --}}
                         <p class="text-[14px] font-normal text-[#9B8B87]">
                             {{ $user->no_hp ?? '-' }}
-                        </p>
+                        </p> -->
 
                     </div>
 
@@ -184,7 +184,7 @@
                     </a>
                 </div>
 
-    {{-- LOGOUT --}}
+    <!-- {{-- LOGOUT --}}
     <form action="{{ route('logout') }}" method="POST" class="mt-10">
         @csrf
         <button type="submit"
@@ -192,7 +192,7 @@
                    hover:bg-[#FFF1F3] transition duration-300">
             <h4 class="text-[18px] font-bold text-[#3B302D]">⎋ Keluar Akun</h4>
         </button>
-    </form> 
+    </form>  -->
 
 </div>
 

@@ -54,6 +54,8 @@
                 class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
                 {{ request()->is('pegawai/jadwal*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
 
+                <span>Jadwal Kerja</span>
+
             </a>
 
             {{-- BOOKING --}}
@@ -85,29 +87,34 @@
 
         {{-- LOGOUT --}}
         <div class="mt-4 pt-4 border-t-[2px] border-black">
+    
+    {{-- FORM LOGOUT dengan POST + CSRF --}}
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        
+        <button type="submit"
+                class="flex items-center gap-3 px-3 text-black text-[18px] font-medium hover:text-[#FF0040] transition cursor-pointer w-full text-left">
 
-            <a href="#"
-               class="flex items-center gap-3 px-3 text-black text-[18px] font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 class="w-6 h-7 text-[#FF0040]"
+                 fill="none"
+                 viewBox="0 0 24 24"
+                 stroke="currentColor"
+                 stroke-width="2.5">
 
-                <svg xmlns="http://www.w3.org/2000/svg"
-                     class="w-6 h-7 text-[#FF0040]"
-                     fill="none"
-                     viewBox="0 0 24 24"
-                     stroke="currentColor"
-                     stroke-width="2.5">
+                <path stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+            </svg>
 
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
-                </svg>
+            <h2 class="text-[18px] font-semibold text-black leading-tight">
+                Keluar Akun
+            </h2>
 
-                <h2 class="text-[18px] font-semibold text-black leading-tight">
-                    Keluar Akun
-                </h2>
+        </button>
+    </form>
 
-            </a>
-
-        </div>
+</div>
 
     </div>
 

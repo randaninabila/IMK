@@ -181,7 +181,7 @@
 
                 {{-- MARK AS DONE: ongoing → completed --}}
                 <form method="POST" action="{{ route('pegawai.booking.updateStatus', $ongoing->booking_id) }}">
-                    @csrf @method('PATCH')
+                    @csrf 
                     <input type="hidden" name="status" value="completed">
                     <button type="submit"
                             class="w-full bg-[#A8D5A2] text-[#2D6A27] rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
@@ -253,32 +253,42 @@
 
                 </div>
 
-                {{-- START SERVICE --}}
-                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
-                    @csrf @method('PATCH')
-                    <input type="hidden" name="status" value="ongoing">
-                    @if($bisaStartUp)
-                        <button type="submit"
-                                class="w-full bg-[#F5A6AF] text-white rounded-2xl py-2 text-[15px] font-medium hover:opacity-90 transition">
-                            Start Service
-                        </button>
-                    @else
-                        <button type="button" disabled
-                                title="Layanan bisa dimulai pukul {{ $jamMulaiUp->format('H:i') }}"
-                                class="w-full bg-[#F5A6AF]/40 text-white rounded-2xl py-2 text-[15px] font-medium cursor-not-allowed flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Mulai pukul {{ $jamMulaiUp->format('H:i') }}
-                        </button>
-                    @endif
-                </form>
+                {{-- START SERVICE: aktif hanya kalau jam sekarang >= jam booking --}}
+<form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
+    @csrf
+    <input type="hidden" name="status" value="ongoing">
+    
+    @if($bisaStartUp)
+        {{-- BUTTON AKTIF --}}
+        <button type="submit"
+                class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Mulai Servis
+        </button>
+    @else
+        {{-- BUTTON DISABLED (Off) --}}
+        <button type="button" 
+                disabled
+                title="Layanan bisa dimulai pukul {{ $jamMulaiUp->format('H:i') }}"
+                class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Mulai pukul {{ $jamMulaiUp->format('H:i') }}
+        </button>
+    @endif
+</form>
 
                 {{-- BATALKAN BOOKING: kembalikan ke pending supaya bisa ditugaskan ulang ke pegawai lain --}}
                     <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}"
                           onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
-                        @csrf @method('PATCH')
+                        @csrf
                         <input type="hidden" name="status" value="pending">
                         <button type="submit"
                                 class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">

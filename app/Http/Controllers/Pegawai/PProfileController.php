@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Pegawai;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use App\Traits\ChecksPasswords;
 use Illuminate\Support\Facades\Auth;
 
 class PProfileController extends Controller
 {
+    use ChecksPasswords;
     /**
      * Display a listing of the resource.
      */
@@ -16,7 +19,7 @@ class PProfileController extends Controller
         $user = Auth::user(); // ambil data user yang login
         $pegawai = $user->pegawai; // relasi ke tabel pegawai
 
-        return view('pegawai.profile.prof1', compact('user', 'pegawai'));
+        return view('pegawai.profile.prof2', compact('user', 'pegawai'));
     }
 
     public function edit(string $id)
@@ -27,30 +30,71 @@ class PProfileController extends Controller
     return view('pegawai.profile.edit', compact('user', 'pegawai'));
 }
 
-public function update(Request $request, string $id)
+public function update(Request $request)
 {
-    $user = Auth::user();
-
-    $request->validate([
-        'nama'  => 'required|string|max:255',
-        'no_hp' => 'nullable|string|max:20',
-        'foto_profile' => 'nullable|image|max:2048',
+    $user = auth()->user();
+    
+    $validated = $request->validate([
+        'nama' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->user_id . ',user_id'],
+        'no_hp' => ['nullable', 'string', 'max:20'],
+        
+        'current_password' => [
+            'nullable', 
+            'required_with:new_password', 
+            function ($attribute, $value, $fail) use ($user) {
+                if (!$this->checkPassword($value, $user->password)) {
+                    $fail('Password saat ini tidak sesuai.');
+                }
+            }
+        ],
+        'new_password' => ['nullable', 'confirmed', 'min:8'],
+    ], [
+        // ✅ PESAN CUSTOM (Menimpa translation key yang error)
+        'new_password.confirmed'         => 'Konfirmasi password baru tidak cocok.',
+        'new_password.min'               => 'Password baru harus minimal 8 karakter.',
+        'current_password.required_with' => 'Password saat ini wajib diisi jika ingin mengubah password.',
+        'email.unique'                   => 'Email sudah terdaftar.',
+        'nama.required'                  => 'Nama lengkap wajib diisi.',
+        'email.required'                 => 'Email wajib diisi.',
+        'email.email'                    => 'Format email tidak valid.',
     ]);
 
-    $data = [
-        'nama'  => $request->nama,
-        'no_hp' => $request->no_hp,
-    ];
+    $user->nama = $validated['nama'];
+    $user->email = $validated['email'];
+    $user->no_hp = $validated['no_hp'] ?? $user->no_hp;
+    
+    if (!empty($validated['new_password'])) {
+        $user->password = Hash::make($validated['new_password']);
+    }
+    
+    $user->save();
+    
+    return back()->with('success', 'Profile berhasil diperbarui!');
+}
 
-    if ($request->hasFile('foto_profile')) {
-        $path = $request->file('foto_profile')->store('foto_profile', 'public');
-        $data['foto_profile'] = $path;
+    // ✅ COPY HELPER DARI AUTHCONTROLLER (atau buat shared helper)
+    private function checkPassword(string $plain, string $hashed): bool
+    {
+        // Bcrypt
+        if (str_starts_with($hashed, '$2y$') || str_starts_with($hashed, '$2a$')) {
+            return Hash::check($plain, $hashed);
+        }
+        // MD5
+        if (strlen($hashed) === 32 && ctype_xdigit($hashed)) {
+            return md5($plain) === $hashed;
+        }
+        // SHA1
+        if (strlen($hashed) === 40 && ctype_xdigit($hashed)) {
+            return sha1($plain) === $hashed;
+        }
+        // SHA256
+        if (strlen($hashed) === 64 && ctype_xdigit($hashed)) {
+            return hash('sha256', $plain) === $hashed;
+        }
+        return false;
     }
 
-    $user->update($data);
-
-    return redirect()->route('pegawai.profile.index')->with('success', 'Profil berhasil diperbarui.');
-}
     /**
      * Show the form for creating a new resource.
      */

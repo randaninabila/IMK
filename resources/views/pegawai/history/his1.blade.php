@@ -307,35 +307,48 @@
             Ringkasan {{ $judulFilter }}
         </h2>
 
-        <div class="grid grid-cols-4 gap-6 mt-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-5">
 
-            <div class="border border-[#F1C9CF] rounded-[24px] py-4 px-6">
-                <p class="text-[15px] text-[#3B302D] font-normal">Total Layanan</p>
-                <h1 class="text-[18px] font-semibold text-[#3B302D] mt-2 leading-none">{{ $totalSesi }}</h1>
-                <span class="text-[15px] text-[#3B302D] font-normal">Sesi</span>
-            </div>
+    {{-- Total Layanan --}}
+    <div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">
+        <p class="text-[15px] text-[#3B302D] font-normal mb-3">
+            Total Layanan
+        </p>
+        <h1 class="text-[28px] font-bold text-[#3B302D] leading-tight">
+            {{ $totalSesi }}
+        </h1>
+        <span class="text-[14px] text-[#9B8B87] font-normal block mt-1">
+            Sesi
+        </span>
+    </div>
 
-            <div class="border border-[#F1C9CF] rounded-[24px] py-4 px-6">
-                <p class="text-[15px] text-[#3B302D] font-normal">Total Durasi</p>
-                <h1 class="text-[18px] font-semibold text-[#3B302D] mt-2 leading-none">{{ $totalDurasi }}</h1>
-                <span class="text-[15px] text-[#3B302D] font-normal">Menit</span>
-            </div>
+    {{-- Total Durasi --}}
+    <div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">
+        <p class="text-[15px] text-[#3B302D] font-normal mb-3">
+            Total Durasi
+        </p>
+        <h1 class="text-[28px] font-bold text-[#3B302D] leading-tight">
+            {{ $totalDurasi }}
+        </h1>
+        <span class="text-[14px] text-[#9B8B87] font-normal block mt-1">
+            Menit
+        </span>
+    </div>
 
-            <div class="border border-[#F1C9CF] rounded-[24px] py-4 px-6">
-                <p class="text-[15px] text-[#3B302D] font-normal">Klien Dilayani</p>
-                <h1 class="text-[18px] font-semibold text-[#3B302D] mt-2 leading-none">{{ $totalKlien }}</h1>
-                <span class="text-[15px] text-[#3B302D] font-normal">Orang</span>
-            </div>
+    {{-- Klien Dilayani --}}
+    <div class="border border-[#F1C9CF] rounded-[24px] py-6 px-6 bg-white">
+        <p class="text-[15px] text-[#3B302D] font-normal mb-3">
+            Klien Dilayani
+        </p>
+        <h1 class="text-[28px] font-bold text-[#3B302D] leading-tight">
+            {{ $totalKlien }}
+        </h1>
+        <span class="text-[14px] text-[#9B8B87] font-normal block mt-1">
+            Orang
+        </span>
+    </div>
 
-            <div class="border border-[#F1C9CF] rounded-[24px] py-4 px-6">
-                <p class="text-[15px] text-[#3B302D] font-normal">Pendapatan</p>
-                <h1 class="text-[18px] font-semibold text-[#3B302D] mt-2 leading-none">
-                    Rp {{ number_format($totalPendapatan, 0, ',', '.') }}
-                </h1>
-                <span class="text-[15px] text-[#3B302D] font-normal">Estimasi</span>
-            </div>
-
-        </div>
+</div>
 
     </div>
 

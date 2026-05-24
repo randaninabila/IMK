@@ -117,7 +117,7 @@ class PegawaiDashboardController extends Controller
         $totalMenunggu  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
                             ->where('status', 'confirmed')->count();
-        $jadwalBerikutnya = JadwalPegawai::where('pegawai_id', auth()->id())
+        $jadwalBerikutnya = JadwalPegawai::where('pegawai_id', $pegawaiId)
     ->where('status_ketersediaan', 'tersedia')
     ->where(function ($q) {
         $q->where('tanggal', '>', now()->toDateString())

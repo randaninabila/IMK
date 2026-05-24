@@ -169,13 +169,13 @@ class PBookingController extends Controller
         ->unique()
         ->count();
 
-    $totalPendapatan = $bookings
-        ->where('status', 'completed')
-        ->sum(function ($b) {
-            return $b->details->sum(function ($d) {
-                return optional($d->layananCabang)->harga ?? 0;
-            });
-        });
+    // $totalPendapatan = $bookings
+    //     ->where('status', 'completed')
+    //     ->sum(function ($b) {
+    //         return $b->details->sum(function ($d) {
+    //             return optional($d->layananCabang)->harga ?? 0;
+    //         });
+    //     });
 
     /*
     |--------------------------------------------------------------------------
@@ -190,7 +190,6 @@ class PBookingController extends Controller
         'totalSesi',
         'totalDurasi',
         'totalKlien',
-        'totalPendapatan',
         'filter',
         'jenisLayananList',
         'jenisLayananId',
