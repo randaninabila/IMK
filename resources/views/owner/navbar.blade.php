@@ -1,15 +1,15 @@
 <header class="fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-white/70 border-b border-gray-200">
-    <div class="max-w-6xl mx-auto flex justify-between items-center py-4 px-6">
+    <div class="w-full px-10 xl:px-16 h-[78px] flex justify-between items-center">
 
         {{-- LOGO --}}
         {{-- text-gray-800 ubah ke text-[#3E382D] --}}
-        <h2 class="text-[#3E382D] font-semibold">
+        <h2 class="text-[#3E382D] font-semibold shrink-0">
             Dina <span class="italic font-light">Salon Muslimah</span>
         </h2>
 
         {{-- MENU --}}
         {{-- text-gray-700 ubah ke text-tertiary-500 --}}
-        <nav class="flex items-center gap-8 text-sm text-tertiary-500">
+        <nav class="flex items-center gap-6 text-[15px] text-tertiary-500 shrink-0 flex-wrap">
 
             @php
             $current = request()->path();
@@ -17,9 +17,9 @@
 
             {{-- Dashboard --}}
             <a href="/dashboard"
-                class="relative hover:text-[#3E382D] {{ $current == '/dashboard' ? 'font-semibold text-[#3E382D]' : '' }}">
+                class="relative hover:text-[#3E382D] {{ $current == 'dashboard' ? 'font-semibold text-[#3E382D]' : '' }}">
                 Dashboard
-                @if($current == '/dashboard')
+                @if($current == 'dashboard')
                 <span class="absolute left-0 -bottom-1 w-full h-[2px] bg-[#3E382D] rounded"></span>
                 @endif
             </a>
@@ -33,10 +33,10 @@
                 @endif
             </a>
 
-            {{-- Specialist --}}
+            {{-- Employee --}}
             <a href="/employee"
                 class="relative hover:text-[#3E382D] {{ $current == 'employee' ? 'font-semibold text-[#3E382D]' : '' }}">
-                Employees
+                Employee
                 @if($current == 'employee')
                 <span class="absolute left-0 -bottom-1 w-full h-[2px] bg-[#3E382D] rounded"></span>
                 @endif
@@ -51,50 +51,152 @@
                 @endif
             </a>
 
-            {{-- PROFILE + LOGOUT --}}
-            <div class="relative flex items-center gap-3" x-data="{ open: false }">
+            {{-- PROFILE + DROPDOWN --}}
+            <div
+                class="relative"
+                x-data="{ open:false }"
+            >
 
-                {{-- PROFILE PHOTO (click → dropdown edit profile) --}}
-                <button @click="open = !open" class="flex items-center gap-2 focus:outline-none">
-                    <img src="{{ auth()->user()->photo ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) . '&background=3E382D&color=fff' }}"
-                        class="w-9 h-9 rounded-full object-cover border-2 border-[#3E382D]">
+                <button
+                    @click="open = !open"
+                    class="
+                        bg-[#F8D7DC]
+                        rounded-full
+                        pl-2 pr-4 py-1.5
+                        flex items-center gap-2.5
+                        border border-[#F1DFDF]
+                        hover:bg-[#F5CDD3]
+                        transition
+                    "
+                >
+
+                    {{-- FOTO --}}
+                    <img
+                        src="{{ auth()->user()->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->nama) . '&background=FFE4E6&color=3E382D' }}"
+                        alt="{{ auth()->user()->nama }}"
+                        class="
+                            w-9 h-9
+                            rounded-full
+                            object-cover
+                            border-2 border-white
+                            shrink-0
+                        "
+                    >
+
+                    {{-- INFO --}}
+                    <div class="text-left leading-tight">
+
+                        <h3 class="
+                            text-[14px]
+                            font-semibold
+                            text-[#2F2A2A]
+                            max-w-[110px]
+                            truncate
+                        ">
+                            {{ auth()->user()->nama }}
+                        </h3>
+
+                        <p class="
+                            text-[11px]
+                            tracking-wide
+                            uppercase
+                            text-[#7A6262]
+                            mt-0.5
+                        ">
+                            {{ auth()->user()->role }}
+                        </p>
+
+                    </div>
+
                 </button>
 
-                {{-- DROPDOWN EDIT PROFILE --}}
-                <div x-show="open" @click.outside="open = false" x-transition
-                    class="absolute right-0 top-12 w-56 bg-white rounded-2xl shadow-lg border border-gray-100 py-3 z-50">
+                {{-- DROPDOWN --}}
+                <div
+                    x-show="open"
+                    @click.outside="open = false"
+                    x-transition
 
-                    {{-- Header --}}
-                    <div class="px-4 pb-3 border-b border-gray-100">
-                        <p class="text-sm font-semibold text-[#3E382D]">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-gray-400 capitalize">{{ auth()->user()->role }}</p>
-                    </div>
+                    class="
+                        absolute right-0 top-16
+                        w-56
+                        bg-white
+                        rounded-2xl
+                        shadow-xl
+                        border border-[#F1DFDF]
+                        p-2
+                        z-50
+                    "
+                >
 
-                    {{-- Menu --}}
-                    <div class="mt-2 px-2">
-                        <a href="/profile/edit"
-                            class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5eaea] text-sm text-[#3E382D] transition">
-                            {{-- Icon User --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Edit Profile
-                        </a>
+                    <a
+                        href="{{ route('profile') }}"
+                        class="
+                            flex items-center gap-3
+                            px-4 py-3
+                            rounded-xl
+                            hover:bg-[#FFF4F4]
+                            text-sm
+                            text-[#3E382D]
+                            transition
+                        "
+                    >
 
-                        <a href="/profile/change-password"
-                            class="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-[#f5eaea] text-sm text-[#3E382D] transition">
-                            {{-- Icon Lock --}}
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                            Change Password
-                        </a>
-                    </div>
+                        {{-- USER ICON --}}
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2">
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+
+                        </svg>
+
+                        Edit Profile
+
+                    </a>
+
+                    <a
+                        href="{{ route('profile') }}#password"
+                        class="
+                            flex items-center gap-3
+                            px-4 py-3
+                            rounded-xl
+                            hover:bg-[#FFF4F4]
+                            text-sm
+                            text-[#3E382D]
+                            transition
+                        "
+                    >
+
+                        {{-- LOCK ICON --}}
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            stroke-width="2">
+
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+
+                        </svg>
+
+                        Change Password
+
+                    </a>
+
                 </div>
+
+            </div>
 
                 {{-- LOGOUT BUTTON (icon only, tooltip on hover) --}}
                 <form method="POST" action="{{ route('logout') }}">

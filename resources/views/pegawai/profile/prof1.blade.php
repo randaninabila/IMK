@@ -23,8 +23,9 @@
                 {{-- LEFT --}}
                 <div class="flex items-center gap-6">
 
+                    {{-- FOTO PROFILE --}}
                     <img
-                        src="https://i.pravatar.cc/150"
+                        src="{{ $user->foto_profile ? asset('storage/' . $user->foto_profile) : 'https://i.pravatar.cc/150?u=' . $user->user_id }}"
                         alt="profile"
                         class="w-28 h-28 rounded-full object-cover border-[5px] border-white shadow-sm"
                     >
@@ -34,39 +35,35 @@
                         <div class="flex items-center gap-3">
 
                             <h2 class="text-[18px] font-bold text-[#3B302D]">
-                                Siti Aulia, Specialist
+                                {{ $user->nama }}
                             </h2>
 
-                            <span class="px-3 py-1 rounded-full bg-[#F9D5DA] text-[#3B302D] text-[12px] font-normal">
-                                Verified Specialist
-                            </span>
+                            @if($user->status_akun === 'aktif')
+                                <span class="px-3 py-1 rounded-full bg-[#F9D5DA] text-[#3B302D] text-[12px] font-normal">
+                                    Verified Specialist
+                                </span>
+                            @endif
 
                         </div>
 
+                        {{-- CABANG --}}
                         <p class="text-[14px] font-normal text-[#3B302D] mt-1">
-                            Salon & Beauty Specialist
+                            {{ $pegawai?->cabang?->nama_cabang ?? 'Cabang tidak ditemukan' }}
                         </p>
 
-                        <div class="flex items-center gap-2">
+                        {{-- EMAIL --}}
+                        <p class="text-[14px] font-normal text-[#3B302D] mt-1">
+                            {{ $user->email }}
+                        </p>
 
-                            <span class="text-yellow-400 text-[18px]">
-                                ★
-                            </span>
-
-                            <p class="text-[14px] font-normal text-[#3B302D]">
-                                4.9 (126 ulasan)
-                            </p>
-
-                        </div>
-
-                        <p class="text-[14px] font-normal text-[#3B302D]">
-                            siti.specialist@salondina.id
+                        {{-- NO HP --}}
+                        <p class="text-[14px] font-normal text-[#9B8B87]">
+                            {{ $user->no_hp ?? '-' }}
                         </p>
 
                     </div>
 
                 </div>
-
             </div>
 
         </div>
@@ -92,8 +89,8 @@
                                 value="Randani Nabila Desti"
                                 class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
                             >
-                        </div>
 
+                        </div>
                         <div>
                             <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
                                 Email Address
@@ -161,9 +158,6 @@
                                 >
                             </div>
 
-                        </div>
-
-                    </div>
 
                 </div>
 
@@ -191,15 +185,14 @@
                 </div>
 
     {{-- LOGOUT --}}
-    <button
-        class=" w-full mt-10 bg-white border-[3px] border-[#F1A9B1] rounded-[15px] py-4
-               hover:bg-[#FFF1F3] transition duration-300">
-<h4 class="text-[18px] font-bold text-[#3B302D]">
-                                ⎋ Keluar Akun
-                            </h4>
-        
-
-    </button>
+    <form action="{{ route('logout') }}" method="POST" class="mt-10">
+        @csrf
+        <button type="submit"
+            class="w-full bg-white border-[3px] border-[#F1A9B1] rounded-[15px] py-4
+                   hover:bg-[#FFF1F3] transition duration-300">
+            <h4 class="text-[18px] font-bold text-[#3B302D]">⎋ Keluar Akun</h4>
+        </button>
+    </form> 
 
 </div>
 

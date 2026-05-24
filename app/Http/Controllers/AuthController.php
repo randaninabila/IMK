@@ -30,7 +30,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectByRole(Auth::user()->role);
         }
-        return view('auth.signin');
+        return view('auth.register');
     }
 
     // =====================
@@ -43,18 +43,68 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt(
-            ['email' => $request->email, 'password' => $request->password],
-            $request->boolean('remember')
-        )) {
-            $request->session()->regenerate();
-            return $this->redirectByRole(Auth::user()->role);
+        $user = User::where('email', $request->email)->first();
+
+        // User tidak ditemukan
+        if (!$user) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Email atau password salah.'
+                ]);
         }
 
-        return back()
-            ->withInput($request->only('email'))
-            ->withErrors(['email' => 'Email atau password salah.']);
+        // Cek password support multi hash
+        if (!$this->checkPassword($request->password, $user->password)) {
+            return back()
+                ->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => 'Email atau password salah.'
+                ]);
+        }
+
+        // Rehash otomatis ke bcrypt jika masih hash lama
+        if (!str_starts_with($user->password, '$2y$')
+            && !str_starts_with($user->password, '$2a$')) {
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+        }
+
+        Auth::login($user, $request->boolean('remember'));
+
+        $request->session()->regenerate();
+
+        return $this->redirectByRole($user->role);
     }
+
+        // =====================
+        // HELPER — cek password support multi-algoritma
+        // =====================
+        private function checkPassword(string $plain, string $hashed): bool
+        {
+            // Bcrypt
+            if (str_starts_with($hashed, '$2y$') || str_starts_with($hashed, '$2a$')) {
+                return Hash::check($plain, $hashed);
+            }
+
+            // MD5 (32 char hex)
+            if (strlen($hashed) === 32 && ctype_xdigit($hashed)) {
+                return md5($plain) === $hashed;
+            }
+
+            // SHA1 (40 char hex)
+            if (strlen($hashed) === 40 && ctype_xdigit($hashed)) {
+                return sha1($plain) === $hashed;
+            }
+
+            // SHA256 (64 char hex)
+            if (strlen($hashed) === 64 && ctype_xdigit($hashed)) {
+                return hash('sha256', $plain) === $hashed;
+            }
+
+            return false;
+        }
 
     // =====================
     // REGISTER (pelanggan)
@@ -62,22 +112,21 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'                  => ['required', 'string', 'max:100'],
-            'email'                 => ['required', 'email', 'unique:users,email'],
-            'password'              => ['required', 'min:6', 'confirmed'],
-            'phone'                 => ['nullable', 'string', 'max:20'],
+            'nama'     => ['required', 'string', 'max:100'],
+            'email'    => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'min:6', 'confirmed'],
+            'no_hp'    => ['nullable', 'string', 'max:20'],
         ]);
 
         $user = User::create([
-            'nama'        => $request->name,
-            'email'       => $request->email,
-            'password'    => Hash::make($request->password),
-            'no_hp'       => $request->phone,
-            'role'        => 'pelanggan',
+            'nama'     => $request->nama,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
+            'no_hp'    => $request->no_hp,
+            'role'     => 'pelanggan',
             'status_akun' => 'aktif',
         ]);
 
-        // Buat record di tabel pelanggan jika ada
         Pelanggan::create(['user_id' => $user->user_id]);
 
         Auth::login($user);
@@ -132,7 +181,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        return redirect('/');
     }
 
     // =====================

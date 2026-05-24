@@ -1,35 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dina Salon Muslimah</title>
+@extends('layouts.app')
 
-    @vite('resources/css/app.css')
+@section('title', 'Dina Salon Muslimah')
 
-    <!-- FONT INTER -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-    <style>
-        body {
-            font-family: 'Inter';
-        }
-    </style>
-</head>
-<body>
-
-    {{-- Navbar --}}
+@section('navbar')
     @include('user.partials.navbar')
+@endsection
 
-    {{-- Content --}}
-    <main>
-        @yield('content')
-    </main>
-
-    {{-- Footer --}}
+@section('footer')
     @include('user.partials.footer')
-
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-</body>
-</html>
+@endsection

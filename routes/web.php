@@ -4,15 +4,33 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Album;
+
+use App\Http\Controllers\Owner\DashboardController;
+use App\Http\Controllers\Owner\ServiceController;
+use App\Http\Controllers\Owner\EmployeeController;
+use App\Http\Controllers\Owner\CustomerController;
+
+use App\Http\Controllers\User\GalleryController;
+use App\Http\Controllers\User\ServiceDetailController;
+use App\Http\Controllers\User\SpecialistController;
+use App\Http\Controllers\User\LayananDetailController;
+use App\Http\Controllers\User\ProfileController;
+
+use App\Http\Controllers\Pegawai\PegawaiDashboardController;
+use App\Http\Controllers\Pegawai\JadwalPegawaiController;
+use App\Http\Controllers\Pegawai\PBookingController;
+use App\Http\Controllers\Pegawai\PProfileController;
+use App\Http\Controllers\NotifikasiController;
 
 // =====================
 // PUBLIC / USER
 // =====================
 
 // Home
-Route::get('/', function () {
-    return view('user.gallery.gallery');
-});
+Route::get('/', [GalleryController::class, 'index']);
+
 
 // Login & Register
 Route::middleware('guest')->group(function () {
@@ -21,10 +39,9 @@ Route::middleware('guest')->group(function () {
         return view('auth.login');
     })->name('login');
 
-    Route::get('/signin', function () {
-        return view('auth.signin');
-    })->name('signin');
-
+    Route::get('/register', function () {
+        return view('auth.register');
+    })->name('register');
 });
 
 Route::get('/forgotpw', function () {
@@ -44,74 +61,32 @@ Route::get('/service', function () {
     return view('user.service.service');
 });
 
-Route::get('/sdetail', function () {
-    return view('user.service.sdetail');
-});
+// Service list
+Route::get('/service', [ServiceDetailController::class, 'index']);
 
-// Specialist
-Route::get('/specialist', function () {
-    return view('user.specialist.specialist');
-});
+// Service detail
+Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
+    ->name('service.detail')
+    ->whereNumber('jenis_layanan_id');
 
-// Gallery
-Route::get('/gallery', function () {
-    return view('user.gallery.gallery');
-});
+Route::get('/specialist', [SpecialistController::class, 'index']);
+ 
+Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'show'])
+    ->name('service.layanan');
+
+// Detail specialist
+Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
+    ->name('specialist.show')
+    ->whereNumber('pegawai_id');
 
 // =====================
 // GALLERY DETAIL
 // =====================
+Route::get('/gallery', [GalleryController::class, 'index'])
+    ->name('gallery.index');
 
-Route::get('/gallery/{slug}', function ($slug) {
-
-    $galleries = [
-
-        'hair-repair-treatment' => [
-            'title' => 'Hair Repair Treatment',
-            'role' => 'hair',
-            'before' => '/images/before.jpg',
-            'after' => '/images/after.jpg',
-            'before_list' => [
-                'Rambut kering dan bercabang',
-                'Tekstur kasar dan sulit diatur',
-                'Rambut mudah patah',
-            ],
-            'after_list' => [
-                'Rambut lebih halus',
-                'Lebih kuat dan sehat',
-                'Lebih mudah diatur',
-            ],
-        ],
-
-        'hair-growth-therapy' => [
-            'title' => 'Hair Growth Therapy',
-            'role' => 'hair',
-            'before' => '/images/before2.jpg',
-            'after' => '/images/after2.jpg',
-            'before_list' => [
-                'Rambut tipis',
-                'Pertumbuhan lambat',
-            ],
-            'after_list' => [
-                'Rambut lebih tebal',
-                'Pertumbuhan lebih cepat',
-            ],
-        ],
-
-        'acne-facial-treatment' => [
-            'title' => 'Acne Facial Treatment',
-            'role' => 'facial',
-            'before' => '/images/before4.jpg',
-            'after' => '/images/after4.jpg',
-        ],
-
-    ];
-
-    $gallery = $galleries[$slug] ?? abort(404);
-
-    return view('user.gallery.gdetail', compact('gallery'));
-
-})->name('gallery.detail');
+Route::get('/gallery/{slug}', [GalleryController::class, 'show'])
+    ->name('gallery.detail');
 
 // =====================
 // SPECIALIST DETAIL
@@ -156,34 +131,31 @@ Route::get('/specialist/{slug}', function ($slug) {
 // =====================
 // AUTH
 // =====================
-
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // =====================
 // QUICK VERIFY DEV
 // =====================
-
 Route::post('/fake-verify-email', function () {
-
     $user = auth()->user();
-
     $user->email_verified_at = now();
 
     $user->save();
-
     return redirect()->intended('/');
-
 })->middleware('auth');
+
+Route::get('/logout-test', function () {
+    Auth::logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+    return redirect('/login');
+});
 
 // =====================
 // EMAIL VERIFICATION
 // =====================
-
 Route::middleware('auth')->group(function () {
 
     Route::get('/email/verify', function () {
@@ -205,75 +177,60 @@ Route::middleware('auth')->group(function () {
         return back();
 
     })->middleware('throttle:6,1')->name('verification.send');
-
 });
 
 // =====================
 // OWNER
 // =====================
-
 Route::middleware(['auth', 'role:owner'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
+    Route::get('/export-pdf', [DashboardController::class, 'exportPDF'])->name('owner.export-pdf');
+    
+    Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
+    Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');
+    
+    Route::get('/employee', [EmployeeController::class, 'index'])->name('owner.employee');
+    Route::get('/employee/edit', [EmployeeController::class, 'edit'])->name('owner.employee.edit');
+    
+    Route::post('/employee/store', [EmployeeController::class, 'store'])->name('owner.employee.store');
+    Route::patch('/employee/{pegawai_id}/today-status', [EmployeeController::class, 'updateTodayStatus'])->name('owner.employee.today-status');
+    Route::patch('/employee/{pegawai_id}/role', [EmployeeController::class, 'updateRole'])->name('owner.employee.role');
+    Route::patch('/employee/{pegawai_id}/resign', [EmployeeController::class, 'resign'])->name('owner.employee.resign');
+    Route::get('/employee/{pegawai_id}/edit', [EmployeeController::class, 'editEmployee'])->name('owner.employee.edit-form');
+    Route::patch('/employee/{pegawai_id}', [EmployeeController::class, 'updateEmployee'])->name('owner.employee.update');
 
-    Route::get('/dashboard', function () {
-        return view('owner.dashboard');
-    });
-
-    Route::get('/customers', function () {
-        return view('owner.customers');
-    });
-
-    Route::get('/serviceo', function () {
-        return view('owner.service.service');
-    });
-
-    Route::get('/employee', function () {
-        return view('owner.employees.employee');
-    });
-
-    Route::get('/eemployee', function () {
-        return view('owner.employees.eemployee');
-    })->name('employee.edit');
-
-    Route::get('/aemployee', function () {
-        return view('owner.employees.aemployee');
-    });
-
-    Route::get('/eservice', function () {
-        return view('owner.service.eservice');
-    });
-
+    Route::get('/customers', [CustomerController::class, 'index'])->name('owner.customer');
 });
 
 // =====================
 // ADMIN
 // =====================
-
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
-
     });
 
 // =====================
 // PEGAWAI
 // =====================
 
-// Route::middleware(['auth', 'role:pegawai'])
-//     ->prefix('pegawai')
-//     ->name('pegawai.')
-//     ->group(function () {
+Route::middleware(['auth', 'role:pegawai'])
+    ->prefix('pegawai')
+    ->name('pegawai.')
+    ->group(function () {
 
-//         Route::get('/dashboard', function () {
-//             return view('pegawai.dashboard');
-//         })->name('dashboard');
+        Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
+        ->name('dashboard');
 
-//     });
+        Route::get('/pegawai/history', [PBookingController::class, 'history'])
+        ->name('history')
+        ->middleware('auth');
 
+    });
 Route::get('/udin', function () {
         return view('pegawai.dashboard');
     });
@@ -295,7 +252,37 @@ Route::get('/jkb', function () {
     });
 Route::get('/book1', function () {
         return view('pegawai.booking.book1');
+
+        // routes/web.php
+        Route::get('/notifikasi', [NotifikasiController::class, 'index'])
+        ->name('notifikasi');
+
+        Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
+        ->name('notifikasi.dibaca');
+
+        Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
+
+        Route::get('/notifikasi/{id}/dibaca', function () {
+        return redirect()->route('pegawai.notifikasi');
+        });
+
+        Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
+        Route::get('/profile/edit', [PProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
+
+        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
+        ->name('jadwal-kerja');
+
+        Route::get('/pegawai/booking', [PBookingController::class, 'index'])
+        ->name('booking');
+
+        // routes/web.php
+// Ganti Route::post menjadi Route::match agar terima POST & PATCH
+Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
+    PBookingController::class, 'updateStatus'
+])->name('booking.updateStatus');
     });
+
 // =====================
 // PELANGGAN
 // =====================
@@ -314,3 +301,10 @@ Route::middleware(['auth', 'role:pelanggan'])
         })->name('bookings');
 
     });
+
+// =====================
+// PROFILE
+// =====================
+Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');

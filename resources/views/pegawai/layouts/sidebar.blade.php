@@ -1,49 +1,83 @@
-<aside class="w-[300px] p-6 font-sans">
+<aside class="fixed top-[70px] left-0 w-[300px] h-[calc(100vh-70px)] p-6 font-sans overflow-y-auto z-40">
 
     {{-- MENU --}}
-    <div class="bg-white rounded-[22px] border-[3px] border-[#9B6D75] px-3 py-4 shadow-sm mt-4">
+    <div class="bg-white rounded-[22px] border-[3px] border-[#9B6D75] px-3 py-4 shadow-sm mt-16">
 
         <div class="space-y-1">
 
             {{-- PROFILE --}}
-            <a href="{{ url('/prof1') }}"
+
+            <!-- <a href="{{ url('/prof1') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('prof1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('prof1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ route('pegawai.profile') }}"
+                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->routeIs('pegawai.profile*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+
                 <span>Profile</span>
             </a>
 
             {{-- DASHBOARD --}}
-            <a href="{{ url('/udin') }}"
+
+            <!-- <a href="{{ url('/udin') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('udin') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('udin') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ route('pegawai.dashboard') }}"
+                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->routeIs('pegawai.dashboard*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+
                 <span>Dashboard</span>
             </a>
 
             {{-- HISTORY --}}
-            <a href="{{ url('/his1') }}"
+
+            <!-- <a href="{{ url('/his1') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('his1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('his1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ route('pegawai.history') }}"
+                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->routeIs('pegawai.history*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+
                 <span>History</span>
             </a>
 
             {{-- JADWAL KERJA --}}
-            <a href="{{ url('/jkb') }}"
+
+            <!-- <a href="{{ url('/jkb') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('jkb') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
-                <span>Jadwal Kerja</span>
+               {{ request()->is('jkb') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ url('/pegawai/jadwal') }}"
+                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->is('pegawai/jadwal*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+
             </a>
 
             {{-- BOOKING --}}
-            <a href="{{ url('/book1') }}"
+
+            <!-- <a href="{{ url('/book1') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('book1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('book1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ route('pegawai.booking') }}"
+                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->routeIs('pegawai.booking*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+
                 <span>Booking</span>
             </a>
 
             {{-- NOTIFIKASI --}}
-            <a href="{{ url('/not1') }}"
+
+            <!-- <a href="{{ url('/not1') }}"
                class="flex items-center mb-32 gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('not1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('not1') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}"> -->
+
+            <a href="{{ route('pegawai.notifikasi') }}"
+                class="flex items-center gap-4 mb-32 px-5 py-3 rounded-2xl text-[18px] font-medium transition
+                {{ request()->routeIs('pegawai.notifikasi*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
                 <span>Notifikasi</span>
             </a>
 
