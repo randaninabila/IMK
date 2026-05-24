@@ -6,21 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class Pegawai extends Model
 {
-    protected $table = 'pegawai';
+    protected $table      = 'pegawai';
     protected $primaryKey = 'pegawai_id';
-    public $timestamps = false;
-    protected $keyType = 'int';
-    public $incrementing = true;
+    public    $timestamps = false;
+    protected $keyType    = 'int';
+    public    $incrementing = true;
 
     protected $fillable = [
         'user_id',
         'cabang_id',
-        'status_kerja'
+        'status_kerja',
     ];
 
     // =====================
     // RELATIONS
     // =====================
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
@@ -29,5 +30,15 @@ class Pegawai extends Model
     public function cabang()
     {
         return $this->belongsTo(Cabang::class, 'cabang_id', 'cabang_id');
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'pegawai_id', 'pegawai_id');
+    }
+
+    public function jadwals()
+    {
+        return $this->hasMany(JadwalPegawai::class, 'pegawai_id', 'pegawai_id');
     }
 }

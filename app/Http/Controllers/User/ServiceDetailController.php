@@ -9,12 +9,10 @@ class ServiceDetailController extends Controller
 {
     public function index()
     {
-        // Ambil daftar jenis layanan
         $jenisLayanan = DB::table('jenis_layanan')
             ->orderBy('jenis_layanan_id')
             ->get();
 
-        // Ambil cover foto untuk setiap jenis layanan
         $covers = [];
         foreach ($jenisLayanan as $jenis) {
             $layanan = DB::table('layanan')
@@ -23,9 +21,10 @@ class ServiceDetailController extends Controller
                 ->where('cover_foto', '!=', '')
                 ->first();
 
-            $covers[$jenis->jenis_layanan_id] = $layanan 
-                ? asset('storage/' . $layanan->cover_foto) 
-                : asset('storage/default.jpg');
+            // foto ada di public/layanan/ bukan storage/
+            $covers[$jenis->jenis_layanan_id] = $layanan
+                ? asset('layanan/' . basename($layanan->cover_foto))
+                : asset('layanan/default.jpg');
         }
 
         return view('user.service.service', compact('covers', 'jenisLayanan'));
@@ -55,9 +54,10 @@ class ServiceDetailController extends Controller
             )
             ->get()
             ->map(function ($item) {
+                // foto ada di public/layanan/ bukan storage/
                 $item->cover_foto = !empty($item->cover_foto)
-                    ? 'storage/' . $item->cover_foto
-                    : 'storage/default.jpg';
+                    ? asset('layanan/' . basename($item->cover_foto))
+                    : asset('layanan/default.jpg');
                 return $item;
             });
 

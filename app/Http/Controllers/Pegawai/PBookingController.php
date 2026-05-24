@@ -4,218 +4,133 @@ namespace App\Http\Controllers\Pegawai;
 
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\BookingDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PBookingController extends Controller
 {
-    public function index(Request $request)
-{
-    $pegawaiId = auth()->user()->pegawai->pegawai_id;
-    $today     = now()->toDateString();
+    /**
+     * Tampilkan halaman booking pegawai.
+     *  - ongoing  : booking hari ini yang jamnya sudah lewat, status pending/confirmed
+     *  - upcoming : booking yang belum terjadi, status pending/confirmed
+     */
+    public function index()
+    {
+        $pegawaiId = auth()->user()->pegawai->pegawai_id;
+        $today     = now()->toDateString();
+        $now       = now()->format('H:i:s');
 
-    // Ongoing: confirmed = sedang dijadwalkan / berjalan hari ini
-    $ongoing = Booking::with([
-            'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
-        ])
-        ->where('pegawai_id', $pegawaiId)
-        ->whereDate('tanggal_booking', $today)
-        ->where('status', 'confirmed')
-        ->orderBy('jam_booking')
-        ->first();
+        // Ongoing: hari ini, jam sudah lewat/sedang berjalan, belum selesai
+        $ongoingBooking = Booking::with([
+                'pelanggan.user',
+                'details.layananCabang.layanan.jenisLayanan',
+            ])
+            ->where('pegawai_id', $pegawaiId)
+            ->whereDate('tanggal_booking', $today)
+            ->whereTime('jam_booking', '<=', $now)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->orderBy('jam_booking', 'desc')
+            ->first();
 
-    // Upcoming: pending = menunggu konfirmasi / belum mulai
-    $upcoming = Booking::with([
-            'details.layananCabang.layanan.jenisLayanan',
-            'pelanggan.user',
-        ])
-        ->where('pegawai_id', $pegawaiId)
-        ->whereDate('tanggal_booking', $today)
-        ->where('status', 'pending')
-        ->orderBy('jam_booking')
-        ->get();
-
-    return view('pegawai.booking.book1', compact('ongoing', 'upcoming'));
-}
-
-public function history(Request $request)
-{
-    $pegawaiId = auth()->user()->pegawai->pegawai_id;
-
-    $search = $request->get('search');
-    $filter = $request->get('filter', 'semua');
-
-    /*
-    |--------------------------------------------------------------------------
-    | QUERY HISTORY
-    |--------------------------------------------------------------------------
-    */
-
-    $query = Booking::with([
-            'details.layananCabang.layanan',
-            'pelanggan.user',
-        ])
-        ->where('pegawai_id', $pegawaiId)
-        ->whereIn('status', ['completed', 'cancelled']);
-
-    /*
-    |--------------------------------------------------------------------------
-    | FILTER
-    |--------------------------------------------------------------------------
-    */
-
-    if ($filter == 'hariini') {
-
-        $query->whereDate('tanggal_booking', now());
-
-    } elseif ($filter == 'bulanan') {
-
-        $query->whereMonth('tanggal_booking', now()->month)
-              ->whereYear('tanggal_booking', now()->year);
-
-    } elseif ($filter == 'tahunan') {
-
-        $query->whereYear('tanggal_booking', now()->year);
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | SEARCH
-    |--------------------------------------------------------------------------
-    */
-
-    if ($search) {
-
-        $query->where(function ($q) use ($search) {
-
-            $q->whereHas('pelanggan.user', function ($q2) use ($search) {
-
-                $q2->where('name', 'like', "%{$search}%");
-
+        // Upcoming: jam lebih besar dari sekarang hari ini, atau tanggal setelah hari ini
+        $upcomingBookings = Booking::with([
+                'pelanggan.user',
+                'details.layananCabang.layanan.jenisLayanan',
+            ])
+            ->where('pegawai_id', $pegawaiId)
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->where(function ($q) use ($today, $now) {
+                $q->whereDate('tanggal_booking', '>', $today)
+                  ->orWhere(function ($q2) use ($today, $now) {
+                      $q2->whereDate('tanggal_booking', $today)
+                         ->whereTime('jam_booking', '>', $now);
+                  });
             })
+            ->orderBy('tanggal_booking')
+            ->orderBy('jam_booking')
+            ->get();
 
-            ->orWhereHas('details.layananCabang.layanan', function ($q2) use ($search) {
-
-                $q2->where('nama_layanan', 'like', "%{$search}%");
-
-            });
-
-        });
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | GET DATA
-    |--------------------------------------------------------------------------
-    */
-
-    $bookings = $query
-        ->orderBy('tanggal_booking', 'desc')
-        ->orderBy('jam_booking', 'desc')
-        ->get();
-
-    /*
-    |--------------------------------------------------------------------------
-    | GROUP BY TANGGAL
-    |--------------------------------------------------------------------------
-    */
-
-    $history = $bookings->groupBy(function ($b) {
-
-        return Carbon::parse($b->tanggal_booking)
-            ->translatedFormat('d F Y');
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | SUMMARY
-    |--------------------------------------------------------------------------
-    */
-
-    $totalSesi = $bookings->count();
-
-    $totalDurasi = $bookings
-    ->where('status', 'completed')
-    ->sum(function ($b) {
-
-        return $b->details->sum(function ($d) {
-
-            return optional($d->layananCabang->layanan)->durasi ?? 0;
-        });
-    });
-
-    $totalKlien = $bookings
-        ->pluck('pelanggan_id')
-        ->unique()
-        ->count();
-
-    $totalPendapatan = $bookings
-        ->where('status', 'completed')
-        ->sum(function ($b) {
-
-            return $b->details->sum(function ($d) {
-
-                return optional($d->layananCabang)->harga ?? 0;
-            });
-        });
-
-    return view('pegawai.history.his1', compact(
-        'history',
-        'totalSesi',
-        'totalDurasi',
-        'totalKlien',
-        'totalPendapatan',
-        'filter'
-    ));
-}
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return view('pegawai.booking.book1', compact('ongoingBooking', 'upcomingBookings'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Pegawai mulai layanan → status: confirmed
      */
-    public function store(Request $request)
+    public function startService(Booking $booking)
     {
-        //
+        $this->authorizeBooking($booking);
+        $booking->update(['status' => 'confirmed']);
+        return back()->with('success', 'Layanan dimulai.');
     }
 
     /**
-     * Display the specified resource.
+     * Pegawai selesaikan layanan → status: completed
      */
-    public function show(string $id)
+    public function markDone(Booking $booking)
     {
-        //
+        $this->authorizeBooking($booking);
+        $booking->update(['status' => 'completed']);
+        return back()->with('success', 'Booking ditandai selesai.');
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Pegawai batalkan booking → status: cancelled
      */
-    public function edit(string $id)
+    public function cancel(Booking $booking)
     {
-        //
+        $this->authorizeBooking($booking);
+        $booking->update(['status' => 'cancelled']);
+        return back()->with('success', 'Booking dibatalkan.');
     }
 
     /**
-     * Update the specified resource in storage.
+     * Riwayat booking yang sudah selesai / dibatalkan.
      */
-    public function update(Request $request, string $id)
+    public function history(Request $request)
     {
-        //
+        $pegawaiId = auth()->user()->pegawai->pegawai_id;
+        $filter    = $request->get('filter', 'semua');
+
+        $query = Booking::with([
+                'pelanggan.user',
+                'details.layananCabang.layanan',
+            ])
+            ->where('pegawai_id', $pegawaiId)
+            ->whereIn('status', ['completed', 'cancelled']);
+
+        // Filter waktu
+        if ($filter === 'hariini') {
+            $query->whereDate('tanggal_booking', now()->toDateString());
+        } elseif ($filter === 'bulanan') {
+            $query->whereMonth('tanggal_booking', now()->month)
+                  ->whereYear('tanggal_booking', now()->year);
+        } elseif ($filter === 'tahunan') {
+            $query->whereYear('tanggal_booking', now()->year);
+        }
+
+        $riwayat = $query->orderBy('tanggal_booking', 'desc')
+                         ->orderBy('jam_booking', 'desc')
+                         ->get();
+
+        // Ringkasan (untuk filter semua & hariini)
+        $ringkasan = [
+            'total_layanan' => $riwayat->where('status', 'completed')->count(),
+            'total_durasi'  => $riwayat->where('status', 'completed')
+                                ->sum(fn($b) => $b->details->sum(
+                                    fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
+                                )),
+            'klien_dilayani' => $riwayat->where('status', 'completed')
+                                ->pluck('pelanggan_id')->unique()->count(),
+        ];
+
+        return view('pegawai.his1', compact('riwayat', 'ringkasan', 'filter'));
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
+    // ── PRIVATE ──────────────────────────────────────────────────────────────
+
+    private function authorizeBooking(Booking $booking): void
     {
-        //
+        $pegawaiId = auth()->user()->pegawai->pegawai_id;
+        abort_if($booking->pegawai_id !== $pegawaiId, 403, 'Akses ditolak.');
     }
 }

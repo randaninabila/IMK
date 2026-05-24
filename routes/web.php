@@ -20,18 +20,16 @@ use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 use App\Http\Controllers\Pegawai\PBookingController;
+use App\Http\Controllers\Pegawai\PegawaiProfileController;
 use App\Http\Controllers\NotifikasiController;
+
 // =====================
 // PUBLIC / USER
 // =====================
 
-// Home
 Route::get('/', [GalleryController::class, 'index']);
 
-
-// Login & Register
 Route::middleware('guest')->group(function () {
-
     Route::get('/login', function () {
         return view('auth.login');
     })->name('login');
@@ -41,71 +39,49 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
-// Service list
 Route::get('/service', [ServiceDetailController::class, 'index']);
 
-// Service detail
 Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
     ->name('service.detail')
     ->whereNumber('jenis_layanan_id');
 
 Route::get('/specialist', [SpecialistController::class, 'index']);
- 
+
 Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'show'])
     ->name('service.layanan');
 
-// Detail specialist
 Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
     ->name('specialist.show')
     ->whereNumber('pegawai_id');
 
 // =====================
-// GALLERY DETAIL
+// GALLERY
 // =====================
-Route::get('/gallery', [GalleryController::class, 'index'])
-    ->name('gallery.index');
-
-Route::get('/gallery/{slug}', [GalleryController::class, 'show'])
-    ->name('gallery.detail');
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
+Route::get('/gallery/{slug}', [GalleryController::class, 'show'])->name('gallery.detail');
 
 // =====================
 // SPECIALIST DETAIL
 // =====================
-
 Route::get('/specialist/{slug}', function ($slug) {
-
     $specialists = [
-
         'aisyah-rahmawati' => [
-            'name' => 'Dr. Aisyah Rahmawati',
-            'role' => 'Senior Beautician',
-            'desc' => 'Specializing in facial treatments...',
-            'img' => 'https://via.placeholder.com/400x300',
-            'services' => [
-                'Facial Treatment',
-                'Skin Brightening',
-                'Acne Care'
-            ]
+            'name'     => 'Dr. Aisyah Rahmawati',
+            'role'     => 'Senior Beautician',
+            'desc'     => 'Specializing in facial treatments...',
+            'img'      => 'https://via.placeholder.com/400x300',
+            'services' => ['Facial Treatment', 'Skin Brightening', 'Acne Care'],
         ],
-
         'kevin-pratama' => [
-            'name' => 'Dr. Kevin Pratama',
-            'role' => 'Skin Specialist',
-            'desc' => 'Expert in advanced dermatology...',
-            'img' => 'https://via.placeholder.com/400x300',
-            'services' => [
-                'Anti Aging',
-                'Dermatology',
-                'Laser Therapy'
-            ]
+            'name'     => 'Dr. Kevin Pratama',
+            'role'     => 'Skin Specialist',
+            'desc'     => 'Expert in advanced dermatology...',
+            'img'      => 'https://via.placeholder.com/400x300',
+            'services' => ['Anti Aging', 'Dermatology', 'Laser Therapy'],
         ],
-
     ];
-
     $specialist = $specialists[$slug] ?? abort(404);
-
     return view('user.specialist.spdetail', compact('specialist'));
-
 })->name('specialist.detail');
 
 // =====================
@@ -121,7 +97,6 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::post('/fake-verify-email', function () {
     $user = auth()->user();
     $user->email_verified_at = now();
-
     $user->save();
     return redirect()->intended('/');
 })->middleware('auth');
@@ -137,25 +112,18 @@ Route::get('/logout-test', function () {
 // EMAIL VERIFICATION
 // =====================
 Route::middleware('auth')->group(function () {
-
     Route::get('/email/verify', function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-
         $request->fulfill();
-
         return redirect('/');
-
     })->middleware('signed')->name('verification.verify');
 
     Route::post('/email/verification-notification', function (Request $request) {
-
         $request->user()->sendEmailVerificationNotification();
-
         return back();
-
     })->middleware('throttle:6,1')->name('verification.send');
 });
 
@@ -165,13 +133,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('owner.dashboard');
     Route::get('/export-pdf', [DashboardController::class, 'exportPDF'])->name('owner.export-pdf');
-    
+
     Route::get('/serviceo', [ServiceController::class, 'index'])->name('owner.service');
     Route::get('/serviceo/edit', [ServiceController::class, 'edit'])->name('owner.service.edit');
-    
+
     Route::get('/employee', [EmployeeController::class, 'index'])->name('owner.employee');
     Route::get('/employee/edit', [EmployeeController::class, 'edit'])->name('owner.employee.edit');
-    
     Route::post('/employee/store', [EmployeeController::class, 'store'])->name('owner.employee.store');
     Route::patch('/employee/{pegawai_id}/today-status', [EmployeeController::class, 'updateTodayStatus'])->name('owner.employee.today-status');
     Route::patch('/employee/{pegawai_id}/role', [EmployeeController::class, 'updateRole'])->name('owner.employee.role');
@@ -197,52 +164,52 @@ Route::middleware(['auth', 'role:admin'])
 // =====================
 // PEGAWAI
 // =====================
-
 Route::middleware(['auth', 'role:pegawai'])
     ->prefix('pegawai')
     ->name('pegawai.')
     ->group(function () {
 
+        // Dashboard
         Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
-        ->name('dashboard');
+            ->name('dashboard');
 
-        Route::get('/pegawai/history', [PBookingController::class, 'history'])
-        ->name('history')
-        ->middleware('auth');
+        // Jadwal Kerja
+        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
+            ->name('jadwal-kerja');
 
-        // routes/web.php
+        // Booking — FIX: hapus prefix /pegawai/ yang dobel, pakai PBookingController
+        Route::get('/booking',                    [PBookingController::class, 'index'])        ->name('booking');
+        Route::patch('/booking/{booking}/start',  [PBookingController::class, 'startService'])->name('booking.start');
+        Route::patch('/booking/{booking}/done',   [PBookingController::class, 'markDone'])    ->name('booking.done');
+        Route::patch('/booking/{booking}/cancel', [PBookingController::class, 'cancel'])      ->name('booking.cancel');
+
+        // History — FIX: hapus prefix /pegawai/ yang dobel
+        Route::get('/history', [PBookingController::class, 'history'])->name('history');
+
+        // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
-        ->name('notifikasi');
-
+            ->name('notifikasi');
         Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
-        ->name('notifikasi.dibaca');
-
+            ->name('notifikasi.dibaca');
         Route::get('/notifikasi/{id}/dibaca', function () {
-        return redirect()->route('pegawai.notifikasi');
+            return redirect()->route('pegawai.notifikasi');
         });
 
-        Route::get('/profile', function () {
-            return view('pegawai.profile.prof1');
-        })->name('profile');
-
-        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
-        ->name('jadwal-kerja');
-
-        Route::get('/pegawai/booking', [PBookingController::class, 'index'])
-        ->name('booking');
-
+        // Profile — FIX: pakai PegawaiProfileController, bukan closure view
+        Route::get('/profile',          [PegawaiProfileController::class, 'index'])         ->name('profile');
+        Route::put('/profile',          [PegawaiProfileController::class, 'update'])        ->name('profile.update');
+        Route::put('/profile/password', [PegawaiProfileController::class, 'updatePassword'])->name('profile.password');
+        Route::post('/logout',          [PegawaiProfileController::class, 'logout'])        ->name('logout');
 
     });
 
 // =====================
 // PELANGGAN
 // =====================
-
 Route::middleware(['auth', 'role:pelanggan'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
-
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
@@ -251,4 +218,22 @@ Route::middleware(['auth', 'role:pelanggan'])
             return view('pelanggan.bookings');
         })->name('bookings');
 
+        // Tambahkan route booking baru dengan layanan_cabang_id
+        Route::get('/booking/create', function () {
+            $layananCabangId = request('layanan_cabang_id');
+            return view('pelanggan.booking-create', compact('layananCabangId'));
+        })->name('booking.create');
+    });
+    
+Route::middleware(['auth', 'role:pelanggan'])
+    ->prefix('pelanggan')
+    ->name('pelanggan.')
+    ->group(function () {
+        Route::get('/profile', function () {
+            return view('pelanggan.profile');
+        })->name('profile');
+
+        Route::get('/bookings', function () {
+            return view('pelanggan.bookings');
+        })->name('bookings');
     });

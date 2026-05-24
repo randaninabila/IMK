@@ -7,16 +7,16 @@
     {{-- ============================================================
          HERO SECTION — nama & deskripsi dari tabel jenis_layanan
     ============================================================ --}}
-    <section class="relative h-[450px] flex items-center overflow-hidden">
-        <div class="absolute inset-0">
+    <section class="relative h-[450px] flex items-center overflow-hidden w-full">
+        <div class="absolute inset-0 w-full">
             @php 
                 $heroFoto = $layananList->first()?->cover_foto;
             @endphp
-            <img src="{{ asset($heroFoto ?? 'storage/default.jpg') }}"
-                alt="{{ $jenisLayanan->nama_jenis }}"
-                class="w-full h-full object-cover"
-                onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
-            <div class="absolute inset-0 bg-black/40"></div>
+            <img src="{{ $heroFoto ?? asset('layanan/default.jpg') }}"
+                 alt="{{ $jenisLayanan->nama_jenis }}"
+                 class="w-full h-full object-cover object-center"
+                 onerror="this.onerror=null;this.src='{{ asset('layanan/default.jpg') }}';">
+            <div class="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/10"></div>
         </div>
 
         <div class="container mx-auto px-10 relative z-10 text-white text-right">
@@ -67,7 +67,7 @@
                         <img src="{{ asset($layanan->cover_foto) }}"
                             class="w-full h-56 object-cover"
                             alt="{{ $layanan->nama_layanan }}"
-                            onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
+                            onerror="this.onerror=null;this.src='{{ asset('images/default.jpg') }}';">
 
                         <div class="p-6 flex flex-col flex-grow">
 
