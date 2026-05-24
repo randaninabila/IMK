@@ -19,6 +19,9 @@ class User extends Authenticatable
     protected $fillable = [
         'nama',
         'email',
+        'email_verified_at',
+        'email_verify_token',
+        'token_expires_at',
         'password',
         'no_hp',
         'foto_profile',
@@ -32,9 +35,9 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'password' => 'hashed',
+        'email_verified_at' => 'datetime',
+        'token_expires_at'  => 'datetime',
     ];
-
 
     // =========================
     // RELATIONS
@@ -110,4 +113,8 @@ class User extends Authenticatable
         return $this->status_akun === 'aktif';
     }
 
+    public function hasVerifiedEmail(): bool
+    {
+        return !is_null($this->email_verified_at);
+    }
 }

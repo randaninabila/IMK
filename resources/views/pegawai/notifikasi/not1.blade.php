@@ -50,13 +50,13 @@
             Jadwal
         </a>
 
-        <a href="{{ url()->current() }}?filter=sistem"
+        <!-- <a href="{{ url()->current() }}?filter=sistem"
            class="px-15 py-3 text-[16px] font-semibold border-l border-[#F1A9B1] transition-all duration-200
            {{ request('filter') == 'sistem'
                 ? 'bg-[#F1A9B1] text-white'
                 : 'bg-white text-[#3B302D]' }}">
             Sistem
-        </a>
+        </a> -->
 
     </div>
 

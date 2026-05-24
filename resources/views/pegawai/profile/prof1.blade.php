@@ -28,7 +28,14 @@
     ============================ --}}
     <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 py-6">
 
-        <div class="flex items-center justify-between">
+
+                    {{-- FOTO PROFILE --}}
+                    <img
+                        src="{{ $user->foto_profile ? asset('storage/' . $user->foto_profile) : 'https://i.pravatar.cc/150?u=' . $user->user_id }}"
+                        alt="profile"
+                        class="w-28 h-28 rounded-full object-cover border-[5px] border-white shadow-sm"
+                    >
+
 
             {{-- LEFT — avatar + info --}}
             <div class="flex items-center gap-6">
@@ -39,15 +46,34 @@
                     class="w-28 h-28 rounded-full object-cover border-[5px] border-white shadow-sm"
                 >
 
-                <div>
 
-                    <div class="flex items-center gap-3">
-                        <h2 class="text-[18px] font-bold text-[#3B302D]">
-                            {{ $user->nama }}, {{ ucfirst($pegawai->cabang->nama_cabang ?? 'Specialist') }}
-                        </h2>
-                        <span class="px-3 py-1 rounded-full bg-[#F9D5DA] text-[#3B302D] text-[12px] font-normal">
-                            Verified Specialist
-                        </span>
+                            <h2 class="text-[18px] font-bold text-[#3B302D]">
+                                {{ $user->nama }}
+                            </h2>
+
+                            @if($user->status_akun === 'aktif')
+                                <span class="px-3 py-1 rounded-full bg-[#F9D5DA] text-[#3B302D] text-[12px] font-normal">
+                                    Verified Specialist
+                                </span>
+                            @endif
+
+                        </div>
+
+                        {{-- CABANG --}}
+                        <p class="text-[14px] font-normal text-[#3B302D] mt-1">
+                            {{ $pegawai?->cabang?->nama_cabang ?? 'Cabang tidak ditemukan' }}
+                        </p>
+
+                        <!-- {{-- EMAIL --}}
+                        <p class="text-[14px] font-normal text-[#3B302D] mt-1">
+                            {{ $user->email }}
+                        </p>
+
+                        {{-- NO HP --}}
+                        <p class="text-[14px] font-normal text-[#9B8B87]">
+                            {{ $user->no_hp ?? '-' }}
+                        </p> -->
+
                     </div>
 
                     <p class="text-[14px] font-normal text-[#3B302D] mt-1">
@@ -90,18 +116,40 @@
 
         </div>
 
-    </div>
+        {{-- SETTINGS --}}
+        <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 pb-6 pt-6">
 
-    {{-- ===========================
-         PENGATURAN AKUN
-    ============================ --}}
-    <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 pb-6 pt-4">
+             {{-- PERSONAL INFORMATION --}}
 
-        <div class="px-5 py-4 border-b border-[#F3D5D9]">
-            <h3 class="text-[18px] font-bold text-[#3B302D]">Pengaturan Akun</h3>
-        </div>
+                    <h2 class="text-[20px] font-bold text-[#2F2A2A] mb-5">
+                        Personal Information
+                    </h2>
 
-        <div class="divide-y divide-[#F3D5D9]">
+                    <div class="space-y-5 max-w-[480px]">
+
+                        <div>
+                            <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
+                                Name
+                            </label>
+
+                            <input
+                                type="text"
+                                value="Randani Nabila Desti"
+                                class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
+                            >
+
+                        </div>
+                        <div>
+                            <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
+                                Email Address
+                            </label>
+
+                            <input
+                                type="email"
+                                value="randeniy@gmail.com"
+                                class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
+                            >
+                        </div>
 
             {{-- Jadwal Kerja --}}
             <a href="{{ route('pegawai.jadwal-kerja') }}"
@@ -112,10 +160,85 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75V4.5m7.5 2.25V4.5m-9 6h10.5m-13.5 9h16.5A2.25 2.25 0 0021 17.25V6.75A2.25 2.25 0 0018.75 4.5H5.25A2.25 2.25 0 003 6.75v10.5A2.25 2.25 0 005.25 19.5z"/>
                         </svg>
                     </div>
-                    <div>
-                        <h4 class="text-[16px] font-semibold text-[#3B302D]">Jadwal Kerja</h4>
-                        <p class="text-[14px] font-normal text-[#3B302D]">Atur hari dan jam kerja anda</p>
-                    </div>
+
+
+                </div>
+
+                {{-- CHANGE PASSWORD --}}
+                <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 pb-6 pt-6">
+
+                    <h2 class="text-[20px] font-bold text-[#2F2A2A] mb-5">
+                        Change Password
+                    </h2>
+
+                    <div class="grid grid-cols-2 gap-8">
+
+                        <div class="space-y-5">
+
+                            <div>
+                                <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
+                                    Current Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value="password"
+                                    class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
+                                >
+                            </div>
+
+                            <div>
+                                <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
+                                    New Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value="password"
+                                    class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
+                                >
+                            </div>
+
+                        </div>
+
+                        <div class="flex items-end">
+
+                            <div class="w-full">
+                                <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
+                                    Confirm New Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    value="password"
+                                    class="w-full h-[56px] rounded-xl border border-[#F3B3BB] px-5 text-[16px] text-[#6E6969] outline-none"
+                                >
+                            </div>
+
+
+                </div>
+
+    {{-- BUTTON --}}
+                <div>
+                    <a href="/prof2">
+                    <button
+                        class="mt-6 border-[3px] border-[#F1A9B1] rounded-xl px-6 h-[56px] flex items-center gap-3 text-[16px] font-medium text-[#3B302D] hover:bg-[#FFF4F5] transition">
+
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="2"
+                            stroke="currentColor"
+                            class="w-5 h-5">
+
+                            <path stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+                        </svg>
+
+                        Edit Profil
+                    </button>
+                    </a>
                 </div>
                 <span class="text-[#3B302D] text-[18px]">›</span>
             </a>
@@ -185,6 +308,8 @@
             <h4 class="text-[18px] font-bold text-[#3B302D]">⎋ Keluar Akun</h4>
         </button>
     </form>
+
+
 
 </div>
 

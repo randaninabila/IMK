@@ -7,50 +7,48 @@ use App\Models\Notifikasi;
 
 class NotifikasiController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    // NotifikasiController.php
-public function index(Request $request)
-{
-    $filter = $request->get('filter', 'semua');
-    $userId = auth()->id();
+    public function index(Request $request)
+    {
+        $filter = $request->get('filter', 'semua');
+        $userId = auth()->id();
 
-    $query = Notifikasi::where('user_id', $userId)
-        ->orderBy('created_at', 'desc');
+        $query = Notifikasi::where('user_id', $userId)
+            ->orderBy('created_at', 'desc');
 
-    // Filter
-    if ($filter === 'belum-dibaca') {
-        $query->where('status_baca', 'belum');
-    } elseif (in_array($filter, ['booking', 'jadwal', 'sistem'])) {
-        $query->where('tipe', $filter);
+        // Filter
+        if ($filter === 'belum-dibaca') {
+            $query->where('status_baca', 'belum');
+        } elseif (in_array($filter, ['booking', 'jadwal', 'sistem'])) {
+            $query->where('tipe', $filter);
+        }
+
+        $notifikasi = $query->get();
+
+        // Pisah notifikasi
+        $belumDibaca = $notifikasi->where('status_baca', 'belum');
+
+        $sebelumnya = $notifikasi->where('status_baca', 'dibaca');
+
+        return view('pegawai.notifikasi.not1', compact(
+            'belumDibaca',
+            'sebelumnya',
+            'filter'
+        ));
     }
 
-    $notifikasi = $query->get();
+    public function markAsRead($id)
+    {
+        $notif = Notifikasi::where('notifikasi_id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
-    // Pisah notifikasi
-    $belumDibaca = $notifikasi->where('status_baca', 'belum');
+        $notif->status_baca = 'dibaca';
+        $notif->saveQuietly();
 
-    $sebelumnya = $notifikasi->where('status_baca', 'dibaca');
+        return back();
+    }
 
-    return view('pegawai.notifikasi.not1', compact(
-        'belumDibaca',
-        'sebelumnya',
-        'filter'
-    ));
-}
-
-public function markAsRead($id)
-{
-    $notif = Notifikasi::where('notifikasi_id', $id)
-        ->where('user_id', auth()->id())
-        ->firstOrFail();
-
-    $notif->status_baca = 'dibaca';
-    $notif->saveQuietly(); // tidak trigger timestamps
-
-    return back();
-}
+    
     /**
      * Show the form for creating a new resource.
      */

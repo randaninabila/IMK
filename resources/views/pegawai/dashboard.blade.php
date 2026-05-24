@@ -24,7 +24,7 @@
             </div>
 
             <p class="text-[#5B4D4D] text-[16px]">
-                Slot kosong berikutnya: 09:40-10:30
+                Jadwal berikutnya: {{ $jadwalText }}
             </p>
         </div>
 
@@ -144,11 +144,9 @@
 
         @if ($ongoing)
         @php
-            $jamMulai   = \Carbon\Carbon::parse($ongoing->jam_booking);
-            $totalDurasi = $ongoing->details->sum(
-                fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
-            );
-            $jamSelesai = $jamMulai->copy()->addMinutes($totalDurasi);
+            $jamMulai    = \Carbon\Carbon::parse($ongoing->tanggal_booking . ' ' . $ongoing->jam_booking);
+            $totalDurasi = $ongoing->details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
+            $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
         @endphp
 
         <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm">
@@ -156,11 +154,11 @@
             <div class="flex gap-5">
 
                 {{-- DATE BUBBLE --}}
-                <div class="w-16 h-16 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
-                    <span class="text-[20px] font-semibold text-[#3B302D] leading-none">
+                <div class="w-18 h-18 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
+                    <span class="text-[15px] font-semibold text-[#3B302D] leading-none">
                         {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->format('d') }}
                     </span>
-                    <span class="text-[12px] text-[#3B302D]">
+                    <span class="text-[15px] text-[#3B302D]">
                         {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->locale('id')->translatedFormat('M') }}
                     </span>
                 </div>
@@ -169,12 +167,9 @@
                     <h2 class="text-[17px] font-bold text-[#934A4A] leading-none">
                         {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
                     </h2>
-
-                    {{-- Layanan pertama --}}
                     <p class="text-[14px] text-[#B56B6B]">
                         {{ $ongoing->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
                     </p>
-
                     <p class="text-[14px] text-[#934A4A] mt-2 font-medium">
                         {{ $ongoing->pelanggan?->user?->nama ?? '-' }}
                     </p>
@@ -183,16 +178,22 @@
             </div>
 
             <div class="space-y-2 mt-6">
-                <button class="w-full bg-[#F5A6AF] text-white rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
-                    Start Service
-                </button>
-                <button class="w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#B7B1B1] text-[16px]">
-                    Mark as Done
-                </button>
+
+                {{-- MARK AS DONE: ongoing → completed --}}
+                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $ongoing->booking_id) }}">
+                    @csrf 
+                    <input type="hidden" name="status" value="completed">
+                    <button type="submit"
+                            class="w-full bg-[#A8D5A2] text-[#2D6A27] rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
+                        Mark as Done
+                    </button>
+                </form>
+
                 <a href="{{ route('pegawai.booking') }}"
                    class="block w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#A05B5B] text-[16px] text-center">
                     View Detail
                 </a>
+
             </div>
 
         </div>
@@ -218,39 +219,82 @@
 
             @forelse ($upcoming as $booking)
             @php
-                $jamMulaiUp   = \Carbon\Carbon::parse($booking->jam_booking);
-                $durasiUp     = $booking->details->sum(
-                    fn($d) => $d->layananCabang?->layanan?->durasi ?? 0
-                );
+                $jamMulaiUp   = \Carbon\Carbon::parse($booking->tanggal_booking . ' ' . $booking->jam_booking);
+                $durasiUp     = $booking->details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
                 $jamSelesaiUp = $jamMulaiUp->copy()->addMinutes($durasiUp);
+                $bisaStartUp  = \Carbon\Carbon::now()->gte($jamMulaiUp);
             @endphp
 
-            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex gap-5">
+            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex flex-col gap-4">
 
-                {{-- DATE BUBBLE --}}
-                <div class="w-20 h-20 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
-                    <span class="text-[26px] font-semibold leading-none">
-                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->format('d') }}
-                    </span>
-                    <span class="text-[15px]">
-                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('M') }}
-                    </span>
+                <div class="flex gap-5">
+
+                    {{-- DATE BUBBLE --}}
+                    <div class="w-18 h-18 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
+                        <span class="text-[15px] font-semibold leading-none">
+                            {{ \Carbon\Carbon::parse($booking->tanggal_booking)->format('d') }}
+                        </span>
+                        <span class="text-[15px]">
+                            {{ \Carbon\Carbon::parse($booking->tanggal_booking)->locale('id')->translatedFormat('M') }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
+                            {{ $jamMulaiUp->format('H:i') }} – {{ $jamSelesaiUp->format('H:i') }}
+                        </h3>
+                        <p class="text-[#B56B6B] text-[15px]">
+                            {{ $booking->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                        </p>
+                        <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
+                            {{ $booking->pelanggan?->user?->nama ?? '-' }}
+                        </p>
+                    </div>
+
                 </div>
 
-                <div>
-                    <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
-                        {{ $jamMulaiUp->format('H:i') }} – {{ $jamSelesaiUp->format('H:i') }}
-                    </h3>
+                {{-- START SERVICE: aktif hanya kalau jam sekarang >= jam booking --}}
+<form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
+    @csrf
+    <input type="hidden" name="status" value="ongoing">
+    
+    @if($bisaStartUp)
+        {{-- BUTTON AKTIF --}}
+        <button type="submit"
+                class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Mulai Servis
+        </button>
+    @else
+        {{-- BUTTON DISABLED (Off) --}}
+        <button type="button" 
+                disabled
+                title="Layanan bisa dimulai pukul {{ $jamMulaiUp->format('H:i') }}"
+                class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Mulai pukul {{ $jamMulaiUp->format('H:i') }}
+        </button>
+    @endif
+</form>
 
-                    <p class="text-[#B56B6B] text-[15px]">
-                        {{ $booking->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
-                    </p>
-
-                    <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
-                        {{ $booking->pelanggan?->user?->nama ?? '-' }}
-                    </p>
-                </div>
-
+                {{-- BATALKAN BOOKING: kembalikan ke pending supaya bisa ditugaskan ulang ke pegawai lain --}}
+                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}"
+                          onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
+                        @csrf
+                        <input type="hidden" name="status" value="pending">
+                        <button type="submit"
+                                class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
+                            Batalkan Booking
+                        </button>
+                    </form>
             </div>
 
             @empty

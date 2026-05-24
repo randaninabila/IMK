@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\VerifyEmailMail;
+use Illuminate\Support\Facades\Mail;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -112,27 +115,33 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'name'                  => ['required', 'string', 'max:100'],
-            'email'                 => ['required', 'email', 'unique:users,email'],
-            'password'              => ['required', 'min:6', 'confirmed'],
-            'phone'                 => ['nullable', 'string', 'max:20'],
+            'nama'     => ['required', 'string', 'max:100'],
+            'email'    => ['required', 'email', 'unique:users,email'],
+            'password' => ['required', 'min:6', 'confirmed'],
+            'no_hp'    => ['nullable', 'string', 'max:20'],
         ]);
 
+        $token = \Illuminate\Support\Str::random(64);
+
         $user = User::create([
-            'nama'        => $request->name,
-            'email'       => $request->email,
-            'password'    => Hash::make($request->password),
-            'no_hp'       => $request->phone,
-            'role'        => 'pelanggan',
-            'status_akun' => 'aktif',
+            'nama'               => $request->nama,
+            'email'              => $request->email,
+            'password'           => Hash::make($request->password),
+            'no_hp'              => $request->no_hp,
+            'role'               => 'pelanggan',
+            'status_akun'        => 'aktif',
+            'email_verify_token' => $token,
+            'token_expires_at'   => now()->addMinutes(60),
         ]);
 
         Pelanggan::create(['user_id' => $user->user_id]);
 
+        Mail::to($user->email)->send(new VerifyEmailMail($user));
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        return redirect('/verify-email-notice');
     }
 
     // =====================
@@ -196,5 +205,65 @@ class AuthController extends Controller
             'pelanggan'=> redirect('/'),
             default    => redirect('/login'),
         };
+    }
+
+    // =====================
+    // VERIFIKASI EMAIL
+    // =====================
+
+    // Halaman cek email
+    public function verifyEmailNotice()
+    {
+        if (Auth::user()?->hasVerifiedEmail()) {
+            return $this->redirectByRole(Auth::user()->role);
+        }
+        return view('auth.verify-email');
+    }
+
+    // Handler klik link dari email
+    public function verifyEmail(string $token)
+    {
+        $user = User::where('email_verify_token', $token)->first();
+
+        if (!$user) {
+            return redirect('/login')->withErrors(['email' => 'Link verifikasi tidak valid.']);
+        }
+
+        if ($user->token_expires_at->isPast()) {
+            return redirect('/verify-email-notice')
+                ->with('error', 'Link verifikasi sudah kadaluarsa. Silakan minta link baru.');
+        }
+
+        $user->update([
+            'email_verified_at'  => now(),
+            'email_verify_token' => null,
+            'token_expires_at'   => null,
+        ]);
+
+        if (!Auth::check()) {
+            Auth::login($user);
+        }
+
+        return redirect('/')->with('success', 'Email berhasil diverifikasi! Selamat datang 🎉');
+    }
+
+    // Resend email verifikasi
+    public function resendVerification(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($user->hasVerifiedEmail()) {
+            return back()->with('info', 'Email kamu sudah terverifikasi.');
+        }
+
+        $token = \Illuminate\Support\Str::random(64);
+        $user->update([
+            'email_verify_token' => $token,
+            'token_expires_at'   => now()->addMinutes(60),
+        ]);
+
+        Mail::to($user->email)->send(new VerifyEmailMail($user));
+
+        return back()->with('success', 'Email verifikasi baru telah dikirim.');
     }
 }

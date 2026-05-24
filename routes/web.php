@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Album;
 
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
+
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
@@ -16,11 +21,12 @@ use App\Http\Controllers\User\GalleryController;
 use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
+use App\Http\Controllers\User\ProfileController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
 use App\Http\Controllers\Pegawai\PBookingController;
-use App\Http\Controllers\Pegawai\PegawaiProfileController;
+use App\Http\Controllers\Pegawai\PProfileController;
 use App\Http\Controllers\NotifikasiController;
 
 // =====================
@@ -39,6 +45,83 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
+Route::get('/forgotpw', function () {
+        return view('login.forgotpw');
+    });
+
+Route::get('/verif', function () {
+        return view('login.verif');
+    });
+
+Route::get('/newpw', function () {
+        return view('login.newpw');
+    });
+
+
+// FORM FORGOT PASSWORD
+Route::get('/forgot-password', function () {
+    return view('login.forgotpw');
+})->name('password.request');
+
+// KIRIM LINK RESET
+Route::post('/forgot-password', function (Request $request) {
+
+    $request->validate([
+        'email' => 'required|email'
+    ]);
+
+    $status = Password::sendResetLink(
+        $request->only('email')
+    );
+
+    return $status === Password::RESET_LINK_SENT
+        ? back()->with('status', __($status))
+        : back()->withErrors(['email' => __($status)]);
+})->name('password.email');
+
+// FORM RESET PASSWORD
+Route::get('/reset-password/{token}', function (string $token) {
+    return view('login.newpw', ['token' => $token]);
+})->name('password.reset');
+
+// UPDATE PASSWORD
+Route::post('/reset-password', function (Request $request) {
+
+    $request->validate([
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|min:8|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only(
+            'email',
+            'password',
+            'password_confirmation',
+            'token'
+        ),
+
+        function ($user, $password) {
+
+            $user->password = Hash::make($password);
+            $user->save();
+
+            event(new PasswordReset($user));
+        }
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? redirect('/login')->with('status', __($status))
+        : back()->withErrors(['email' => [__($status)]]);
+})->name('password.update');
+
+
+// Service
+Route::get('/service', function () {
+    return view('user.service.service');
+});
+
+// Service list
 Route::get('/service', [ServiceDetailController::class, 'index']);
 
 Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
@@ -116,15 +199,17 @@ Route::middleware('auth')->group(function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-        return redirect('/');
-    })->middleware('signed')->name('verification.verify');
 
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-        return back();
-    })->middleware('throttle:6,1')->name('verification.send');
+    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])
+        ->middleware('auth')
+        ->name('verification.notice');
+
+    Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail'])
+        ->name('verification.verify');
+
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
+        ->middleware('auth')
+        ->name('verification.resend');
 });
 
 // =====================
@@ -173,35 +258,42 @@ Route::middleware(['auth', 'role:pegawai'])
         Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
             ->name('dashboard');
 
-        // Jadwal Kerja
-        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
-            ->name('jadwal-kerja');
+        Route::get('/pegawai/history', [PBookingController::class, 'history'])
+        ->name('history');
 
-        // Booking — FIX: hapus prefix /pegawai/ yang dobel, pakai PBookingController
-        Route::get('/booking',                    [PBookingController::class, 'index'])        ->name('booking');
-        Route::patch('/booking/{booking}/start',  [PBookingController::class, 'startService'])->name('booking.start');
-        Route::patch('/booking/{booking}/done',   [PBookingController::class, 'markDone'])    ->name('booking.done');
-        Route::patch('/booking/{booking}/cancel', [PBookingController::class, 'cancel'])      ->name('booking.cancel');
-
-        // History — FIX: hapus prefix /pegawai/ yang dobel
-        Route::get('/history', [PBookingController::class, 'history'])->name('history');
-
-        // Notifikasi
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
-            ->name('notifikasi');
+        ->name('notifikasi');
+    
         Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
-            ->name('notifikasi.dibaca');
+        ->name('notifikasi.dibaca');
+    
+        Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
+    
         Route::get('/notifikasi/{id}/dibaca', function () {
             return redirect()->route('pegawai.notifikasi');
         });
 
-        // Profile — FIX: pakai PegawaiProfileController, bukan closure view
-        Route::get('/profile',          [PegawaiProfileController::class, 'index'])         ->name('profile');
-        Route::put('/profile',          [PegawaiProfileController::class, 'update'])        ->name('profile.update');
-        Route::put('/profile/password', [PegawaiProfileController::class, 'updatePassword'])->name('profile.password');
-        Route::post('/logout',          [PegawaiProfileController::class, 'logout'])        ->name('logout');
-
+    
+        Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
+        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
+    
+        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
+        ->name('jadwal-kerja');
+    
+        Route::get('/pegawai/booking', [PBookingController::class, 'index'])
+        ->name('booking');
+        Route::post('/booking/{booking}/update-status', [PBookingController::class, 'updateStatus'
+        ])->name('booking.updateStatus');
     });
+
+
+        // routes/web.php
+// Ganti Route::post menjadi Route::match agar terima POST & PATCH
+Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
+    PBookingController::class, 'updateStatus'
+])->name('booking.updateStatus');
+    
 
 // =====================
 // PELANGGAN
@@ -218,22 +310,13 @@ Route::middleware(['auth', 'role:pelanggan'])
             return view('pelanggan.bookings');
         })->name('bookings');
 
-        // Tambahkan route booking baru dengan layanan_cabang_id
-        Route::get('/booking/create', function () {
-            $layananCabangId = request('layanan_cabang_id');
-            return view('pelanggan.booking-create', compact('layananCabangId'));
-        })->name('booking.create');
-    });
-    
-Route::middleware(['auth', 'role:pelanggan'])
-    ->prefix('pelanggan')
-    ->name('pelanggan.')
-    ->group(function () {
-        Route::get('/profile', function () {
-            return view('pelanggan.profile');
-        })->name('profile');
 
-        Route::get('/bookings', function () {
-            return view('pelanggan.bookings');
-        })->name('bookings');
     });
+
+// =====================
+// PROFILE
+// =====================
+Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
+Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
