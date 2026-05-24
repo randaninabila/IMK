@@ -96,14 +96,6 @@
 
                 </a>
 
-                {{-- Booking --}}
-                <a href="#"
-                    class="relative hover:text-[#3E382D] transition">
-
-                    Booking
-
-                </a>
-
                 {{-- Gallery --}}
                 <a href="/gallery"
                     class="relative hover:text-[#3E382D] transition
