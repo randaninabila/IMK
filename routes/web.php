@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Album;
 
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
+
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
@@ -55,6 +60,65 @@ Route::get('/verif', function () {
 Route::get('/newpw', function () {
         return view('login.newpw');
     });
+
+
+// FORM FORGOT PASSWORD
+Route::get('/forgot-password', function () {
+    return view('login.forgotpw');
+})->name('password.request');
+
+// KIRIM LINK RESET
+Route::post('/forgot-password', function (Request $request) {
+
+    $request->validate([
+        'email' => 'required|email'
+    ]);
+
+    $status = Password::sendResetLink(
+        $request->only('email')
+    );
+
+    return $status === Password::RESET_LINK_SENT
+        ? back()->with('status', __($status))
+        : back()->withErrors(['email' => __($status)]);
+})->name('password.email');
+
+// FORM RESET PASSWORD
+Route::get('/reset-password/{token}', function (string $token) {
+    return view('login.newpw', ['token' => $token]);
+})->name('password.reset');
+
+// UPDATE PASSWORD
+Route::post('/reset-password', function (Request $request) {
+
+    $request->validate([
+        'token' => 'required',
+        'email' => 'required|email',
+        'password' => 'required|min:8|confirmed',
+    ]);
+
+    $status = Password::reset(
+        $request->only(
+            'email',
+            'password',
+            'password_confirmation',
+            'token'
+        ),
+
+        function ($user, $password) {
+
+            $user->password = Hash::make($password);
+            $user->save();
+
+            event(new PasswordReset($user));
+        }
+    );
+
+    return $status === Password::PASSWORD_RESET
+        ? redirect('/login')->with('status', __($status))
+        : back()->withErrors(['email' => [__($status)]]);
+})->name('password.update');
+
 
 // Service
 Route::get('/service', function () {
@@ -162,21 +226,16 @@ Route::middleware('auth')->group(function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])
+        ->middleware('auth')
+        ->name('verification.notice');
 
-        $request->fulfill();
+    Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail'])
+        ->name('verification.verify');
 
-        return redirect('/');
-
-    })->middleware('signed')->name('verification.verify');
-
-    Route::post('/email/verification-notification', function (Request $request) {
-
-        $request->user()->sendEmailVerificationNotification();
-
-        return back();
-
-    })->middleware('throttle:6,1')->name('verification.send');
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
+        ->middleware('auth')
+        ->name('verification.resend');
 });
 
 // =====================

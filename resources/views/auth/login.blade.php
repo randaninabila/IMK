@@ -73,7 +73,9 @@ bg-[radial-gradient(circle_at_top_left,_#FFADB2_0%,_transparent_40%),radial-grad
                         <input type="checkbox" name="remember" class="w-4 h-4">
                         Remember me
                     </label>
-                    <a href="#" class="hover:underline">Forgot Password ?</a>
+                    <a href="{{ route('password.request') }}" class="hover:underline">
+                        Forgot Password ?
+                    </a>
                 </div>
 
                 <!-- LOGIN BUTTON -->
