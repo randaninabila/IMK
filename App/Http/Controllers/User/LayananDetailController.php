@@ -31,28 +31,30 @@ class LayananDetailController extends Controller
             ->where('jenis_layanan_id', $layanan->jenis_layanan_id)
             ->first();
 
-        // Ambil semua foto album (before, after, result, catalog)
+        // Ambil semua foto album
         $album = DB::table('album')
             ->where('layanan_id', $layanan_id)
             ->first();
 
         $albumFotos = collect();
+
         if ($album) {
             $albumFotos = DB::table('album_foto')
                 ->where('album_id', $album->album_id)
                 ->orderByRaw("FIELD(tipe, 'cover', 'before', 'after', 'result', 'catalog')")
                 ->get()
                 ->map(function ($foto) {
-                    // foto ada di public/album/
+
                     $foto->url_foto = asset('album/' . basename($foto->url_foto));
+
                     return $foto;
                 });
         }
 
-        // Kelompokkan foto berdasarkan tipe
+        // Kelompokkan foto
         $fotoByTipe = $albumFotos->groupBy('tipe');
 
-        // Ulasan layanan ini
+        // Ulasan
         $ulasan = DB::table('ulasan as u')
             ->join('booking as b', 'u.booking_id', '=', 'b.booking_id')
             ->join('booking_detail as bd', 'b.booking_id', '=', 'bd.booking_id')
@@ -74,13 +76,30 @@ class LayananDetailController extends Controller
 
         $avgRating = $ulasan->avg('rating');
 
+        // TAMBAHAN HARGA PER CABANG
+        $layananCabang = DB::table('layanan_cabang as lc')
+            ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
+            ->where('lc.layanan_id', $layanan_id)
+            ->where('lc.status', 'tersedia')
+            ->where('c.status', 'BUKA')
+            ->select(
+                'lc.layanan_cabang_id',
+                'lc.harga',
+                'lc.harga_promo',
+                'c.nama_cabang',
+                'c.alamat'
+            )
+            ->orderBy('c.cabang_id')
+            ->get();
+
         return view('user.service.detail', compact(
             'layanan',
             'jenisLayanan',
             'albumFotos',
             'fotoByTipe',
             'ulasan',
-            'avgRating'
+            'avgRating',
+            'layananCabang'
         ));
     }
 }

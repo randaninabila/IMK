@@ -22,6 +22,7 @@ use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\User\BookingController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -302,6 +303,7 @@ Route::middleware(['auth', 'role:pelanggan'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
+
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
@@ -310,6 +312,11 @@ Route::middleware(['auth', 'role:pelanggan'])
             return view('pelanggan.bookings');
         })->name('bookings');
 
+        Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
+            ->name('booking.create');
+
+        Route::post('/booking/store', [BookingController::class, 'store'])
+            ->name('booking.store');
 
     });
 

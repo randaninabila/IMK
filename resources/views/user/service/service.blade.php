@@ -49,19 +49,6 @@
                 </a>
             @endforeach
         </div>
-
-        {{-- PAGINATION --}}
-        <div class="col-span-2 flex justify-center gap-3 items-center mt-10">
-            <button id="prevBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#43392f] text-white transition duration-300 hover:scale-110 active:scale-95">&lt;</button>
-
-            @for($i = 1; $i <= $totalPages; $i++)
-                <button class="page-btn w-10 h-10 rounded-md border border-[#43392f] text-[#43392f] transition duration-300 hover:bg-[#43392f] hover:text-white hover:scale-105"
-                        data-page="{{ $i }}">{{ $i }}</button>
-            @endfor
-
-            <button id="nextBtn" class="w-10 h-10 flex items-center justify-center rounded-full bg-[#43392f] text-white transition duration-300 hover:scale-110 active:scale-95">&gt;</button>
-        </div>
-
     </div>
 </div>
 

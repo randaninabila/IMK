@@ -88,8 +88,8 @@ class GalleryController extends Controller
                 ->get()
                 ->map(function ($foto) {
                     $foto->url_foto = !empty($foto->url_foto)
-                        ? 'storage/' . $foto->url_foto
-                        : 'storage/default.jpg';
+                        ? 'layanan/' . $foto->url_foto
+                        : 'layanan/default.jpg';
                     return $foto;
                 });
 
@@ -98,7 +98,7 @@ class GalleryController extends Controller
             $resultFotos = $allFotos->where('tipe', 'result')->values();
 
             if (!$afterFoto && !empty($layanan->cover_foto)) {
-                $afterFoto = (object)['url_foto' => 'storage/' . $layanan->cover_foto];
+                $afterFoto = (object)['url_foto' => 'layanan/' . $layanan->cover_foto];
             }
         }
 

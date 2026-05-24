@@ -66,21 +66,80 @@
     </div>
 </section>
 
-    {{-- TOMBOL BOOKING --}}
-    <div class="bg-white border-b border-pink-100 py-4 sticky top-0 z-30 shadow-sm">
-        <div class="container mx-auto px-6 flex justify-between items-center">
-            <p class="text-sm text-gray-500">{{ $layanan->nama_layanan }}</p>
-            {{-- SESUDAH --}}
-                @if($layanan->layanan_cabang_id)
-                    <a href="{{ route('pelanggan.booking.create', ['layanan_cabang_id' => $layanan->layanan_cabang_id]) }}"
-                    class="bg-rose-400 hover:bg-rose-500 text-white text-sm font-bold px-6 py-2 rounded-full transition">
-                        Booking Sekarang
-                    </a>
-                @else
-                    <span class="text-xs text-gray-400 italic">Tidak tersedia di cabang ini</span>
-                @endif
+    {{-- HARGA PER CABANG --}}
+@if($layananCabang->isNotEmpty())
+<section class="bg-white border-b border-pink-100 py-6 shadow-sm">
+
+    <div class="container mx-auto px-6">
+
+        <div class="flex items-center justify-center mb-6">
+            <div class="flex-grow h-px bg-pink-100"></div>
+
+            <h2 class="px-4 text-sm font-bold text-[#3E382D] uppercase tracking-widest whitespace-nowrap">
+                Harga Tiap Cabang
+            </h2>
+
+            <div class="flex-grow h-px bg-pink-100"></div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            @foreach($layananCabang as $lc)
+
+            <div class="bg-[#FFF8F8] border border-pink-100 rounded-2xl p-5 flex justify-between items-center">
+
+                <div>
+                    <h3 class="font-bold text-[#3E382D] text-sm">
+                        {{ $lc->nama_cabang }}
+                    </h3>
+
+                    @if($lc->alamat)
+                    <p class="text-xs text-gray-400 mt-1">
+                        {{ $lc->alamat }}
+                    </p>
+                    @endif
+
+                    <div class="mt-3">
+
+                        @if($lc->harga_promo)
+
+                            <p class="text-xs text-gray-400 line-through">
+                                Rp {{ number_format($lc->harga, 0, ',', '.') }}
+                            </p>
+
+                            <p class="text-lg font-bold text-rose-400">
+                                Rp {{ number_format($lc->harga_promo, 0, ',', '.') }}
+                            </p>
+
+                        @else
+
+                            <p class="text-lg font-bold text-[#3E382D]">
+                                Rp {{ number_format($lc->harga, 0, ',', '.') }}
+                            </p>
+
+                        @endif
+
+                    </div>
+                </div>
+
+                {{-- BUTTON --}}
+                @if($lc->layanan_cabang_id)
+                    <a href="{{ route('pelanggan.booking.create', $lc->layanan_cabang_id) }}"
+                    class="bg-rose-400 hover:bg-rose-500 text-white text-sm font-bold px-5 py-2 rounded-full transition">
+                        Booking
+                    </a>
+                @endif
+
+            </div>
+
+            @endforeach
+
+        </div>
+
     </div>
+
+</section>
+@endif
 
     {{-- BEFORE & AFTER --}}
     @if($albumFotos->isNotEmpty())
@@ -106,9 +165,9 @@
                         <span class="w-3 h-3 rounded-full bg-gray-400 inline-block"></span>
                         <span class="text-sm font-bold text-gray-500 uppercase tracking-widest">Sebelum</span>
                     </div>
-                    <div class="flex flex-wrap gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                         @foreach($fotoByTipe['before'] as $foto)
-                        <div class="w-[220px] h-[320px] rounded-2xl overflow-hidden border-2 border-rose-200 flex-shrink-0">
+                        <div class="w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 border-rose-200">
                             <img src="{{ $foto->url_foto }}"
                                  alt="Before {{ $layanan->nama_layanan }}"
                                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
@@ -126,9 +185,9 @@
                         <span class="w-3 h-3 rounded-full bg-rose-400 inline-block"></span>
                         <span class="text-sm font-bold text-rose-400 uppercase tracking-widest">Sesudah</span>
                     </div>
-                    <div class="flex flex-wrap gap-3">
+                    <div class="grid grid-cols-2 gap-3">
                         @foreach($fotoByTipe['after'] as $foto)
-                        <div class="w-[220px] h-[320px] rounded-2xl overflow-hidden border-2 border-rose-200 flex-shrink-0">
+                        <div class="w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 border-rose-200">
                             <img src="{{ $foto->url_foto }}"
                                  alt="After {{ $layanan->nama_layanan }}"
                                  class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
@@ -152,7 +211,7 @@
             </div>
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 @foreach($fotoByTipe->only(['result', 'catalog'])->flatten() as $foto)
-                <div class="rounded-2xl overflow-hidden border border-pink-100 h-[320px]">
+                <div class="w-full aspect-[3/4] rounded-2xl overflow-hidden border-2 border-pink-100">
                     <img src="{{ $foto->url_foto }}"
                          alt="Result {{ $layanan->nama_layanan }}"
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"

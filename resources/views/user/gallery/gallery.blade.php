@@ -73,9 +73,9 @@
                 data-desc="{{ strtolower($item->album_deskripsi ?? '') }}"
                 data-index="{{ $index }}">
 
-                <img src="{{ $item->cover_foto ? asset('storage/' . $item->cover_foto) : ($item->layanan_cover ? asset('storage/' . $item->layanan_cover) : asset('storage/default.jpg')) }}"
+                <img src="{{ $item->cover_foto ? asset('layanan/' . $item->cover_foto) : ($item->layanan_cover ? asset('layanan/' . $item->layanan_cover) : asset('layanan/default.jpg')) }}"
                     class="rounded-lg mb-3 w-full h-56 object-cover"
-                    onerror="this.onerror=null;this.src='{{ asset('storage/default.jpg') }}';">
+                    onerror="this.onerror=null;this.src='{{ asset('layanan/default.jpg') }}';">
 
                 <span class="text-[10px] uppercase px-2 py-1 rounded-full bg-gray-100 text-gray-600">
                     {{ $item->nama_jenis }}
