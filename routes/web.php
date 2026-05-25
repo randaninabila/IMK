@@ -24,6 +24,7 @@ use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\BookingController;
 use App\Http\Controllers\User\PaymentController;
+use App\Http\Controllers\User\HomeController; 
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -35,7 +36,7 @@ use App\Http\Controllers\NotifikasiController;
 // PUBLIC / USER
 // =====================
 
-Route::get('/', [GalleryController::class, 'index']);
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', function () {
@@ -116,12 +117,6 @@ Route::post('/reset-password', function (Request $request) {
         ? redirect('/login')->with('status', __($status))
         : back()->withErrors(['email' => [__($status)]]);
 })->name('password.update');
-
-
-// Service
-Route::get('/service', function () {
-    return view('user.service.service');
-});
 
 // Service list
 Route::get('/service', [ServiceDetailController::class, 'index']);

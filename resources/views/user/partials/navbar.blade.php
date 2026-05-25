@@ -43,13 +43,13 @@
                 @endphp
 
                 {{-- Home --}}
-                <a href="/home"
-                    class="relative hover:text-[#3E382D] transition
-                    {{ $current == '/home' ? 'font-semibold text-[#3E382D]' : '' }}">
+                <a href="{{ route('home') ?? '/' }}"
+                class="relative hover:text-[#3E382D] transition
+                {{ request()->is('/') ? 'font-semibold text-[#3E382D]' : '' }}">
 
                     Home
 
-                    @if($current == '/home')
+                    @if(request()->is('/'))
                         <span class="
                             absolute left-0 -bottom-1
                             w-full h-[2px]
@@ -57,9 +57,7 @@
                             rounded
                         "></span>
                     @endif
-
                 </a>
-
                 {{-- Service --}}
                 <a href="/service"
                     class="relative hover:text-[#3E382D] transition

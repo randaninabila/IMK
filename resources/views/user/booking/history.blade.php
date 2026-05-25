@@ -35,7 +35,7 @@
                       {{ request('status') == '' ? 'bg-rose-400 text-white' : 'bg-white text-gray-600 hover:bg-rose-50 border border-pink-200' }}">
                 Semua
             </a>
-            @foreach(['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'ongoing' => 'Berlangsung', 'completed' => 'Selesai', 'Reschedule' => 'JadwalUlang'] as $key => $label)
+            @foreach(['pending' => 'Menunggu', 'confirmed' => 'Dikonfirmasi', 'ongoing' => 'Berlangsung', 'completed' => 'Selesai',] as $key => $label)
                 <a href="{{ route('pelanggan.bookings', ['status' => $key]) }}" 
                    class="px-4 py-2 rounded-full text-sm font-semibold transition
                           {{ request('status') == $key ? 'bg-rose-400 text-white' : 'bg-white text-gray-600 hover:bg-rose-50 border border-pink-200' }}">
@@ -195,7 +195,7 @@
                     </div>
                     <h3 class="text-lg font-semibold text-[#3E382D] mb-2">Belum Ada Booking</h3>
                     <p class="text-gray-500 text-sm mb-6">Kamu belum memiliki riwayat pemesanan layanan.</p>
-                    <a href="{{ route('service.index') }}" 
+                    <a href="{{ url('/service') }}"
                        class="inline-flex items-center gap-2 bg-rose-400 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-2xl transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>

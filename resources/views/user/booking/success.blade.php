@@ -52,25 +52,8 @@
         <div class="mb-6">
             @if(isset($pembayaran))
                 
-                {{-- ✅ CASH: Langsung confirmed --}}
-                @if($pembayaran->metode_pembayaran === 'cash')
-                    <div class="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-start gap-4">
-                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
-                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-green-800 font-semibold text-sm">Status: Booking Dikonfirmasi</p>
-                            <p class="text-green-700 text-sm mt-0.5">
-                                Bayar tunai <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong> saat kamu tiba di salon.
-                                Tunjukkan kode booking <strong>#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</strong> ke kasir.
-                            </p>
-                        </div>
-                    </div>
-
-                {{-- ⏳ QRIS: Menunggu verifikasi --}}
-                @elseif($pembayaran->metode_pembayaran === 'qris' && $pembayaran->status === 'pending')
+                {{-- ✅ PENDING (baik QRIS maupun Cash yang belum diverifikasi) --}}
+                @if($pembayaran->status === 'pending')
                     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
                             <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,8 +63,47 @@
                         <div>
                             <p class="text-amber-800 font-semibold text-sm">Status: Menunggu Verifikasi</p>
                             <p class="text-amber-700 text-sm mt-0.5">
-                                Tim kami akan memverifikasi bukti pembayaran QRIS kamu dalam waktu singkat. 
-                                Kamu akan mendapatkan notifikasi setelah dikonfirmasi.
+                                @if($pembayaran->metode_pembayaran === 'cash')
+                                    Pembayaran tunai untuk booking ini akan diverifikasi saat kamu tiba di salon.
+                                @else
+                                    Bukti pembayaran QRIS sedang diverifikasi oleh admin. Proses biasanya ≤ 1 jam kerja.
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+
+                {{-- ✅ VERIFIED (sudah dikonfirmasi) --}}
+                @elseif($pembayaran->status === 'verified')
+                    <div class="bg-green-50 border border-green-200 rounded-2xl p-5 flex items-start gap-4">
+                        <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-green-800 font-semibold text-sm">✅ Pembayaran Diverifikasi!</p>
+                            <p class="text-green-700 text-sm mt-0.5">
+                                Booking kamu sudah dikonfirmasi. Siapkan diri dan hadir sesuai jadwal ya! 🌸
+                            </p>
+                        </div>
+                    </div>
+
+                {{-- ✅ ON_HOLD / FAILED --}}
+                @elseif(in_array($pembayaran->status, ['on_hold', 'failed']))
+                    <div class="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+                            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-red-800 font-semibold text-sm">Status: {{ strtoupper($pembayaran->status) }}</p>
+                            <p class="text-red-700 text-sm mt-0.5">
+                                @if($pembayaran->status === 'on_hold')
+                                    Pembayaran ditunda. Silakan hubungi admin untuk informasi lebih lanjut.
+                                @else
+                                    Pembayaran gagal. Silakan coba lagi atau hubungi admin.
+                                @endif
                             </p>
                         </div>
                     </div>
@@ -130,7 +152,10 @@
                     </div>
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Status Bayar</p>
-                        <p class="font-semibold {{ $pembayaran && $pembayaran->status === 'pending' ? 'text-green-500' : 'text-amber-500' }}">
+                        <p class="font-semibold {{ 
+                            $pembayaran && $pembayaran->status === 'verified' ? 'text-green-500' : 
+                            ($pembayaran && in_array($pembayaran->status, ['failed', 'on_hold']) ? 'text-red-500' : 'text-amber-500') 
+                        }}">
                             {{ $pembayaran ? strtoupper($pembayaran->status) : '-' }}
                         </p>
                     </div>
