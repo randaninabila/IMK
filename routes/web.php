@@ -23,6 +23,7 @@ use App\Http\Controllers\User\SpecialistController;
 use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\BookingController;
+use App\Http\Controllers\User\PaymentController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -308,17 +309,33 @@ Route::middleware(['auth', 'role:pelanggan'])
             return view('pelanggan.profile');
         })->name('profile');
 
-        Route::get('/bookings', function () {
-            return view('pelanggan.bookings');
-        })->name('bookings');
-
         Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
             ->name('booking.create');
 
         Route::post('/booking/store', [BookingController::class, 'store'])
             ->name('booking.store');
 
-    });
+        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
+            ->name('payment.show');
+        
+        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
+            ->name('payment.process');
+        
+        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
+            ->name('payment.success');
+
+        Route::get('/bookings', [App\Http\Controllers\User\BookingController::class, 'history'])
+            ->name('bookings');
+            
+        Route::get('/booking/{booking_id}', [App\Http\Controllers\User\BookingController::class, 'show'])
+            ->name('booking.show');
+        
+        Route::get('/booking/{booking_id}/reschedule', [App\Http\Controllers\User\BookingController::class, 'showReschedule'])
+            ->name('booking.reschedule');
+        
+        Route::post('/booking/{booking_id}/reschedule', [App\Http\Controllers\User\BookingController::class, 'processReschedule'])
+            ->name('booking.reschedule.process');
+        });
 
 // =====================
 // PROFILE

@@ -252,13 +252,6 @@
                 Data Diri
             </button>
 
-            @if($user->role === 'pelanggan')
-            <button type="button" onclick="switchTab('booking')" id="tab-booking"
-                class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
-                Riwayat Booking
-            </button>
-            @endif
-
             <button type="button" onclick="switchTab('password')" id="tab-password"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
                 Ganti Password
@@ -328,73 +321,9 @@
             </div>
         </div>
     </form>
-        {{-- ================================
-             TAB 2: RIWAYAT BOOKING
-        ================================ --}}
-        @if($user->role === 'pelanggan')
-        <div id="tab-content-booking" class="hidden">
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <h2 class="text-lg font-bold text-[#3E382D] mb-6">Riwayat Booking</h2>
-
-                @if($bookings->isEmpty())
-                    <p class="text-center text-gray-400 py-10 text-sm">Belum ada riwayat booking.</p>
-                @else
-                    <div class="space-y-4">
-                        @foreach($bookings as $booking)
-                        <div class="border border-gray-100 rounded-xl p-5 hover:shadow-sm transition">
-                            <div class="flex justify-between items-start flex-wrap gap-2">
-                                <div>
-                                    <p class="text-sm font-bold text-[#3E382D]">
-                                        #{{ $booking->booking_id }} — {{ $booking->layanan ?: '-' }}
-                                    </p>
-                                    <p class="text-xs text-gray-400 mt-1">
-                                        {{ \Carbon\Carbon::parse($booking->tanggal_booking)->translatedFormat('d F Y') }}
-                                        pukul {{ \Carbon\Carbon::parse($booking->jam_booking)->format('H:i') }}
-                                    </p>
-                                    <p class="text-xs text-gray-400 mt-0.5 capitalize">
-                                        Tipe: {{ $booking->tipe_booking }}
-                                    </p>
-                                </div>
-                                <div class="text-right">
-                                    {{-- Status booking --}}
-                                    @php
-                                        $statusColor = match($booking->status) {
-                                            'selesai'   => 'bg-green-100 text-green-600',
-                                            'batal'     => 'bg-red-100 text-red-500',
-                                            'pending'   => 'bg-yellow-100 text-yellow-600',
-                                            'confirmed' => 'bg-blue-100 text-blue-600',
-                                            'proses'    => 'bg-purple-100 text-purple-600',
-                                            default     => 'bg-gray-100 text-gray-500',
-                                        };
-                                    @endphp
-                                    <span class="text-[10px] uppercase font-bold px-2 py-1 rounded-full {{ $statusColor }}">
-                                        {{ $booking->status }}
-                                    </span>
-
-                                    {{-- Total bayar --}}
-                                    @if($booking->jumlah)
-                                    <p class="text-sm font-bold text-[#3E382D] mt-2">
-                                        Rp {{ number_format($booking->jumlah, 0, ',', '.') }}
-                                    </p>
-                                    <p class="text-[10px] text-gray-400 capitalize">
-                                        {{ $booking->metode_pembayaran ?? '-' }} •
-                                        <span class="{{ $booking->status_bayar === 'verified' ? 'text-green-500' : 'text-yellow-500' }}">
-                                            {{ $booking->status_bayar ?? '-' }}
-                                        </span>
-                                    </p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-        </div>
-        @endif
 
         {{-- ================================
-             TAB 3: GANTI PASSWORD
+             TAB 2: GANTI PASSWORD
         ================================ --}}
         <div id="tab-content-password" class="hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">

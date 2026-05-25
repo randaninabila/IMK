@@ -43,13 +43,13 @@
                 @endphp
 
                 {{-- Home --}}
-                <a href="/"
+                <a href="/home"
                     class="relative hover:text-[#3E382D] transition
-                    {{ $current == '/' ? 'font-semibold text-[#3E382D]' : '' }}">
+                    {{ $current == '/home' ? 'font-semibold text-[#3E382D]' : '' }}">
 
                     Home
 
-                    @if($current == '/')
+                    @if($current == '/home')
                         <span class="
                             absolute left-0 -bottom-1
                             w-full h-[2px]
@@ -115,6 +115,27 @@
                 </a>
 
             </nav>
+
+            @auth
+                @if(auth()->user()->role === 'pelanggan')
+                    <a href="{{ route('pelanggan.bookings') }}"
+                        class="relative hover:text-[#3E382D] transition
+                        {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
+
+                        Riwayat Booking
+
+                        @if(request()->is('pelanggan/bookings*'))
+                            <span class="
+                                absolute left-0 -bottom-1
+                                w-full h-[2px]
+                                bg-[#3E382D]
+                                rounded
+                            "></span>
+                        @endif
+
+                    </a>
+                @endif
+            @endauth
 
 
             {{-- AUTH --}}
