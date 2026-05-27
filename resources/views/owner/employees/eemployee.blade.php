@@ -78,7 +78,7 @@
 .sort-link.active .sort-icon { color: #f45b69; }
 </style>
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen">
+<div class="relative">
 
     <div x-data="{ openModal: {{ $errors->any() ? 'true' : 'false' }} }">
 
@@ -193,7 +193,7 @@
     </div>
 
     {{-- MAIN CARD --}}
-    <div class="bg-[#efe3e3] rounded-[35px] px-10 py-8">
+    <div>
 
         {{-- HEADER --}}
         <div class="flex justify-between items-center mb-6">

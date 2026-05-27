@@ -294,11 +294,15 @@
 
 
                 {{-- LOGOUT --}}
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
+                <div
+                    x-data="{ logoutOpen:false }"
+                    class="relative"
+                >
 
+                    {{-- BUTTON --}}
                     <button
-                        type="submit"
+                        type="button"
+                        @click="logoutOpen = !logoutOpen"
 
                         class="
                             group relative
@@ -332,7 +336,81 @@
 
                     </button>
 
-                </form>
+
+                    {{-- MINI CONFIRM --}}
+                    <div
+                        x-show="logoutOpen"
+                        x-transition
+                        x-cloak
+                        @click.outside="logoutOpen = false"
+
+                        class="
+                            absolute right-0 top-12
+                            w-44
+                            bg-white
+                            border border-[#F1DFDF]
+                            rounded-2xl
+                            shadow-xl
+                            p-3
+                            z-[999]
+                        "
+                    >
+
+                        <p class="
+                            text-xs
+                            text-[#3E382D]
+                            mb-3
+                        ">
+                            Logout dari akun?
+                        </p>
+
+                        <div class="flex justify-end gap-2">
+
+                            {{-- CANCEL --}}
+                            <button
+                                type="button"
+                                @click="logoutOpen = false"
+
+                                class="
+                                    px-3 py-1.5
+                                    rounded-lg
+                                    text-xs
+                                    bg-gray-100
+                                    hover:bg-gray-200
+                                    transition
+                                "
+                            >
+                                Batal
+                            </button>
+
+
+                            {{-- CONFIRM --}}
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+
+                                <button
+                                    type="submit"
+
+                                    class="
+                                        px-3 py-1.5
+                                        rounded-lg
+                                        text-xs
+                                        bg-red-500
+                                        hover:bg-red-600
+                                        text-white
+                                        transition
+                                    "
+                                >
+                                    Logout
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 

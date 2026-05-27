@@ -87,7 +87,7 @@
 }
 </style>
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen">
+<div class="relative">
 
     {{-- BACK --}}
     <a
@@ -136,7 +136,7 @@
     </div>
 
     {{-- MAIN --}}
-    <div class="bg-[#eadede] rounded-3xl p-6">
+    <div>
 
         {{-- HEADER (tidak berubah) --}}
         <div class="flex justify-between items-center mb-6">

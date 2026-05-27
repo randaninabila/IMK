@@ -13,7 +13,7 @@
         class="
             bg-white
             w-full
-            max-w-[620px]
+            max-w-[760px]
             max-h-[95vh]
             overflow-y-auto
             rounded-[24px]
@@ -28,7 +28,7 @@
             Select Branch
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
             {{-- Semua --}}
             <button
@@ -36,13 +36,21 @@
                 :class="selectedBranch === 'Semua'
                     ? 'border border-pink-500 bg-white'
                     : 'bg-[#FCEDEF] border border-transparent'"
-                class="rounded-2xl px-3 py-2 flex items-center gap-3 transition-all duration-300"
+                class="
+                    rounded-2xl
+                    px-4 py-4
+                    flex items-center gap-4
+                    transition-all duration-300
+                    min-h-[72px]
+                    w-full
+                    text-left
+                "
             >
                 <div
                     :class="selectedBranch === 'Semua'
                         ? 'border-pink-500'
                         : 'border-gray-300'"
-                    class="w-5 h-5 rounded-full border flex items-center justify-center"
+                    class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
                 >
                     <div
                         x-show="selectedBranch === 'Semua'"
@@ -55,60 +63,44 @@
                 </span>
             </button>
 
-            {{-- Laudendang --}}
-            <button
-                @click="selectedBranch='Laudendang'"
-                :class="selectedBranch === 'Laudendang'
-                    ? 'border border-pink-500 bg-white'
-                    : 'bg-[#FCEDEF] border border-transparent'"
-                class="rounded-2xl px-3 py-2 flex items-center gap-3 transition-all duration-300"
-            >
-                <div
-                    :class="selectedBranch === 'Laudendang'
-                        ? 'border-pink-500'
-                        : 'border-gray-300'"
-                    class="w-5 h-5 rounded-full border flex items-center justify-center"
+            @foreach($cabangs as $cabang)
+                <button
+                    @click="selectedBranch='{{ $cabang->nama_cabang }}'"
+                    :class="selectedBranch === '{{ $cabang->nama_cabang }}'
+                        ? 'border border-pink-500 bg-white'
+                        : 'bg-[#FCEDEF] border border-transparent'"
+                    class="
+                        rounded-2xl
+                        px-4 py-4
+                        flex items-center gap-4
+                        transition-all duration-300
+                        min-h-[72px]
+                        w-full
+                        text-left
+                    "
                 >
                     <div
-                        x-show="selectedBranch === 'Laudendang'"
-                        class="w-2.5 h-2.5 bg-pink-500 rounded-full"
-                    ></div>
-                </div>
+                        :class="selectedBranch === '{{ $cabang->nama_cabang }}'
+                            ? 'border-pink-500'
+                            : 'border-gray-300'"
+                        class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
+                    >
+                        <div
+                            x-show="selectedBranch === '{{ $cabang->nama_cabang }}'"
+                            class="w-2.5 h-2.5 bg-pink-500 rounded-full"
+                        ></div>
+                    </div>
 
-                <span class="font-medium text-sm text-[#4A3B35]">
-                    Laudendang
-                </span>
-            </button>
-
-            {{-- Tuasan --}}
-            <button
-                @click="selectedBranch='Tuasan'"
-                :class="selectedBranch === 'Tuasan'
-                    ? 'border border-pink-500 bg-white'
-                    : 'bg-[#FCEDEF] border border-transparent'"
-                class="rounded-2xl px-3 py-2 flex items-center gap-3 transition-all duration-300"
-            >
-                <div
-                    :class="selectedBranch === 'Tuasan'
-                        ? 'border-pink-500'
-                        : 'border-gray-300'"
-                    class="w-5 h-5 rounded-full border flex items-center justify-center"
-                >
-                    <div
-                        x-show="selectedBranch === 'Tuasan'"
-                        class="w-2.5 h-2.5 bg-pink-500 rounded-full"
-                    ></div>
-                </div>
-
-                <span class="font-medium text-sm text-[#4A3B35]">
-                    Tuasan
-                </span>
-            </button>
+                    <span class="font-medium text-[15px] leading-snug text-[#4A3B35] break-words">
+                        {{ $cabang->nama_cabang }}
+                    </span>
+                </button>
+            @endforeach
 
         </div>
 
         {{-- REPORT TYPE --}}
-        <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-5 mb-4"
+        <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-4 mb-4"
             style="font-family: Playfair Display, serif;">
             Select Report Type
         </h2>
@@ -230,7 +222,7 @@
         </div>
 
     {{-- DATE RANGE --}}
-    <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-5 mb-3"
+    <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-4 mb-3"
         style="font-family: Playfair Display, serif;">
         Report Period
     </h2>

@@ -4,7 +4,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative">
+<div class="relative">
 
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-8">

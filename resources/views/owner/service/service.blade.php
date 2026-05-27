@@ -2,12 +2,12 @@
 
 @section('content')
 
-<div class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative">
+<div class="relative">
 
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-5xl font-bold text-[#2d2a26]">Service Analytics</h1>
+            <h1 class="text-[52px] font-bold text-[#2d2a26]">Service Analytics</h1>
             <p class="text-gray-500 mt-2">Deep dive into your salon's growth.</p>
         </div>
 

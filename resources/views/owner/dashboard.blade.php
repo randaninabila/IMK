@@ -86,14 +86,14 @@
             return '';
         }
     }"
-    class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative"
+    class="relative"
 >
 
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-8">
 
         <div>
-            <h1 class="text-5xl font-bold text-[#2d2a26]">
+            <h1 class="text-[52px] font-bold text-[#2d2a26]">
                 Welcome Back!
             </h1>
 
