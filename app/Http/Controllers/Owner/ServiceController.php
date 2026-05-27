@@ -281,7 +281,7 @@ class ServiceController extends Controller
             $month = Carbon::now()->subMonths($i);
             $months->push([
                 'value' => $month->format('Y-m'),
-                'label' => $month->translatedFormat('F Y'),
+                'label' => $month->locale('id')->translatedFormat('F Y'),
             ]);
         }
         return $months;

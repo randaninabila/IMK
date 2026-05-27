@@ -106,28 +106,28 @@
             mb-8
         "
     >
-        ← Back to Service Analytics
+        ← Kembali ke Analisis Layanan
     </a>
 
     {{-- STATS --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
         <div class="bg-white rounded-3xl p-5 shadow-sm">
-            <p class="text-sm text-gray-500 mb-2">Total Categories</p>
+            <p class="text-sm text-gray-500 mb-2">Total Kategori</p>
             <h2 class="text-3xl font-bold text-[#f45b69]">
                 {{ $jenisLayanan->count() }}
             </h2>
         </div>
 
         <div class="bg-white rounded-3xl p-5 shadow-sm">
-            <p class="text-sm text-gray-500 mb-2">Active Services</p>
+            <p class="text-sm text-gray-500 mb-2">Layanan Aktif</p>
             <h2 class="text-3xl font-bold text-[#f45b69]">
                 {{ $leaderboard->count() }}
             </h2>
         </div>
 
         <div class="bg-white rounded-3xl p-5 shadow-sm">
-            <p class="text-sm text-gray-500 mb-2">Total Revenue</p>
+            <p class="text-sm text-gray-500 mb-2">Total Pendapatan</p>
             <h2 class="text-3xl font-bold text-[#f45b69]">
                 Rp {{ number_format($totalRevenue, 0, ',', '.') }}
             </h2>
@@ -142,14 +142,14 @@
         <div class="flex justify-between items-center mb-6">
 
             <div>
-                <h1 class="text-3xl font-bold text-[#2d2a26]">Service Directory</h1>
+                <h1 class="text-3xl font-bold text-[#2d2a26]">Daftar Layanan</h1>
                 <p class="text-sm text-gray-500 mt-1">
                     {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
-                    • Manage and monitor all salon services
+                    • Kelola dan pantau seluruh layanan salon
                 </p>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
 
                 {{-- FILTER CABANG --}}
                 <div class="relative" x-data="{ open: false }">
@@ -243,7 +243,7 @@
                 <span class="mr-3 text-gray-400">🔍</span>
                 <input
                     type="text"
-                    placeholder="Search service..."
+                    placeholder="Cari layanan..."
                     class="bg-transparent outline-none w-full text-sm"
                     id="searchService"
                 >
@@ -257,15 +257,9 @@
                 <thead class="text-left text-[#b04a4a] border-b border-[#d8c6c6] [&_th]:py-3 [&_th]:px-4 [&_th]:align-middle">
                     <tr>
                         <th class="px-4 font-semibold text-center">No</th>
-                        <th class="px-4 font-semibold">Service</th>
-                        <th class="px-4 font-semibold">Category</th>
+                        <th class="px-4 font-semibold">Layanan</th>
+                        <th class="px-4 font-semibold">Kategori</th>
 
-                        {{--
-                            ── KOLOM BRANCH PERFORMANCE
-                            Saat 'all': tiap kolom cabang punya sort arrow sendiri.
-                            Klik header cabang → sort by jumlah booking cabang itu.
-                            Saat cabang spesifik: satu kolom, sort by total_count.
-                        --}}
                         @if($selectedCabang == 'all')
 
                             @foreach($cabangs as $loop_cabang)
@@ -301,7 +295,7 @@
                                 class="sort-link {{ $isActive('revenue') ? 'active' : '' }}"
                                 text-center
                             >
-                                Revenue (Rp)
+                                Pendapatan (Rp)
                                 {!! $sortIcon('revenue') !!}
                             </a>
                         </th>
@@ -313,7 +307,7 @@
                                 class="sort-link {{ $isActive('growth') ? 'active' : '' }}"
                                 text-center
                             >
-                                Growth
+                                Pertumbuhan
                                 {!! $sortIcon('growth') !!}
                             </a>
                         </th>
@@ -369,8 +363,8 @@
                         <td colspan="100%" class="py-14 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="text-5xl mb-4">📊</div>
-                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">No service data</h3>
-                                <p class="text-sm text-gray-500">No completed bookings were found.</p>
+                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">Belum ada data layanan</h3>
+                                <p class="text-sm text-gray-500">Belum ada booking selesai yang ditemukan.</p>
                             </div>
                         </td>
                     </tr>

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Salon Report - {{ $branch_name }}</title>
+    <title>Laporan Salon - {{ $branch_name }}</title>
     <style>
         @page {
             margin: 20mm;
@@ -178,38 +178,38 @@
 <body>
     <div class="header">
         <h1>Salon Muslimah Dina</h1>
-        <p>Business Performance Report</p>
+        <p>Laporan Performa Bisnis</p>
         <p><strong>{{ $branch_name }}</strong> | {{ $date_range['label'] }}</p>
-        <p>Generated: {{ now()->format('d M Y') }}</p>
+        <p>Dibuat pada: {{ now()->format('d M Y') }}</p>
     </div>
 
     @foreach($reports as $report)
         @if($report === 'Financial' && isset($financial_data))
             <div class="section">
-                <h2>Financial Summary</h2>
+                <h2>Ringkasan Keuangan</h2>
 
                 <p class="section-desc">
-                    Overview of salon revenue performance and transaction activity during the selected period.
+                    Ringkasan pendapatan salon dan aktivitas transaksi selama periode yang dipilih.
                 </p>
 
                 <table class="summary-row">
                     <tr>
                         <td>
-                            <span class="summary-label">Total Revenue</span>
+                            <span class="summary-label">Total Pendapatan</span>
                             <span class="summary-value">
                                 Rp {{ number_format($financial_data['total_revenue'] ?? 0, 0, ',', '.') }}
                             </span>
                         </td>
 
                         <td>
-                            <span class="summary-label">Transactions</span>
+                            <span class="summary-label">Jumlah Transaksi</span>
                             <span class="summary-value">
                                 {{ $financial_data['total_transactions'] ?? 0 }}
                             </span>
                         </td>
 
                         <td>
-                            <span class="summary-label">Average Transaction</span>
+                            <span class="summary-label">Rata-rata Transaksi</span>
                             <span class="summary-value">
                                 Rp {{ number_format($financial_data['avg_transaction'] ?? 0, 0, ',', '.') }}
                             </span>
@@ -221,9 +221,9 @@
                     <table>
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Revenue</th>
-                                <th>Transactions</th>
+                                <th>Tanggal</th>
+                                <th>Pendapatan</th>
+                                <th>Jumlah Transaksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -237,26 +237,26 @@
                         </tbody>
                     </table>
                 @else
-                    <div class="no-data">No financial data available for this period</div>
+                    <div class="no-data">Belum ada data keuangan pada periode ini</div>
                 @endif
             </div>
         @endif
 
         @if($report === 'Services' && isset($services_data))
             <div class="section">
-                <h2>Top Services</h2>
+                <h2>Layanan Terpopuler</h2>
 
                 <p class="section-desc">
-                    Most booked services based on customer demand and booking frequency.
+                    Layanan yang paling sering dibooking berdasarkan permintaan pelanggan.
                 </p>
 
                 @if($services_data->count() > 0)
                     <table>
                         <thead>
                             <tr>
-                                <th>Service</th>
-                                <th>Bookings</th>
-                                <th>Percentage</th>
+                                <th>Layanan</th>
+                                <th>Jumlah Booking</th>
+                                <th>Persentase</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -271,28 +271,28 @@
                         </tbody>
                     </table>
                 @else
-                    <div class="no-data">No service data available for this period</div>
+                    <div class="no-data">Belum ada data layanan pada periode ini</div>
                 @endif
             </div>
         @endif
 
         @if($report === 'Employees' && isset($employees_data))
             <div class="section">
-                <h2>Employee Performance</h2>
+                <h2>Performa Pegawai</h2>
 
                 <p class="section-desc">
-                    Employee workload, service activity, and branch assignment during this reporting period.
+                    Aktivitas layanan, beban kerja, dan penempatan karyawan selama periode laporan.
                 </p>
 
                 @if($employees_data->count() > 0)
                     <table class="employee-table">
                         <thead>
                             <tr>
-                                <th>Employee</th>
-                                <th>Branch</th>
+                                <th>Pegawai</th>
+                                <th>Cabang</th>
                                 <th>Role</th>
-                                <th>Bookings</th>
-                                <th>Services</th>
+                                <th>Booking</th>
+                                <th>Layanan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -308,45 +308,45 @@
                         </tbody>
                     </table>
                 @else
-                    <div class="no-data">No employee data available for this period</div>
+                    <div class="no-data">Belum ada data karyawan pada periode ini</div>
                 @endif
             </div>
         @endif
 
         @if($report === 'Customers' && isset($customers_data))
             <div class="section">
-                <h2>Customer Analytics</h2>
+                <h2>Analisis Pelanggan</h2>
 
                 <p class="section-desc">
-                    Customer growth, retention, and loyalty trends during this reporting period.
+                    Tren pertumbuhan, loyalitas, dan retensi pelanggan selama periode laporan.
                 </p>
 
                 <table class="summary-row">
                     <tr>
 
                         <td>
-                            <span class="summary-label">Total Customers</span>
+                            <span class="summary-label">Total Pelanggan</span>
                             <span class="summary-value">
                                 {{ $customers_data['total_customers'] ?? 0 }}
                             </span>
                         </td>
 
                         <td>
-                            <span class="summary-label">New Customers</span>
+                            <span class="summary-label">Pelanggan Baru</span>
                             <span class="summary-value">
                                 {{ $customers_data['new_customers'] ?? 0 }}
                             </span>
                         </td>
 
                         <td>
-                            <span class="summary-label">Repeat Customers</span>
+                            <span class="summary-label">Pelanggan Loyal</span>
                             <span class="summary-value">
                                 {{ $customers_data['repeat_customers'] ?? 0 }}
                             </span>
                         </td>
 
                         <td>
-                            <span class="summary-label">Retention Rate</span>
+                            <span class="summary-label">Tingkat Retensi</span>
                             <span class="summary-value">
                                 {{
                                     ($customers_data['total_customers'] ?? 0) > 0
@@ -366,7 +366,7 @@
     @endforeach
 
     <div style="margin-top: 50px; text-align: center; color: #7A6A63; font-size: 10px;">
-        <p>Generated by Salon Muslimah Dina Management System</p>
+        <p>Dibuat oleh Sistem Manajemen Salon Muslimah Dina</p>
         <p>{{ now()->format('d M Y') }}</p>
     </div>
 </body>

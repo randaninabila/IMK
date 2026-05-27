@@ -25,7 +25,7 @@
         {{-- SELECT BRANCH --}}
         <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mb-6"
             style="font-family: Playfair Display, serif;">
-            Select Branch
+            Pilih Cabang
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -102,7 +102,7 @@
         {{-- REPORT TYPE --}}
         <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-4 mb-4"
             style="font-family: Playfair Display, serif;">
-            Select Report Type
+            Pilih Jenis Laporan
         </h2>
 
         <div class="grid grid-cols-2 gap-3">
@@ -124,11 +124,11 @@
                     <div>
                         <h3 class="text-sm font-semibold text-[#4A3B35]"
                             style="font-family: Playfair Display, serif;">
-                            Financial
+                            Keuangan
                         </h3>
 
                         <p class="text-[10px] text-[#7A6A63] mt-1 leading-tight">
-                            Revenue, expenses, and taxes.
+                            Pendapatan.
                         </p>
                     </div>
 
@@ -152,11 +152,11 @@
                     <div>
                         <h3 class="text-sm font-semibold text-[#4A3B35]"
                             style="font-family: Playfair Display, serif;">
-                            Services
+                            Layanan
                         </h3>
 
                         <p class="text-[10px] text-[#7A6A63] mt-1 leading-tight">
-                            Booking trends and popularity.
+                            Tren pemesanan dan popularitas layanan.
                         </p>
                     </div>
 
@@ -180,11 +180,11 @@
                     <div>
                         <h3 class="text-sm font-semibold text-[#4A3B35]"
                             style="font-family: Playfair Display, serif;">
-                            Employees
+                            Pegawai
                         </h3>
 
                         <p class="text-[10px] text-[#7A6A63] mt-1 leading-tight">
-                            Staff performance & hours.
+                            Performa dan jam kerja staf.
                         </p>
                     </div>
 
@@ -208,11 +208,11 @@
                     <div>
                         <h3 class="text-sm font-semibold text-[#4A3B35]"
                             style="font-family: Playfair Display, serif;">
-                            Customers
+                            Pelanggan
                         </h3>
 
                         <p class="text-[10px] text-[#7A6A63] mt-1 leading-tight">
-                            Demographics and retention.
+                            Demografi dan retensi pelanggan.
                         </p>
                     </div>
 
@@ -224,7 +224,7 @@
     {{-- DATE RANGE --}}
     <h2 class="text-[20px] leading-none font-bold text-[#3F342D] mt-4 mb-3"
         style="font-family: Playfair Display, serif;">
-        Report Period
+        Rentang Waktu
     </h2>
 
     {{-- QUICK FILTER --}}
@@ -238,7 +238,7 @@
                 : 'bg-[#FCEDEF] text-[#4A3B35]'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
         >
-            Today
+            Hari Ini
         </button>
 
         {{-- This Week --}}
@@ -249,7 +249,7 @@
                 : 'bg-[#FCEDEF] text-[#4A3B35]'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
         >
-            This Week
+            Minggu Ini
         </button>
 
         {{-- This Month --}}
@@ -260,7 +260,7 @@
                 : 'bg-[#FCEDEF] text-[#4A3B35]'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
         >
-            This Month
+            Bulan Ini
         </button>
 
         {{-- This Year --}}
@@ -271,7 +271,7 @@
                 : 'bg-[#FCEDEF] text-[#4A3B35]'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
         >
-            This Year
+            Tahun Ini
         </button>
 
         {{-- Custom --}}
@@ -282,7 +282,7 @@
                 : 'bg-[#FCEDEF] text-[#4A3B35]'"
             class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300"
         >
-            Custom
+            Kustom
         </button>
 
     </div>
@@ -297,7 +297,7 @@
         {{-- START DATE --}}
         <div class="w-full">
             <label class="block text-sm text-gray-500 mb-2">
-                Start Date
+                Tanggal Awal
             </label>
 
             <input
@@ -324,7 +324,7 @@
         {{-- END DATE --}}
         <div class="w-full">
             <label class="block text-sm text-gray-500 mb-2">
-                End Date
+                Tanggal Akhir
             </label>
 
             <input
@@ -352,7 +352,7 @@
                 @click="showModal = false"
                 class="px-10 py-3 rounded-full bg-[#F7EFEF] hover:opacity-80 transition font-semibold text-sm"
             >
-                Cancel
+                Batal
             </button>
 
             <div class="relative">
@@ -370,7 +370,7 @@
                         transition
                     "
                 >
-                    Export PDF
+                    Ekspor PDF
                 </button>
 
                 {{-- Floating Warning --}}
@@ -416,7 +416,7 @@
 
                         <div>
                             <p class="font-semibold text-sm mb-1">
-                                Export can't continue
+                                Ekspor tidak dapat dilanjutkan
                             </p>
 
                             <p

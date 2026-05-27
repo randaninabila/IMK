@@ -93,7 +93,7 @@
             shadow-sm hover:bg-pink-50 transition mb-8
         "
     >
-        ← Back to Team Performance
+        ← Kembali ke Performa Tim
     </a>
 
     {{-- SUMMARY --}}
@@ -102,7 +102,7 @@
         {{-- 1. TOTAL EMPLOYEES --}}
         <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-500">Total Employees</p>
+                <p class="text-sm font-semibold text-gray-500">Total Karyawan</p>
                 <span class="p-2 bg-pink-100 rounded-xl text-base leading-none">🆔</span>
             </div>
             <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $totalEmployees }}</h2>
@@ -118,7 +118,7 @@
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-xs text-gray-400 truncate">{{ Str::limit($cs['nama_cabang'], 20) }}</span>
                     <span class="text-xs font-semibold text-[#f45b69] bg-pink-50 px-2.5 py-0.5 rounded-full flex-shrink-0">
-                        {{ $cs['total'] }} staff
+                        {{ $cs['total'] }} staf
                     </span>
                 </div>
                 @endforeach
@@ -129,7 +129,7 @@
         {{-- 2. AVAILABLE TODAY --}}
         <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-500">Available Today</p>
+                <p class="text-sm font-semibold text-gray-500">Tersedia Hari Ini</p>
                 <span class="p-2 bg-blue-100 rounded-xl text-base leading-none">✅</span>
             </div>
             <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $activeEmployees }}</h2>
@@ -163,7 +163,7 @@
         {{-- 3. OFF TODAY --}}
         <div class="bg-white rounded-3xl px-5 p-3 shadow-sm border border-pink-50">
             <div class="flex items-center justify-between mb-4">
-                <p class="text-sm font-semibold text-gray-500">Off Today</p>
+                <p class="text-sm font-semibold text-gray-500">Libur Hari Ini</p>
                 <span class="p-2 bg-amber-100 rounded-xl text-base leading-none">⏰</span>
             </div>
             <h2 class="text-3xl font-bold text-[#f45b69] mb-1">{{ $totalEmployees - $activeEmployees }}</h2>
@@ -182,7 +182,7 @@
                         {{ $cs['off_today'] > 0
                             ? 'text-amber-700 bg-amber-50'
                             : 'text-gray-400 bg-gray-50' }}">
-                        {{ $cs['off_today'] }} off
+                        {{ $cs['off_today'] }} libur
                     </span>
                 </div>
                 @endforeach
@@ -199,14 +199,14 @@
         <div class="flex justify-between items-center mb-6">
 
             <div>
-                <h1 class="text-3xl font-bold text-[#2d2a26]">Employee Directory</h1>
+                <h1 class="text-3xl font-bold text-[#2d2a26]">Daftar Pegawai</h1>
                 <p class="text-sm text-gray-500 mt-1">
                     {{ Carbon\Carbon::parse($selectedMonth)->translatedFormat('F Y') }}
-                    • Manage salon specialists and staff
+                    • Kelola spesialis dan staf salon
                 </p>
             </div>
 
-            <div class="flex gap-3">
+            <div class="flex flex-wrap items-center gap-3 shrink-0">
 
                 {{-- FILTER CABANG --}}
                 <div class="relative" x-data="{ open: false }">
@@ -255,7 +255,7 @@
 
                 {{-- ADD --}}
                 <button @click="openModal = true" class="bg-[#f8cdd0] text-[#b04a4a] px-5 py-2.5 rounded-full text-sm font-medium hover:opacity-90 transition">
-                    + Add Employee
+                    + Tambah Pegawai
                 </button>
 
             </div>
@@ -267,7 +267,7 @@
                 <span class="mr-3 text-gray-400">🔍</span>
                 <input
                     type="text"
-                    placeholder="Search by name, role, availability, joined date..."
+                    placeholder="Cari berdasarkan nama, posisi, status, atau tanggal bergabung..."
                     class="bg-transparent outline-none w-full text-sm"
                     id="searchEmployee"
                 >
@@ -286,36 +286,36 @@
                         {{-- EMPLOYEE (sort by name) --}}
                         <th class="text-center px-4 w-[260px]">
                             <a href="{{ $sortUrl('employee') }}" class="sort-link {{ $isActive('employee') ? 'active' : '' }}">
-                                Employee {!! $sortIcon('employee') !!}
+                                Pegawai {!! $sortIcon('employee') !!}
                             </a>
                         </th>
 
                         <th class="px-4 font-semibold text-center w-[110px]">Role</th>
                         <th class="px-4 font-semibold text-center w-[200px]">Cabang</th>
-                        <th class="px-4 font-semibold text-center w-[110px]">Today</th>
+                        <th class="px-4 font-semibold text-center w-[110px]">Hari Ini</th>
 
                         {{-- CLIENTS --}}
                         <th class="px-4 text-center w-[100px]">
                             <a href="{{ $sortUrl('clients') }}" class="sort-link {{ $isActive('clients') ? 'active' : '' }}">
-                                Clients {!! $sortIcon('clients') !!}
+                                Klien {!! $sortIcon('clients') !!}
                             </a>
                         </th>
 
                         {{-- SERVICES --}}
                         <th class="px-4 text-center w-[100px]">
                             <a href="{{ $sortUrl('services') }}" class="sort-link {{ $isActive('services') ? 'active' : '' }}">
-                                Services {!! $sortIcon('services') !!}
+                                Layanan {!! $sortIcon('services') !!}
                             </a>
                         </th>
 
                         {{-- SINCE --}}
                         <th class="px-4 text-center w-[120px]">
                             <a href="{{ $sortUrl('since') }}" class="sort-link {{ $isActive('since') ? 'active' : '' }}">
-                                Since {!! $sortIcon('since') !!}
+                                Bergabung {!! $sortIcon('since') !!}
                             </a>
                         </th>
 
-                        <th class="px-4 text-center w-[110px] font-semibold">Action</th>
+                        <th class="px-4 text-center w-[110px] font-semibold">Aksi</th>
                     </tr>
                 </thead>
 
@@ -329,8 +329,8 @@
                         transition duration-200
                     "
                         data-name="{{ strtolower($employee['nama']) }}"
-                        data-role="{{ strtolower($employee['role'] == 'admin' ? 'admin' : 'specialist') }}"
-                        data-today="{{ strtolower($employee['today_status'] == 'tersedia' ? 'available' : 'off today') }}"
+                        data-role="{{ strtolower($employee['role'] == 'admin' ? 'admin' : 'spesialis') }}"
+                        data-today="{{ strtolower($employee['today_status'] == 'tersedia' ? 'tersedia' : 'libur') }}"
                         data-since="{{ strtolower($employee['since_joined']) }}"
                     >
 
@@ -360,7 +360,7 @@
                         {{-- ROLE --}}
                         <td class="px-4 text-center">
                             <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $employee['role'] == 'admin' ? 'bg-[#dbeafe] text-[#2563eb]' : 'bg-[#ffe4e6] text-[#e11d48]' }}">
-                                {{ $employee['role'] == 'admin' ? 'Admin' : 'Specialist' }}
+                                {{ $employee['role'] == 'admin' ? 'Admin' : 'Spesialis' }}
                             </span>
                         </td>
 
@@ -393,7 +393,7 @@
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open"
                                         class="w-9 h-9 rounded-xl bg-white border border-[#f3dede] shadow-sm hover:bg-blue-50 hover:scale-105 transition flex items-center justify-center text-xs font-medium {{ $employee['today_status'] == 'tersedia' ? 'bg-blue-50 text-blue-600 border-blue-200' : 'text-gray-500' }}"
-                                        title="Toggle ketersediaan hari ini">
+                                        title="Ubah status ketersediaan hari ini">
                                         {{ $employee['today_status'] == 'tersedia' ? '✅' : '⏰' }}
                                     </button>
                                     <div x-show="open" @click.outside="open = false" x-transition
@@ -425,7 +425,7 @@
 
                                 {{-- RESIGN --}}
                                 <form action="{{ route('owner.employee.resign', $employee['pegawai_id']) }}" method="POST"
-                                    onsubmit="return confirm('Resign employee ini?');">
+                                    onsubmit="return confirm('Yakin ingin menonaktifkan karyawan ini?');">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="w-9 h-9 rounded-xl bg-white border border-[#f3dede] shadow-sm hover:bg-red-100 hover:scale-105 transition">⛔</button>
                                 </form>
@@ -439,8 +439,8 @@
                         <td colspan="10" class="py-16 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="text-5xl mb-4">📊</div>
-                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">No employee data</h3>
-                                <p class="text-sm text-gray-500">No employee activity found for this period.</p>
+                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">Belum ada data karyawan</h3>
+                                <p class="text-sm text-gray-500">Belum ada aktivitas karyawan pada periode ini.</p>
                             </div>
                         </td>
                     </tr>

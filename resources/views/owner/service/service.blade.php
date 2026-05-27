@@ -7,11 +7,13 @@
     {{-- HEADER --}}
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h1 class="text-[52px] font-bold text-[#2d2a26]">Service Analytics</h1>
-            <p class="text-gray-500 mt-2">Deep dive into your salon's growth.</p>
+            <h1 class="text-4xl lg:text-5xl leading-tight font-bold text-[#2d2a26] max-w-4xl">
+                Analisis Layanan
+            </h1>
+            <p class="text-gray-500 mt-2">Analisis performa dan perkembangan layanan salon.</p>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
 
             {{-- CABANG --}}
             <div class="relative" x-data="{ openBranch: false }">
@@ -228,7 +230,7 @@
 
         <button data-filter="all"
             class="filter-btn px-4 py-1.5 rounded-md text-sm border border-[#3E382D] bg-[#3E382D] text-white">
-            All Services
+            Semua Layanan
         </button>
 
         @foreach($jenisLayanan as $jenis)
@@ -251,11 +253,11 @@
 
             <div>
                 <h2 class="text-2xl font-bold text-[#2d2a26]">
-                    Most Popular Services
+                    Layanan Paling Populer
                 </h2>
 
                 <p class="text-sm text-gray-500 mt-1">
-                    Top booked services this month
+                    Layanan dengan booking terbanyak bulan ini
                 </p>
             </div>
 
@@ -351,7 +353,7 @@
                         <span
                             class="text-sm font-medium text-gray-500">
 
-                            appointments
+                            booking
 
                         </span>
 
@@ -375,11 +377,11 @@
             </div>
 
             <h3 class="text-lg font-semibold text-[#2d2a26] mb-2">
-                No services found
+                Layanan tidak ditemukan
             </h3>
 
             <p class="text-sm text-gray-500">
-                No appointments were recorded for this category this month.
+                Belum ada booking pada kategori ini bulan ini.
             </p>
 
         </div>
@@ -395,11 +397,11 @@
             </div>
 
             <h3 class="text-lg font-semibold text-[#2d2a26] mb-2">
-                No service data yet
+                Belum ada data layanan
             </h3>
 
             <p class="text-gray-500 text-sm">
-                There are no completed bookings for this period.
+                Belum ada booking selesai pada periode ini.
             </p>
 
         </div>
@@ -413,7 +415,7 @@
 
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold text-[#2d2a26]">
-                Service Leaderboard
+                Peringkat Layanan
             </h2>
 
             <a
@@ -423,7 +425,7 @@
                     text-[#b04a4a]
                 "
             >
-                See all →
+                Lihat semua →
             </a>
         </div>
 
@@ -434,8 +436,8 @@
                 <thead class="text-left text-[#b04a4a] border-b border-[#d8c6c6]">
                     <tr>
                         <th class="py-4 px-4 text-center">No</th>
-                        <th class="py-4 px-4">Services</th>
-                        <th class="py-4 px-4">Category</th>
+                        <th class="py-4 px-4">Layanan</th>
+                        <th class="py-4 px-4">Kategori</th>
 
                         @if($selectedCabang == 'all')
 
@@ -453,8 +455,8 @@
 
                         @endif
 
-                        <th class="px-4">Revenue (Rp)</th>
-                        <th class="px-4 text-center">Growth</th>
+                        <th class="px-4">Pendapatan (Rp)</th>
+                        <th class="px-4 text-center">Pertumbuhan</th>
                     </tr>
                 </thead>
 
@@ -561,11 +563,11 @@
                                 </div>
 
                                 <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">
-                                    No leaderboard data
+                                    Belum ada data peringkat
                                 </h3>
 
                                 <p class="text-sm text-gray-500">
-                                    No completed service bookings were found for this period.
+                                    Belum ada booking layanan selesai pada periode ini.
                                 </p>
 
                             </div>
@@ -594,8 +596,7 @@
                 </h3>
 
                 <p class="text-sm text-gray-500">
-                    No completed service bookings were found
-                    for this category.
+                    Belum ada booking layanan selesai pada kategori ini.
                 </p>
             </div>
 
@@ -607,7 +608,7 @@
 
                     @if($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator)
 
-                        Showing
+                        Menampilkan
                         <span class="font-semibold text-[#2d2a26]">
                             {{ $leaderboard->firstItem() }}
                         </span>
@@ -618,17 +619,17 @@
                             {{ $leaderboard->lastItem() }}
                         </span>
 
-                        of
+                        dari
 
                         <span class="font-semibold text-[#2d2a26]">
                             {{ $leaderboard->total() }}
                         </span>
 
-                        services
+                        layanan
 
                     @else
 
-                        Showing all
+                        Menampilkan semua
                         <span class="font-semibold text-[#2d2a26]">
                             {{ $leaderboard->count() }}
                         </span>
@@ -679,22 +680,22 @@
 
                             <option value="10"
                                 {{ $perPage == 10 ? 'selected' : '' }}>
-                                10 rows
+                                10 baris
                             </option>
 
                             <option value="20"
                                 {{ $perPage == 20 ? 'selected' : '' }}>
-                                20 rows
+                                20 baris
                             </option>
 
                             <option value="50"
                                 {{ $perPage == 50 ? 'selected' : '' }}>
-                                50 rows
+                                50 baris
                             </option>
 
                             <option value="all"
                                 {{ $perPage == 'all' ? 'selected' : '' }}>
-                                All
+                                Semua
                             </option>
 
                         </select>

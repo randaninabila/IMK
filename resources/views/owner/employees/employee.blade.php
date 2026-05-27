@@ -5,19 +5,19 @@
 <div class="relative">
 
     {{-- HEADER --}}
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
 
         <div>
-            <h1 class="text-[52px] font-bold text-[#2d2a26]">
-                Team Performance
+            <h1 class="text-4xl lg:text-5xl leading-tight font-bold text-[#2d2a26] max-w-4xl">
+                Performa Tim
             </h1>
 
             <p class="text-gray-500 mt-2">
-                Overview of employee efficiency across your luxury network.
+                Ringkasan performa dan produktivitas karyawan salon.
             </p>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
 
             {{-- CABANG --}}
             <div class="relative" x-data="{ open: false }">
@@ -80,7 +80,7 @@
     </div>
 
     {{-- TOP PERFORMERS --}}
-    <h2 class="text-2xl font-semibold text-[#2d2a26] mb-4">Top Performers</h2>
+    <h2 class="text-2xl font-semibold text-[#2d2a26] mb-4">Karyawan Terbaik</h2>
 
     @if($topPerformers->count())
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -105,7 +105,7 @@
                 <h3 class="text-lg font-semibold mt-2 text-[#2d2a26] truncate">{{ $employee['nama'] }}</h3>
                 <p class="mt-1 text-lg font-bold text-[#f45b69]">
                     {{ $employee['total_clients'] }}
-                    <span class="text-gray-500 text-sm font-normal">klien bln ini</span>
+                    <span class="text-gray-500 text-sm font-normal">klien bulan ini</span>
                 </p>
             </div>
 
@@ -116,8 +116,8 @@
     @else
     <div class="bg-white rounded-3xl py-14 px-6 text-center shadow-md mb-10">
         <div class="text-5xl mb-4">📊</div>
-        <h3 class="text-lg font-semibold text-[#2d2a26] mb-2">No employee data yet</h3>
-        <p class="text-gray-500 text-sm">There are no employee performances for this period.</p>
+        <h3 class="text-lg font-semibold text-[#2d2a26] mb-2">Belum ada data karyawan</h3>
+        <p class="text-gray-500 text-sm">Belum ada aktivitas performa karyawan pada periode ini.</p>
     </div>
     @endif
 
@@ -125,8 +125,8 @@
     <div class="bg-[#eadede] p-6 rounded-3xl">
 
         <div class="flex justify-between items-center mb-5">
-            <h2 class="text-xl font-semibold text-[#2d2a26]">Employee Efficiency</h2>
-            <a href="{{ route('owner.employee.edit') }}" class="text-sm text-[#b04a4a]">See all →</a>
+            <h2 class="text-xl font-semibold text-[#2d2a26]">Produktivitas Karyawan</h2>
+            <a href="{{ route('owner.employee.edit') }}" class="text-sm text-[#b04a4a]">Lihat semua →</a>
         </div>
 
         <div class="overflow-x-auto">
@@ -136,11 +136,11 @@
                 <thead class="text-[#b04a4a] border-b border-[#d8c6c6]">
                     <tr>
                         <th class="py-4 px-4 text-center">No</th>
-                        <th class="px-4 text-left">Employee</th>
+                        <th class="px-4 text-left">Pegawai</th>
                         <th class="px-4 text-left">Cabang</th>
-                        <th class="px-4 text-center">Today</th>
-                        <th class="px-4 text-center">Clients</th>
-                        <th class="px-4 text-center">Services</th>
+                        <th class="px-4 text-center">Hari Ini</th>
+                        <th class="px-4 text-center">Klien</th>
+                        <th class="px-4 text-center">Layanan</th>
                     </tr>
                 </thead>
 
@@ -169,7 +169,7 @@
                                 @endif
                                 <div class="min-w-0">
                                     <p class="font-semibold truncate">{{ $employee['nama'] }}</p>
-                                    <p class="text-xs text-gray-500">Since {{ $employee['since_joined'] }}</p>
+                                    <p class="text-xs text-gray-500">Bergabung sejak {{ $employee['since_joined'] }}</p>
                                 </div>
                             </div>
                         </td>
@@ -180,7 +180,7 @@
                         {{-- TODAY --}}
                         <td class="px-4 text-center">
                             <span class="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap {{ $employee['today_status'] == 'tersedia' ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-600' }}">
-                                {{ $employee['today_status'] == 'tersedia' ? 'Available' : 'Off Today' }}
+                                {{ $employee['today_status'] == 'tersedia' ? 'Tersedia' : 'Libur' }}
                             </span>
                         </td>
 
@@ -197,8 +197,8 @@
                         <td colspan="7" class="py-14 text-center">
                             <div class="flex flex-col items-center">
                                 <div class="text-5xl mb-4">📊</div>
-                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">No employee data</h3>
-                                <p class="text-sm text-gray-500">No employee performance activity for this period.</p>
+                                <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">Belum ada data karyawan</h3>
+                                <p class="text-sm text-gray-500">Belum ada aktivitas karyawan pada periode ini.</p>
                             </div>
                         </td>
                     </tr>
@@ -214,17 +214,17 @@
                 {{-- INFO --}}
                 <div class="text-sm text-gray-500">
                     @if($employees instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                        Showing
+                        Menampilkan
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->firstItem() }}</span>
                         -
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->lastItem() }}</span>
-                        of
+                        dari
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->total() }}</span>
-                        employees
+                        pegawai
                     @else
-                        Showing all
+                        Menampilkan semua
                         <span class="font-semibold text-[#2d2a26]">{{ $employees->count() }}</span>
-                        employees
+                        pegawai
                     @endif
                 </div>
 
@@ -241,10 +241,10 @@
                                 onchange="this.form.submit()"
                                 class="bg-white border border-[#ecd9d9] rounded-xl pl-4 pr-10 py-2 text-sm outline-none shadow-sm appearance-none cursor-pointer hover:border-[#f4b6bc] transition"
                             >
-                                <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 rows</option>
-                                <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 rows</option>
-                                <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 rows</option>
-                                <option value="all" {{ $perPage == 'all' ? 'selected' : '' }}>All</option>
+                                <option value="10" {{ $perPage == 10 ? 'selected' : '' }}>10 baris</option>
+                                <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20 baris</option>
+                                <option value="50" {{ $perPage == 50 ? 'selected' : '' }}>50 baris</option>
+                                <option value="all" {{ $perPage == 'all' ? 'selected' : '' }}>Semua</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
