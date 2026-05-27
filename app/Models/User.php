@@ -27,6 +27,8 @@ class User extends Authenticatable
         'foto_profile',
         'role',
         'status_akun',
+        'reset_token',
+        'reset_token_expires_at',
     ];
 
     protected $hidden = [
@@ -35,8 +37,9 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
-        'token_expires_at'  => 'datetime',
+        'email_verified_at'      => 'datetime',
+        'token_expires_at'       => 'datetime',
+        'reset_token_expires_at' => 'datetime',
     ];
 
     // =========================

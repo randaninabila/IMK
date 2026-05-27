@@ -329,14 +329,15 @@ class EmployeeController extends Controller
             $plainPassword = Str::slug($validated['nama'], '.');
 
             $userId = DB::table('users')->insertGetId([
-                'nama'       => trim($validated['nama']),
-                'email'      => strtolower(trim($validated['email'])),
-                'password'   => Hash::make($plainPassword),
-                'no_hp'      => $phone,
-                'role'       => $validated['role'],
-                'status_akun'=> 'aktif',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'nama'              => trim($validated['nama']),
+                'email'             => strtolower(trim($validated['email'])),
+                'password'          => Hash::make($plainPassword),
+                'no_hp'             => $phone,
+                'role'              => $validated['role'],
+                'status_akun'       => 'aktif',
+                'email_verified_at' => now()
+                'created_at'        => now(),
+                'updated_at'        => now(),
             ]);
 
             DB::table('pegawai')->insert([

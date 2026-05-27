@@ -5,6 +5,8 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Album;
 
 use Illuminate\Support\Facades\Password;
@@ -32,6 +34,9 @@ use App\Http\Controllers\Pegawai\PBookingController;
 use App\Http\Controllers\Pegawai\PProfileController;
 use App\Http\Controllers\NotifikasiController;
 
+use App\Http\Controllers\ForgotPasswordController;
+
+
 // =====================
 // PUBLIC / USER
 // =====================
@@ -48,75 +53,29 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
-Route::get('/forgotpw', function () {
-        return view('login.forgotpw');
-    });
-
-Route::get('/verif', function () {
-        return view('login.verif');
-    });
-
-Route::get('/newpw', function () {
-        return view('login.newpw');
-    });
-
-
-// FORM FORGOT PASSWORD
-Route::get('/forgot-password', function () {
-    return view('login.forgotpw');
-})->name('password.request');
-
-// KIRIM LINK RESET
-Route::post('/forgot-password', function (Request $request) {
-
-    $request->validate([
-        'email' => 'required|email'
-    ]);
-
-    $status = Password::sendResetLink(
-        $request->only('email')
-    );
-
-    return $status === Password::RESET_LINK_SENT
-        ? back()->with('status', __($status))
-        : back()->withErrors(['email' => __($status)]);
-})->name('password.email');
-
-// FORM RESET PASSWORD
-Route::get('/reset-password/{token}', function (string $token) {
-    return view('login.newpw', ['token' => $token]);
-})->name('password.reset');
-
-// UPDATE PASSWORD
-Route::post('/reset-password', function (Request $request) {
-
-    $request->validate([
-        'token' => 'required',
-        'email' => 'required|email',
-        'password' => 'required|min:8|confirmed',
-    ]);
-
-    $status = Password::reset(
-        $request->only(
-            'email',
-            'password',
-            'password_confirmation',
-            'token'
-        ),
-
-        function ($user, $password) {
-
-            $user->password = Hash::make($password);
-            $user->save();
-
-            event(new PasswordReset($user));
-        }
-    );
-
-    return $status === Password::PASSWORD_RESET
-        ? redirect('/login')->with('status', __($status))
-        : back()->withErrors(['email' => [__($status)]]);
-})->name('password.update');
+// STEP 1 — Forgot password form + send OTP
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
+    ->name('password.request');
+ 
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])
+    ->name('password.send-otp');
+ 
+// STEP 2 — OTP verification form + verify + resend
+Route::get('/verify-otp', [ForgotPasswordController::class, 'showOtpForm'])
+    ->name('password.otp');
+ 
+Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])
+    ->name('password.verify-otp');
+ 
+Route::post('/resend-otp', [ForgotPasswordController::class, 'resendOtp'])
+    ->name('password.resend-otp');
+ 
+// STEP 3 — New password form + update
+Route::get('/reset-password', [ForgotPasswordController::class, 'showNewPasswordForm'])
+    ->name('password.reset.form');
+ 
+Route::post('/reset-password', [ForgotPasswordController::class, 'updatePassword'])
+    ->name('password.update');
 
 // Service list
 Route::get('/service', [ServiceDetailController::class, 'index']);
@@ -201,7 +160,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('auth')
         ->name('verification.notice');
 
-    Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail'])
+    Route::get('/verify-email/{otp}', [AuthController::class, 'verifyEmail'])
         ->name('verification.verify');
 
     Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
