@@ -21,7 +21,7 @@ class GalleryController extends Controller
                             SUBSTRING_INDEX(
                                 GROUP_CONCAT(
                                     url_foto
-                                    ORDER BY FIELD(tipe,'cover','before','result','after','catalog')
+                                    ORDER BY FIELD(tipe,'after','result','before','catalog')
                                     SEPARATOR '|||'
                                 ),
                                 '|||', 1
@@ -88,7 +88,7 @@ class GalleryController extends Controller
                 ->get()
                 ->map(function ($foto) {
                     $foto->url_foto = !empty($foto->url_foto)
-                        ? 'layanan/' . $foto->url_foto
+                        ? $foto->url_foto
                         : 'layanan/default.jpg';
                     return $foto;
                 });

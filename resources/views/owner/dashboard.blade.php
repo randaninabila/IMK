@@ -69,40 +69,40 @@
         get exportMessage() {
 
             if (this.selectedReports.length === 0) {
-                return 'Select at least one report type';
+                return 'Pilih minimal satu jenis laporan';
             }
 
             if (this.selectedPeriod === 'custom') {
 
                 if (!this.startDate || !this.endDate) {
-                    return 'Select start and end date';
+                    return 'Pilih tanggal awal dan tanggal akhir';
                 }
 
                 if (this.startDate > this.endDate) {
-                    return 'Start date cannot exceed end date';
+                    return 'Tanggal awal tidak boleh melebihi tanggal akhir';
                 }
             }
 
             return '';
         }
     }"
-    class="pt-24 px-8 pb-8 bg-[#f6eaea] min-h-screen relative"
+    class="relative"
 >
 
     {{-- HEADER --}}
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-10">
 
         <div>
-            <h1 class="text-5xl font-bold text-[#2d2a26]">
-                Welcome Back!
+            <h1 class="text-4xl lg:text-5xl leading-tight font-bold text-[#2d2a26] max-w-4xl">
+                Selamat Datang Kembali!
             </h1>
 
             <p class="text-gray-500 text-base">
-                Your salon is humming with activity today. Here's your overview.
+                Pantau aktivitas dan performa salon Anda hari ini.
             </p>
         </div>
 
-        <div class="flex gap-3">
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
 
             {{-- FILTER --}}
             <div class="relative">
@@ -227,7 +227,7 @@
                 class="bg-[#f8cdd0] text-[#2d2a26] px-5 py-2.5 rounded-full text-xs font-medium flex items-center gap-2 shadow-sm"
             >
                 <span>📥</span>
-                Download PDF Report
+                Unduh Laporan PDF
             </button>
 
         </div>
@@ -242,10 +242,10 @@
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">💵</span>
                 <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">
-                    +{{ $stats['todayBookings'] }} Today
+                    +{{ $stats['todayBookings'] }} Hari Ini
                 </span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Today's Revenue</p>
+            <p class="text-gray-500 font-semibold mb-1">Pendapatan Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ $stats['todayRevenue'] }}</h3>
             <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
 
@@ -266,7 +266,7 @@
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">📅</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Today's Bookings</p>
+            <p class="text-gray-500 font-semibold mb-1">Booking Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayBookings']) }}</h3>
             <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
 
@@ -288,9 +288,9 @@
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">👥</span>
                 <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">+12%</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Today's Customers</p>
+            <p class="text-gray-500 font-semibold mb-1">Pelanggan Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayCustomers']) }}</h3>
-            <p class="text-xs text-gray-400 mb-2">Member base</p>
+            <p class="text-xs text-gray-400 mb-2">Total pelanggan terdaftar</p>
 
             @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
                 <div class="border-t border-pink-50 pt-2 space-y-1">
@@ -309,7 +309,7 @@
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">🆔</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Active Staff Today</p>
+            <p class="text-gray-500 font-semibold mb-1">Staf Aktif Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['activeStaff']) }}</h3>
             <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
 
@@ -318,7 +318,7 @@
                     @foreach($stats['cabangBreakdown'] as $cb)
                         <div class="flex justify-between text-xs">
                             <span class="text-gray-400 truncate max-w-[65%]">{{ $cb['nama'] }}</span>
-                            <span class="font-semibold text-gray-600">{{ $cb['staff'] }} staff</span>
+                            <span class="font-semibold text-gray-600">{{ $cb['staff'] }} staf</span>
                         </div>
                     @endforeach
                 </div>
@@ -338,11 +338,11 @@
                 {{-- LEFT --}}
                 <div>
                     <h4 class="text-xl font-bold">
-                        Revenue Trends
+                        Tren Pendapatan
                     </h4>
 
                     <p class="text-gray-400 text-xs mt-1">
-                        Revenue from the last 6 months
+                        Pendapatan selama 6 bulan terakhir
                     </p>
                 </div>
 
@@ -405,11 +405,11 @@
                         </div>
 
                         <h5 class="font-semibold text-gray-600 text-base">
-                            No revenue data yet
+                            Belum ada data pendapatan
                         </h5>
 
                         <p class="text-xs text-gray-400 mt-1">
-                            Completed appointments will appear here
+                            Data booking selesai akan tampil di sini
                         </p>
 
                     </div>
@@ -423,13 +423,13 @@
         <div class="bg-white p-6 rounded-3xl shadow-sm">
 
             <h4 class="text-xl font-bold mb-2">
-                Popular Services
+                Layanan Terpopuler
             </h4>
 
             <div class="mb-8 flex items-center justify-between flex-wrap">
                 {{-- Kiri --}}
                 <p class="text-gray-400 text-xs whitespace-nowrap m-0">
-                    Most booked services this month
+                    Layanan yang paling sering dibooking bulan ini
                 </p>
 
                 {{-- Kanan --}}
@@ -450,7 +450,7 @@
                         </span>
 
                         <span class="text-gray-400 font-normal">
-                            {{ $service->total }} orders
+                            {{ $service->total }} booking
                         </span>
                     </div>
 
@@ -471,11 +471,11 @@
                     </div>
 
                     <h5 class="font-semibold text-gray-600">
-                        No services booked yet
+                        Belum ada layanan yang dibooking
                     </h5>
 
                     <p class="text-xs text-gray-400 mt-1">
-                        Service statistics will appear after appointments
+                        Statistik layanan akan muncul setelah ada booking
                     </p>
 
                 </div>
@@ -489,7 +489,7 @@
     </div>
 
     {{-- STAFF PERFORMANCE --}}
-    <h4 class="text-xl font-bold mt-10 mb-6 text-left">Staff Performance</h4>
+    <h4 class="text-xl font-bold mt-10 mb-6 text-left">Performa Staf</h4>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-left">
         @forelse($staffPerformance as $staff)
             <div class="bg-[#FFE4E9]/80 px-5 py-4 rounded-3xl flex items-center gap-4 border border-white shadow-sm">
@@ -507,13 +507,13 @@
                     <h5 class="font-bold text-xs text-gray-800 truncate">{{ $staff->nama }}</h5>
                     <p class="text-[11px] text-gray-500 mb-1 truncate">{{ $staff->cabang }}</p>
                     <div class="flex items-center text-gray-500 text-xs gap-1">
-                        ({{ $staff->total_booking }} bookings)
+                        ({{ $staff->total_booking }} booking)
                     </div>
                 </div>
             </div>
         @empty
             <div class="col-span-full text-center py-12 text-gray-400">
-                No staff activity recorded yet
+                Belum ada aktivitas staf yang tercatat
             </div>
         @endforelse
     </div>

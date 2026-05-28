@@ -73,7 +73,7 @@
                 data-desc="{{ strtolower($item->album_deskripsi ?? '') }}"
                 data-index="{{ $index }}">
 
-                <img src="{{ $item->cover_foto ? asset('layanan/' . $item->cover_foto) : ($item->layanan_cover ? asset('layanan/' . $item->layanan_cover) : asset('layanan/default.jpg')) }}"
+                <img src="{{ $item->cover_foto ? asset($item->cover_foto) : ($item->layanan_cover ? asset($item->layanan_cover) : asset('layanan/default.jpg')) }}"
                     class="rounded-lg mb-3 w-full h-56 object-cover"
                     onerror="this.onerror=null;this.src='{{ asset('layanan/default.jpg') }}';">
 

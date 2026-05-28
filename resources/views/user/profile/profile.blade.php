@@ -6,8 +6,16 @@
 
 @section('content')
 
+@if(auth()->user()->role === 'owner')
+
+<div class="max-w-5xl">
+
+@else
+
 <div class="min-h-screen bg-gradient-to-b from-[#FFE4E6] to-white pt-28 pb-16 px-4">
     <div class="max-w-4xl mx-auto">
+
+@endif
 
     <form action="{{ route('profile.update') }}"
       method="POST"
@@ -374,8 +382,16 @@
             </div>
         </div>
 
+@if(auth()->user()->role === 'owner')
+
+</div>
+
+@else
+
     </div>
 </div>
+
+@endif
 
 <script>
 function switchTab(tab) {
