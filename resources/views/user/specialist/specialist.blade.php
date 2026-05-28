@@ -3,7 +3,7 @@
 @section('content')
 
 {{-- HERO --}}
-<section class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white text-center min-h-screen flex flex-col justify-center items-center px-4">
+<section class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white text-center py-24 flex flex-col justify-center items-center px-4">
     <span class="bg-[#3E382D] text-white px-4 py-1 rounded text-sm">
         Board-Certified Specialists
     </span>
@@ -29,7 +29,7 @@
 
         {{-- SEARCH BOX --}}
         <div class="flex justify-end mb-12">
-            <div class="relative w-full max-w-xs">
+            <div class="relative w-full">
                 <input
                     type="text"
                     id="searchInput"

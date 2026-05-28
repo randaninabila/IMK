@@ -47,7 +47,7 @@
                 class="relative hover:text-[#3E382D] transition
                 {{ request()->is('/') ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Home
+                    Beranda
 
                     @if(request()->is('/'))
                         <span class="
@@ -63,7 +63,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'service' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Service
+                    Layanan
 
                     @if($current == 'service')
                         <span class="
@@ -81,7 +81,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'specialist' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Specialist
+                    Spesialis
 
                     @if($current == 'specialist')
                         <span class="
@@ -99,7 +99,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'gallery' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Gallery
+                    Galeri
 
                     @if($current == 'gallery')
                         <span class="
@@ -250,7 +250,7 @@
 
                         </svg>
 
-                        Edit Profile
+                        Edit Profil
 
                     </a>
 
@@ -286,7 +286,7 @@
 
                         </svg>
 
-                        Change Password
+                        Ganti Password
 
                     </a>
 
@@ -294,11 +294,12 @@
 
 
                 {{-- LOGOUT --}}
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ route('logout') }}" id="logoutForm">
                     @csrf
 
                     <button
-                        type="submit"
+                        type="button"
+                        onclick="if(confirm('Apakah kamu yakin ingin keluar?')) document.getElementById('logoutForm').submit();"
 
                         class="
                             group relative
@@ -350,7 +351,7 @@
                     transition
                 ">
 
-                Log In
+                Masuk
 
             </a>
 

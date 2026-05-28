@@ -45,7 +45,7 @@
                     {{-- PILIH METODE --}}
                     <div class="bg-white rounded-3xl shadow-sm border border-pink-100 p-8">
                         <h2 class="text-lg font-bold text-[#3E382D] mb-6">Pilih Metode Pembayaran</h2>
-                        <div class="space-y-4">
+                        <div class="space-y-4 text-left">
 
                             {{-- QRIS --}}
                             <label class="flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 border-pink-100 hover:border-rose-300 has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50" id="label-qris">
