@@ -7,7 +7,7 @@
     {{-- TITLE --}}
     <div>
         <h1 class="text-[26px] font-bold leading-none">
-            Profile
+            Profil
         </h1>
         <p class="mt-2 text-[16px]">
              Kelola informasi profesional pengaturan akun Anda
@@ -31,7 +31,7 @@
                         </h2>
                         @if($user->status_akun === 'aktif')
                             <span class="px-3 py-1 rounded-full bg-[#F9D5DA] text-[#3B302D] text-[12px] font-normal">
-                                Verified Specialist
+                                Spesialis Terverifikasi
                             </span>
                         @endif
                     </div>

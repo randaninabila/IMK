@@ -6,14 +6,14 @@
 
     {{-- TITLE --}}
     <div class="mb-5">
-        <h1 class="text-[26px] font-bold leading-none">Booking</h1>
-        <p class="mt-2 text-[16px]">Lihat detail lengkap booking yang masuk</p>
+        <h1 class="text-[26px] font-bold leading-none">Pesanan</h1>
+        <p class="mt-2 text-[16px]">Lihat informasi lengkap dari pesanan yang masuk</p>
     </div>
 
     {{-- ONGOING --}}
     <div class="mb-7">
 
-        <h2 class="text-[18px] font-bold mb-2">Ongoing</h2>
+        <h2 class="text-[18px] font-bold mb-2">Sedang Berlangsung</h2>
 
         @if ($ongoing)
             @include('pegawai.partial.booking-card', ['booking' => $ongoing, 'isOngoing' => true])
@@ -28,7 +28,7 @@
     {{-- UPCOMING --}}
     <div>
 
-        <h2 class="text-[18px] font-bold mb-2">Upcoming Events</h2>
+        <h2 class="text-[18px] font-bold mb-2">Pesanan Yang Akan Datang</h2>
 
         @forelse ($upcoming as $booking)
             @include('pegawai.partial.booking-card', ['booking' => $booking, 'isOngoing' => false])

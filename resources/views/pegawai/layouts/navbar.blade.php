@@ -26,7 +26,7 @@
                     {{ $authUser->name }}
                 </h3>
                 <p class="text-[13px] text-[#6C5555]">
-                    Verified Specialist
+                    Spesialis Terverifikasi
                 </p>
             </div>
             

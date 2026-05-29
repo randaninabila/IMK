@@ -10,7 +10,7 @@
         {{-- HEADER --}}
         <div>
             <h1 class="text-[26px] font-bold text-[#3E382D] leading-none">
-                Selamat Datang, Specialist !
+                Selamat Datang, Spesialis !
             </h1>
 
             <div class="mt-2 text-[#5B4D4D] text-[16px] flex gap-4 flex-wrap">
@@ -137,7 +137,7 @@
 
     {{-- ONGOING --}}
     <div>
-        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Ongoing</h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Sedang Berlangsung</h3>
 
         @if ($ongoing)
         @php
@@ -200,7 +200,7 @@
 
     {{-- UPCOMING --}}
     <div class="mt-8">
-        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Upcoming Events</h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Pesanan Yang Akan Datang</h3>
 
         <div class="space-y-5">
             @forelse ($upcoming as $booking)
