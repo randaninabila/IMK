@@ -88,7 +88,7 @@
                         @csrf
                         <button type="submit"
                                 class="px-3 py-2 rounded-xl text-xs bg-red-500 hover:bg-red-600 text-white transition">
-                            Logout
+                            Keluar
                         </button>
                     </form>
                 </div>
