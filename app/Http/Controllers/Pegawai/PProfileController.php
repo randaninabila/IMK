@@ -33,44 +33,47 @@ class PProfileController extends Controller
 public function update(Request $request)
 {
     $user = auth()->user();
-    
+
     $validated = $request->validate([
-        'nama' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->user_id . ',user_id'],
+        'nama'  => ['required', 'string', 'max:255'],
         'no_hp' => ['nullable', 'string', 'max:20'],
-        
+    ], [
+        'nama.required' => 'Nama lengkap wajib diisi.',
+    ]);
+
+    $user->nama  = $validated['nama'];
+    $user->no_hp = $validated['no_hp'] ?? $user->no_hp;
+
+    $user->save();
+
+    return back()->with('success', 'Profile berhasil diperbarui!');
+}
+
+public function updatePassword(Request $request)
+{
+    $user = auth()->user();
+
+    $validated = $request->validate([
         'current_password' => [
-            'nullable', 
-            'required_with:new_password', 
+            'required',
             function ($attribute, $value, $fail) use ($user) {
-                if (!$this->checkPassword($value, $user->password)) {
+                if (!Hash::check($value, $user->password)) {
                     $fail('Password saat ini tidak sesuai.');
                 }
             }
         ],
-        'new_password' => ['nullable', 'confirmed', 'min:8'],
+        'new_password' => ['required', 'string', 'min:8', 'confirmed'],
     ], [
-        // ✅ PESAN CUSTOM (Menimpa translation key yang error)
-        'new_password.confirmed'         => 'Konfirmasi password baru tidak cocok.',
-        'new_password.min'               => 'Password baru harus minimal 8 karakter.',
-        'current_password.required_with' => 'Password saat ini wajib diisi jika ingin mengubah password.',
-        'email.unique'                   => 'Email sudah terdaftar.',
-        'nama.required'                  => 'Nama lengkap wajib diisi.',
-        'email.required'                 => 'Email wajib diisi.',
-        'email.email'                    => 'Format email tidak valid.',
+        'current_password.required'  => 'Password saat ini wajib diisi.',
+        'new_password.required'      => 'Password baru wajib diisi.',
+        'new_password.min'           => 'Password baru harus minimal 8 karakter.',
+        'new_password.confirmed'     => 'Konfirmasi password baru tidak cocok.',
     ]);
 
-    $user->nama = $validated['nama'];
-    $user->email = $validated['email'];
-    $user->no_hp = $validated['no_hp'] ?? $user->no_hp;
-    
-    if (!empty($validated['new_password'])) {
-        $user->password = Hash::make($validated['new_password']);
-    }
-    
+    $user->password = Hash::make($validated['new_password']);
     $user->save();
-    
-    return back()->with('success', 'Profile berhasil diperbarui!');
+
+    return back()->with('success_password', 'Password berhasil diubah!');
 }
 
     // ✅ COPY HELPER DARI AUTHCONTROLLER (atau buat shared helper)

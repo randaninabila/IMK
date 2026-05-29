@@ -232,8 +232,8 @@ Route::middleware(['auth', 'role:pegawai'])
     
         Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
         Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
-        Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
-    
+        Route::put('/profile/password-update', [PProfileController::class, 'updatePassword'])->name('profile.password');
+
         Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
         ->name('jadwal-kerja');
     
