@@ -123,6 +123,8 @@ class PBookingController extends Controller
                     $q3->where('nama_layanan', 'like', "%{$search}%");
                 });
             });
+            
+            $q->orWhere('booking_id', 'like', "%{$search}%");
         });
     }
 
@@ -208,7 +210,7 @@ class PBookingController extends Controller
 
         $booking = Booking::where('booking_id', $booking_id)
             ->where('pegawai_id', $pegawaiId)
-            ->firstOrFail();
+            ->findOrFail($booking_id);
 
         // Validasi transisi status yang diizinkan
         // confirmed → ongoing (mulai servis), pending (lepas dari pegawai ini, bisa ditugaskan ulang)

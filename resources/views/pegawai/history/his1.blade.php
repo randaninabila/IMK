@@ -63,7 +63,7 @@
                    name="search"
                    id="inputSearch"
                    value="{{ request('search') }}"
-                   placeholder="Cari nama klien atau layanan..."
+                   placeholder="Cari nama klien, layanan, atau nomor pesanan..."
                    class="w-full h-full bg-transparent outline-none text-[16px] font-semibold text-[#3B302D] placeholder:text-[#C4B5B2] ml-4">
 
             @if(request('search'))
@@ -222,7 +222,8 @@
             @foreach($bookings as $booking)
 
             @php
-                $pelanggan = $booking->pelanggan->user->name ?? '-';
+                $booking_id = $booking->booking_id;
+                $pelanggan = $booking->pelanggan->user->nama ?? '-';
                 $foto      = $booking->pelanggan->user->foto ?? null;
 
                 $layanan = $booking->details
@@ -253,6 +254,9 @@
                     @endif
 
                     <div>
+                        <p class="text-[#E8B1B6] text-sm font-bold mb-2">
+    Booking ID : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+</p>
                         <h2 class="text-[17px] font-semibold text-[#3B302D] leading-none">{{ $pelanggan }}</h2>
                         <p class="text-[14px] text-[#3B302D] mt-2 font-normal">
                             {{ $jamMulai }} - {{ $jamSelesai }} ({{ $durasi }} menit)

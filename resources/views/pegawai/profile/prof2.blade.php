@@ -51,7 +51,7 @@
         <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 pb-6 pt-6">
             <div class="flex items-center justify-between mb-5">
                 <h2 class="text-[20px] font-bold text-[#2F2A2A]">
-                    Personal Information
+                    Informasi Pribadi
                 </h2>
                 <button type="submit"
                     class="px-5 h-[40px] rounded-xl bg-[#F1A9B1] text-white text-[14px] font-medium hover:bg-[#e0959d] transition flex items-center gap-2">
@@ -83,7 +83,7 @@
                 {{-- Email Address (READONLY) --}}
                 <div>
                     <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
-                        Email Address
+                        Alamat Email
                     </label>
                     <input
                         type="email"
@@ -123,14 +123,14 @@
         <div class="mt-6 bg-white border-[3px] border-[#F1A9B1] rounded-[20px] px-9 pb-6 pt-6">
             <div class="flex items-center justify-between mb-5">
                 <h2 class="text-[20px] font-bold text-[#2F2A2A]">
-                    Change Password
+                    Kata Sandi
                 </h2>
                 <button type="submit"
                     class="px-5 h-[40px] rounded-xl bg-[#F1A9B1] text-white text-[14px] font-medium hover:bg-[#e0959d] transition flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
                     </svg>
-                    Ubah Password
+                    Ubah Kata Sandi
                 </button>
             </div>
 
@@ -143,7 +143,7 @@
                 {{-- Current Password --}}
                 <div class="md:col-span-2">
                     <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
-                        Current Password
+                        Kata Sandi Lama
                     </label>
                     <div class="relative">
                         <input
@@ -173,7 +173,7 @@
                 {{-- New Password --}}
                 <div>
                     <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
-                        New Password
+                        Kata Sandi Baru
                     </label>
                     <div class="relative">
                         <input
@@ -203,7 +203,7 @@
                 {{-- Confirm New Password --}}
                 <div>
                     <label class="block text-[16px] font-medium text-[#2F2A2A] mb-2">
-                        Confirm New Password
+                        Konfirmasi Kata Sandi Baru
                     </label>
                     <div class="relative">
                         <input

@@ -239,7 +239,7 @@ Route::middleware(['auth', 'role:pegawai'])
     
         Route::get('/pegawai/booking', [PBookingController::class, 'index'])
         ->name('booking');
-        Route::post('/booking/{booking}/update-status', [PBookingController::class, 'updateStatus'
+        Route::post('/booking/{booking_id}/update-status', [PBookingController::class, 'updateStatus'
         ])->name('booking.updateStatus');
     });
 

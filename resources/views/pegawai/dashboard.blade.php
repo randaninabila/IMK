@@ -14,7 +14,7 @@
             </h1>
 
             <div class="mt-2 text-[#5B4D4D] text-[16px] flex gap-4 flex-wrap">
-                <span>Total Booking hari ini : {{ $totalBooking }} Booking</span>
+                <span>Total Pesanan hari ini : {{ $totalBooking }} Pesanan</span>
                 <span>|</span>
                 <span>{{ $totalSelesai }} Selesai</span>
                 <span>|</span>
@@ -45,13 +45,13 @@
 
             {{-- DAY --}}
             <div class="grid grid-cols-7 text-center text-[#A56A6A] font-medium mb-6 text-[17px]">
-                <div>MO</div>
-                <div>TU</div>
-                <div>WE</div>
-                <div>TH</div>
-                <div>FR</div>
-                <div>SA</div>
-                <div>SU</div>
+                <div>SENIN</div>
+                <div>SELASA</div>
+                <div>RABU</div>
+                <div>KAMIS</div>
+                <div>JUMAT</div>
+                <div>SABTU</div>
+                <div>MINGGU</div>
             </div>
 
             {{-- DATE --}}
@@ -132,15 +132,12 @@
 
     </div>
 
-    {{-- RIGHT SIDE --}}
+{{-- RIGHT SIDE --}}
 <div class="w-[360px] pt-17">
 
     {{-- ONGOING --}}
     <div>
-
-        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
-            Ongoing
-        </h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Ongoing</h3>
 
         @if ($ongoing)
         @php
@@ -150,9 +147,7 @@
         @endphp
 
         <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm">
-
             <div class="flex gap-5">
-
                 {{-- DATE BUBBLE --}}
                 <div class="w-18 h-18 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
                     <span class="text-[15px] font-semibold text-[#3B302D] leading-none">
@@ -164,6 +159,9 @@
                 </div>
 
                 <div>
+                    <p class="text-[#E8B1B6] text-sm font-bold mb-2">
+        No Pesanan : #{{ str_pad($ongoing->booking_id, 5, '0', STR_PAD_LEFT) }}
+    </p>
                     <h2 class="text-[17px] font-bold text-[#934A4A] leading-none">
                         {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
                     </h2>
@@ -174,49 +172,37 @@
                         {{ $ongoing->pelanggan?->user?->nama ?? '-' }}
                     </p>
                 </div>
-
             </div>
 
             <div class="space-y-2 mt-6">
-
                 {{-- MARK AS DONE: ongoing → completed --}}
-                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $ongoing->booking_id) }}">
+                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $ongoing) }}">
                     @csrf 
                     <input type="hidden" name="status" value="completed">
                     <button type="submit"
                             class="w-full bg-[#A8D5A2] text-[#2D6A27] rounded-2xl py-2.5 text-[16px] font-medium hover:opacity-90 transition">
-                        Mark as Done
+                        Tandai Selesai
                     </button>
                 </form>
 
                 <a href="{{ route('pegawai.booking') }}"
                    class="block w-full border border-[#E9E1E1] rounded-2xl py-2.5 text-[#A05B5B] text-[16px] text-center">
-                    View Detail
+                    Lihat Selengkapnya
                 </a>
-
             </div>
-
         </div>
-
         @else
-
-        <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm text-center text-[#C4AAAA] text-[15px] py-8">
-            Tidak ada booking berjalan.
-        </div>
-
+            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[34px] p-5 shadow-sm text-center text-[#C4AAAA] text-[15px] py-8">
+                Tidak ada booking berjalan.
+            </div>
         @endif
-
     </div>
 
     {{-- UPCOMING --}}
     <div class="mt-8">
-
-        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">
-            Upcoming Events
-        </h3>
+        <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Upcoming Events</h3>
 
         <div class="space-y-5">
-
             @forelse ($upcoming as $booking)
             @php
                 $jamMulaiUp   = \Carbon\Carbon::parse($booking->tanggal_booking . ' ' . $booking->jam_booking);
@@ -226,9 +212,8 @@
             @endphp
 
             <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-4 shadow-md flex flex-col gap-4">
-
                 <div class="flex gap-5">
-
+                    
                     {{-- DATE BUBBLE --}}
                     <div class="w-18 h-18 rounded-full bg-[#F4C3C3] flex flex-col items-center justify-center shrink-0">
                         <span class="text-[15px] font-semibold leading-none">
@@ -240,6 +225,9 @@
                     </div>
 
                     <div>
+                        <p class="text-[#E8B1B6] text-sm font-bold mb-2">
+        No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+    </p>
                         <h3 class="text-[20px] leading-none font-bold text-[#3B302D]">
                             {{ $jamMulaiUp->format('H:i') }} – {{ $jamSelesaiUp->format('H:i') }}
                         </h3>
@@ -250,66 +238,58 @@
                             {{ $booking->pelanggan?->user?->nama ?? '-' }}
                         </p>
                     </div>
-
                 </div>
 
-                {{-- START SERVICE: aktif hanya kalau jam sekarang >= jam booking --}}
-<form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}">
-    @csrf
-    <input type="hidden" name="status" value="ongoing">
-    
-    @if($bisaStartUp)
-        {{-- BUTTON AKTIF --}}
-        <button type="submit"
-                class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Mulai Servis
-        </button>
-    @else
-        {{-- BUTTON DISABLED (Off) --}}
-        <button type="button" 
-                disabled
-                title="Layanan bisa dimulai pukul {{ $jamMulaiUp->format('H:i') }}"
-                class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            Mulai pukul {{ $jamMulaiUp->format('H:i') }}
-        </button>
-    @endif
-</form>
-
-                {{-- BATALKAN BOOKING: kembalikan ke pending supaya bisa ditugaskan ulang ke pegawai lain --}}
-                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking->booking_id) }}"
-                          onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
-                        @csrf
-                        <input type="hidden" name="status" value="pending">
+                {{-- START SERVICE: confirmed → ongoing --}}
+                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
+                    @csrf
+                    <input type="hidden" name="status" value="ongoing">
+                    
+                    @if($bisaStartUp)
                         <button type="submit"
-                                class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
-                            Batalkan Booking
+                                class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Mulai Servis
                         </button>
-                    </form>
-            </div>
+                    @else
+                        <button type="button" disabled
+                                title="Layanan bisa dimulai pukul {{ $jamMulaiUp->format('H:i') }}"
+                                class="w-full h-[40px] rounded-xl bg-gray-200 text-gray-500 font-semibold cursor-not-allowed flex items-center justify-center gap-2 opacity-60">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Mulai pukul {{ $jamMulaiUp->format('H:i') }}
+                        </button>
+                    @endif
+                </form>
 
+                {{-- BATALKAN BOOKING: confirmed → pending --}}
+                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}"
+                      onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
+                    @csrf
+                    <input type="hidden" name="status" value="pending">
+                    <button type="submit"
+                            class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
+                        Batalkan Pesanan
+                    </button>
+                </form>
+            </div>
             @empty
-
-            <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-6 text-center text-[#C4AAAA] text-[15px]">
-                Tidak ada upcoming booking hari ini.
-            </div>
-
+                <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-6 text-center text-[#C4AAAA] text-[15px]">
+                    Tidak ada Pesanan Mendatang hari ini.
+                </div>
             @endforelse
-
         </div>
-
     </div>
 
 </div>
+
 
 </div>
 
