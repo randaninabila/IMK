@@ -123,8 +123,10 @@ class PBookingController extends Controller
                     $q3->where('nama_layanan', 'like', "%{$search}%");
                 });
             });
-            
-            $q->orWhere('booking_id', 'like', "%{$search}%");
+
+            // Search booking_id — support format #00021 atau 21
+            $cleanId = ltrim(preg_replace('/[^0-9]/', '', $search), '0') ?: '0';
+            $q->orWhere('booking_id', $cleanId);
         });
     }
 

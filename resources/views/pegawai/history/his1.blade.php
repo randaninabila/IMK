@@ -255,7 +255,7 @@
 
                     <div>
                         <p class="text-[#E8B1B6] text-sm font-bold mb-2">
-    Booking ID : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+    No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
 </p>
                         <h2 class="text-[17px] font-semibold text-[#3B302D] leading-none">{{ $pelanggan }}</h2>
                         <p class="text-[14px] text-[#3B302D] mt-2 font-normal">

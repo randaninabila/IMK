@@ -10,21 +10,21 @@
             <a href="{{ route('pegawai.profile') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
                {{ request()->routeIs('pegawai.profile*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
-                <span>Profile</span>
+                <span>Profil</span>
             </a>
 
             {{-- DASHBOARD --}}
             <a href="{{ route('pegawai.dashboard') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
                {{ request()->routeIs('pegawai.dashboard*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
-                <span>Dashboard</span>
+                <span>Beranda</span>
             </a>
 
             {{-- HISTORY --}}
             <a href="{{ route('pegawai.history') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
                {{ request()->routeIs('pegawai.history*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
-                <span>History</span>
+                <span>Riwayat Aktivitas</span>
             </a>
 
             {{-- JADWAL KERJA --}}
@@ -38,7 +38,7 @@
             <a href="{{ route('pegawai.booking') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
                {{ request()->routeIs('pegawai.booking*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
-                <span>Booking</span>
+                <span>Pesanan</span>
             </a>
 
             {{-- NOTIFIKASI --}}

@@ -92,6 +92,7 @@
     @forelse ($jadwals as $booking)
 
         @php
+            $booking_id = $booking->booking_id;
             $namaPelanggan = $booking->pelanggan->user->nama ?? '-';
 
             // ambil layanan pertama (kalau multi service)
@@ -100,11 +101,18 @@
 
         <div class="mb-4">
 
-            {{-- Nama Layanan --}}
-            <h3 class="text-[17px] font-semibold text-[#3E382D]">
-                {{ $layanan }}
-            </h3>
+        
+            <div class="flex items-center justify-between">
+    <h3 class="text-[17px] font-semibold text-[#3E382D]">
+        {{ $layanan }}
+    </h3>
 
+    <span class="text-xs bg-[#F1A9B1] text-[#ffffff] px-3 py-1 rounded-full font-medium">
+        No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+    </span>
+</div>
+
+            
             {{-- Jam + Nama Customer --}}
             <p class="text-[14px] text-[#4F4545]">
                 {{ \Carbon\Carbon::parse($booking->jam_booking)->format('H:i') }}
@@ -171,15 +179,22 @@
             @forelse ($jadwals as $booking)
 
     @php
+        $booking_id = $booking->booking_id;
         $namaPelanggan = $booking->pelanggan->user->nama ?? '-';
         $layanan = $booking->details?->first()?->layananCabang?->layanan?->nama_layanan ?? '-';
     @endphp
 
     <div class="mb-4">
 
-        <h3 class="text-[17px] font-semibold text-[#3E382D]">
-            {{ $layanan }}
-        </h3>
+        <div class="flex items-center justify-between">
+    <h3 class="text-[17px] font-semibold text-[#3E382D]">
+        {{ $layanan }}
+    </h3>
+
+    <span class="text-xs bg-[#F1A9B1] text-[#ffffff] px-3 py-1 rounded-full font-medium">
+        No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+    </span>
+</div>
 
         <p class="text-[14px] text-[#4F4545]">
             {{ \Carbon\Carbon::parse($booking->jam_booking)->format('H:i') }}
