@@ -26,12 +26,7 @@
     /* Smooth scroll */
     html { scroll-behavior: smooth; }
     
-    /* Custom scrollbar */
-    ::-webkit-scrollbar { width: 8px; }
-    ::-webkit-scrollbar-track { background: #FFF1F2; }
-    ::-webkit-scrollbar-thumb { background: #F472B6; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #E11D48; }
-    
+      
     /* Glassmorphism */
     .glass {
         background: rgba(255, 255, 255, 0.85);
@@ -447,6 +442,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                 </svg>
             </a>
+            
             
             <a href="https://wa.me/6287869590802" target="_blank"
                class="inline-flex items-center gap-3 px-10 py-5 rounded-2xl border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition-all duration-300">

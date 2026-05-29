@@ -262,7 +262,7 @@
 
             <button type="button" onclick="switchTab('password')" id="tab-password"
                 class="tab-btn px-5 py-2 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-[#3E382D] transition">
-                Ganti Password
+                Ganti Kata Sandi
             </button>
 
         </div>
@@ -375,7 +375,7 @@
                     <div class="mt-8 flex justify-end">
                         <button type="submit"
                             class="bg-[#3E382D] text-white px-8 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition">
-                            Ubah Password
+                            Ubah Kata Sandi
                         </button>
                     </div>
                 </form>

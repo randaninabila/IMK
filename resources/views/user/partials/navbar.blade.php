@@ -120,7 +120,7 @@
                         class="relative hover:text-[#3E382D] transition
                         {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                        Riwayat Booking
+                        Riwayat Pemesanan
 
                         @if(request()->is('pelanggan/bookings*'))
                             <span class="
@@ -250,7 +250,7 @@
 
                         </svg>
 
-                        Edit Profil
+                        Kelola Profil
 
                     </a>
 
@@ -286,7 +286,7 @@
 
                         </svg>
 
-                        Ganti Password
+                        Ganti Kata Sandi
 
                     </a>
 
@@ -360,7 +360,7 @@
                             text-[#3E382D]
                             mb-3
                         ">
-                            Logout dari akun?
+                            Keluar dari akun?
                         </p>
 
                         <div class="flex justify-end gap-2">
@@ -400,7 +400,7 @@
                                         transition
                                     "
                                 >
-                                    Logout
+                                    Keluar
                                 </button>
 
                             </form>
@@ -414,24 +414,43 @@
             </div>
 
             @else
+    {{-- GUEST: Login + Register Buttons --}}
+    <div class="flex items-center gap-3">
+        
+        {{-- REGISTER BUTTON --}}
+        <a href="{{ route('register') }}"
+           class="
+               px-5 py-2
+               rounded-full
+               text-sm
+               font-medium
+               text-[#3E382D]
+               border-2 border-[#3E382D]
+               hover:bg-[#3E382D]
+               hover:text-white
+               transition-all duration-200
+           ">
+            Daftar
+        </a>
 
-            {{-- LOGIN --}}
-            <a href="/login"
-                class="
-                    bg-[#3E382D]
-                    text-white
-                    px-5 py-2
-                    rounded-full
-                    text-sm
-                    hover:opacity-90
-                    transition
-                ">
-
-                Masuk
-
-            </a>
-
-            @endauth
+        {{-- LOGIN BUTTON --}}
+        <a href="{{ route('login') }}"
+           class="
+               bg-[#3E382D]
+               text-white
+               px-5 py-2
+               rounded-full
+               text-sm
+               font-medium
+               hover:opacity-90
+               hover:shadow-lg
+               transition-all duration-200
+           ">
+            Masuk
+        </a>
+        
+    </div>
+@endauth
 
         </div>
 

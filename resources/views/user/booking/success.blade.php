@@ -6,8 +6,7 @@
         {{-- ANIMASI & JUDUL (DINAMIS BERDASARKAN METODE) --}}
         <div class="text-center mb-8 mt-16" id="successAnimation">
             <div class="relative inline-block">
-                {{-- Animasi ping hanya untuk QRIS pending --}}
-                @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'qris' && $pembayaran->status === 'pending')
+                @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'qris' && $pembayaran->status === 'Menunggu')
                     <div class="absolute inset-0 rounded-full bg-amber-100 animate-ping opacity-30"></div>
                 @endif
                 
@@ -21,7 +20,6 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     @else
-                        {{-- ⏳ QRIS Pending: Icon Jam Amber --}}
                         <svg class="w-14 h-14 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
@@ -32,7 +30,7 @@
             {{-- Judul Dinamis --}}
             <h1 class="text-3xl font-bold text-[#3E382D] mt-6 mb-2">
                 @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                    Booking Dikonfirmasi! 🎉
+                    Pesanan Telah Dikonfirmasi! 🎉
                 @else
                     Bukti Terkirim! ✨
                 @endif
@@ -41,7 +39,7 @@
             {{-- Deskripsi Dinamis --}}
             <p class="text-gray-500 text-sm max-w-sm mx-auto">
                 @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                    Booking kamu sudah dikonfirmasi. Siapkan uang tunai dan hadir sesuai jadwal.
+                    Pesanan kamu sudah dikonfirmasi. Siapkan uang tunai dan hadir sesuai jadwal.
                 @else
                     Bukti pembayaran kamu sudah kami terima dan sedang diverifikasi oleh tim kami.
                 @endif
@@ -51,9 +49,7 @@
         {{-- NOTIFIKASI STATUS --}}
         <div class="mb-6">
             @if(isset($pembayaran))
-                
-                {{-- ✅ PENDING (baik QRIS maupun Cash yang belum diverifikasi) --}}
-                @if($pembayaran->status === 'pending')
+                @if($pembayaran->status === 'Menunggu')
                     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex items-start gap-4">
                         <div class="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0">
                             <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +60,7 @@
                             <p class="text-amber-800 font-semibold text-sm">Status: Menunggu Verifikasi</p>
                             <p class="text-amber-700 text-sm mt-0.5">
                                 @if($pembayaran->metode_pembayaran === 'cash')
-                                    Pembayaran tunai untuk booking ini akan diverifikasi saat kamu tiba di salon.
+                                    Pembayaran tunai untuk pesanan ini akan diverifikasi saat kamu tiba di salon.
                                 @else
                                     Bukti pembayaran QRIS sedang diverifikasi oleh admin. Proses biasanya ≤ 1 jam kerja.
                                 @endif
@@ -83,7 +79,7 @@
                         <div>
                             <p class="text-green-800 font-semibold text-sm">✅ Pembayaran Diverifikasi!</p>
                             <p class="text-green-700 text-sm mt-0.5">
-                                Booking kamu sudah dikonfirmasi. Siapkan diri dan hadir sesuai jadwal ya! 🌸
+                                Pesanan kamu sudah dikonfirmasi. Siapkan diri dan hadir sesuai jadwal ya! 🌸
                             </p>
                         </div>
                     </div>
@@ -115,11 +111,11 @@
         <div class="bg-white rounded-3xl shadow-sm border border-pink-100 overflow-hidden mb-6">
             <div class="bg-gradient-to-r from-rose-400 to-pink-400 p-5 flex items-center justify-between">
                 <div>
-                    <p class="text-white text-xs font-semibold opacity-80 uppercase tracking-wide">Detail Booking</p>
+                    <p class="text-white text-xs font-semibold opacity-80 uppercase tracking-wide">Rincian Pemesanan</p>
                     <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                 </div>
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                    {{ $booking->status === 'confirmed' ? 'bg-green-400 text-white' : 'bg-white/30 text-white' }}">
+                    {{ $booking->status === 'Dikonfirmasi' ? 'bg-green-400 text-white' : 'bg-white/30 text-white' }}">
                     {{ strtoupper($booking->status) }}
                 </span>
             </div>
@@ -183,7 +179,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                 </svg>
-                Riwayat Booking
+                Riwayat Pemesanan
             </a>
         </div>
 
@@ -213,7 +209,7 @@
     <div>
         <p class="text-sm font-semibold text-[#3E382D]">
             @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                Booking dikonfirmasi!
+                Pesanan dikonfirmasi!
             @else
                 Bukti pembayaran terkirim!
             @endif

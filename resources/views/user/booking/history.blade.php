@@ -5,7 +5,7 @@
 
         {{-- HEADER --}}
         <div class="text-center mb-10 mt-14">
-            <h1 class="text-7xl font-bold text-[#3E382D]">Riwayat Booking</h1>
+            <h1 class="text-7xl font-bold text-[#3E382D]">Riwayat Pemesanan</h1>
             <p class="text-sm text-gray-500 mt-2">Lihat semua pemesanan layanan kamu</p>
         </div>
 
@@ -58,7 +58,7 @@
                                 </svg>
                             </div>
                             <div>
-                                <p class="text-white text-xs font-semibold opacity-90">Booking ID</p>
+                                <p class="text-white text-xs font-semibold opacity-90">No. Pesanan</p>
                                 <p class="text-white font-bold">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                             </div>
                         </div>
@@ -163,7 +163,7 @@
                             {{-- Lihat Detail --}}
                             <a href="{{ route('pelanggan.booking.show', $booking->booking_id) }}" 
                                class="flex-1 bg-white border-2 border-pink-200 text-[#3E382D] font-semibold py-2.5 rounded-xl text-center text-sm hover:border-rose-300 transition">
-                                Lihat Detail
+                                Lihat Rincian
                             </a>
 
                             
@@ -193,14 +193,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-[#3E382D] mb-2">Belum Ada Booking</h3>
+                    <h3 class="text-lg font-semibold text-[#3E382D] mb-2">Belum Ada Pesanan</h3>
                     <p class="text-gray-500 text-sm mb-6">Kamu belum memiliki riwayat pemesanan layanan.</p>
                     <a href="{{ url('/service') }}"
                        class="inline-flex items-center gap-2 bg-rose-400 hover:bg-rose-500 text-white font-semibold px-6 py-3 rounded-2xl transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
-                        Booking Sekarang
+                        Pesan Sekarang
                     </a>
                 </div>
             @endforelse
