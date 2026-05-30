@@ -330,7 +330,7 @@
                             <td class="px-4">
                                 <div class="leading-6">
                                     <span class="font-medium">
-                                        {{ $item['branches'][$cabang->cabang_id]['count'] }} booking
+                                        {{ $item['branches'][$cabang->cabang_id]['count'] }} pesanan
                                     </span>
                                     <br>
                                     <span class="text-xs text-gray-400">
@@ -342,7 +342,7 @@
                         @else
                             <td class="px-4">
                                 <div class="leading-6">
-                                    <span class="font-medium">{{ $item['selected_count'] }} booking</span>
+                                    <span class="font-medium">{{ $item['selected_count'] }} pesanan</span>
                                     <br>
                                     <span class="text-xs text-gray-400">{{ $item['selected_revenue'] }}</span>
                                 </div>
@@ -364,7 +364,7 @@
                             <div class="flex flex-col items-center">
                                 <div class="text-5xl mb-4">📊</div>
                                 <h3 class="text-xl font-semibold text-[#2d2a26] mb-2">Belum ada data layanan</h3>
-                                <p class="text-sm text-gray-500">Belum ada booking selesai yang ditemukan.</p>
+                                <p class="text-sm text-gray-500">Belum ada pesanan selesai yang ditemukan.</p>
                             </div>
                         </td>
                     </tr>

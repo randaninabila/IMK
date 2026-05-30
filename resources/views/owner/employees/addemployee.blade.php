@@ -193,7 +193,7 @@
                         font-semibold
                         text-[#2d2a26]
                     ">
-                        Role
+                        Peran
                     </label>
 
                     <select

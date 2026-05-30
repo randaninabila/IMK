@@ -233,7 +233,6 @@ class EmployeeController extends Controller
             'c.nama_cabang', 'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
             DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-            'u.created_at',
         ], $dynamicCabangSelect))
         ->groupBy(
             'p.pegawai_id', 'p.status_kerja',

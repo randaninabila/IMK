@@ -115,24 +115,22 @@
             </nav>
 
             @auth
-                @if(auth()->user()->role === 'pelanggan')
-                    <a href="{{ route('pelanggan.bookings') }}"
-                        class="relative hover:text-[#3E382D] transition
-                        {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
+                <a href="{{ route('pelanggan.bookings') }}"
+                    class="relative hover:text-[#3E382D] transition
+                    {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                        Riwayat Pemesanan
+                    Riwayat Pemesanan
 
-                        @if(request()->is('pelanggan/bookings*'))
-                            <span class="
-                                absolute left-0 -bottom-1
-                                w-full h-[2px]
-                                bg-[#3E382D]
-                                rounded
-                            "></span>
-                        @endif
+                    @if(request()->is('pelanggan/bookings*'))
+                        <span class="
+                            absolute left-0 -bottom-1
+                            w-full h-[2px]
+                            bg-[#3E382D]
+                            rounded
+                        "></span>
+                    @endif
 
-                    </a>
-                @endif
+                </a>
             @endauth
 
 

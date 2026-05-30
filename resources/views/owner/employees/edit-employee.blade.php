@@ -42,7 +42,7 @@
 
             <div class="grid grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-base font-semibold text-[#2d2a26] mb-2">Role</label>
+                    <label class="block text-base font-semibold text-[#2d2a26] mb-2">Peran</label>
                     <select name="role" required class="w-full bg-[#e8d2d2] border border-transparent focus:border-[#f45b69] focus:ring-2 focus:ring-[#ffd5d8] outline-none px-5 py-3 rounded-2xl transition">
                         <option value="pegawai" {{ old('role', $pegawai->role) == 'pegawai' ? 'selected' : '' }}>Pegawai</option>
                         <option value="admin" {{ old('role', $pegawai->role) == 'admin' ? 'selected' : '' }}>Admin</option>

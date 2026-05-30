@@ -214,7 +214,7 @@
         [
         'title' => 'Pelanggan Aktif Bulan Ini',
         'value' => $stats['active_customers'],
-        'desc' => 'Booking selesai',
+        'desc' => 'Pesanan selesai',
         'icon' => '👥'
         ],
 
@@ -554,14 +554,14 @@
                 $reservationHabits['evening']
                 )
 
-                Pelanggan lebih aktif melakukan booking pada pagi hingga siang hari.
+                Pelanggan lebih aktif melakukan pesanan pada pagi hingga siang hari.
 
                 @elseif(
                 $reservationHabits['evening'] >
                 $reservationHabits['morning']
                 )
 
-                Booking malam lebih dominan pada periode ini, menunjukkan tingginya aktivitas pelanggan setelah jam kerja.
+                Pesanan malam lebih dominan pada periode ini, menunjukkan tingginya aktivitas pelanggan setelah jam kerja.
 
                 @else
 
@@ -592,7 +592,7 @@
             mb-8
         ">
 
-            Kapan pelanggan paling aktif melakukan booking?
+            Kapan pelanggan paling aktif melakukan pesanan?
 
         </p>
 

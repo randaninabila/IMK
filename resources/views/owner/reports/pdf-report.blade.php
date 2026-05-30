@@ -247,7 +247,7 @@
                 <h2>Layanan Terpopuler</h2>
 
                 <p class="section-desc">
-                    Layanan yang paling sering dibooking berdasarkan permintaan pelanggan.
+                    Layanan yang paling sering dipesan berdasarkan permintaan pelanggan.
                 </p>
 
                 @if($services_data->count() > 0)
@@ -255,7 +255,7 @@
                         <thead>
                             <tr>
                                 <th>Layanan</th>
-                                <th>Jumlah Booking</th>
+                                <th>Jumlah Pesanan</th>
                                 <th>Persentase</th>
                             </tr>
                         </thead>
@@ -290,8 +290,8 @@
                             <tr>
                                 <th>Pegawai</th>
                                 <th>Cabang</th>
-                                <th>Role</th>
-                                <th>Booking</th>
+                                <th>Peran</th>
+                                <th>Pesanan</th>
                                 <th>Layanan</th>
                             </tr>
                         </thead>

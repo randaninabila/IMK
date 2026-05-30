@@ -290,7 +290,7 @@
                             </a>
                         </th>
 
-                        <th class="px-4 font-semibold text-center w-[110px]">Role</th>
+                        <th class="px-4 font-semibold text-center w-[110px]">Peran</th>
                         <th class="px-4 font-semibold text-center w-[200px]">Cabang</th>
                         <th class="px-4 font-semibold text-center w-[110px]">Hari Ini</th>
 

@@ -241,9 +241,6 @@
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">💵</span>
-                <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">
-                    +{{ $stats['todayBookings'] }} Hari Ini
-                </span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Pendapatan Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ $stats['todayRevenue'] }}</h3>
@@ -266,7 +263,7 @@
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">📅</span>
             </div>
-            <p class="text-gray-500 font-semibold mb-1">Booking Hari Ini</p>
+            <p class="text-gray-500 font-semibold mb-1">Pesanan Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayBookings']) }}</h3>
             <p class="text-xs text-gray-400 mb-2">{{ $stats['selectedCabangName'] }}</p>
 
@@ -286,11 +283,10 @@
         <div class="bg-white px-5 py-4 rounded-3xl shadow-sm border border-pink-50">
             <div class="flex justify-between mb-3 text-xl">
                 <span class="p-2.5 bg-pink-100 rounded-xl text-pink-500">👥</span>
-                <span class="text-xs font-bold bg-green-100 text-green-600 px-3 py-1.5 rounded-full h-fit">+12%</span>
             </div>
             <p class="text-gray-500 font-semibold mb-1">Pelanggan Hari Ini</p>
             <h3 class="text-xl font-bold text-pink-500 mb-1">{{ number_format($stats['todayCustomers']) }}</h3>
-            <p class="text-xs text-gray-400 mb-2">Total pelanggan terdaftar</p>
+            <p class="text-xs text-gray-400 mb-2">Pelanggan Hari Ini</p>
 
             @if(!$selectedCabang && count($stats['cabangBreakdown']) > 0)
                 <div class="border-t border-pink-50 pt-2 space-y-1">
@@ -409,7 +405,7 @@
                         </h5>
 
                         <p class="text-xs text-gray-400 mt-1">
-                            Data booking selesai akan tampil di sini
+                            Data pesanan selesai akan tampil di sini
                         </p>
 
                     </div>
@@ -429,7 +425,7 @@
             <div class="mb-8 flex items-center justify-between flex-wrap">
                 {{-- Kiri --}}
                 <p class="text-gray-400 text-xs whitespace-nowrap m-0">
-                    Layanan yang paling sering dibooking bulan ini
+                    Layanan yang paling sering dipesan bulan ini
                 </p>
 
                 {{-- Kanan --}}
@@ -450,7 +446,7 @@
                         </span>
 
                         <span class="text-gray-400 font-normal">
-                            {{ $service->total }} booking
+                            {{ $service->total }} pesanan
                         </span>
                     </div>
 
@@ -471,11 +467,11 @@
                     </div>
 
                     <h5 class="font-semibold text-gray-600">
-                        Belum ada layanan yang dibooking
+                        Belum ada layanan yang dipesan
                     </h5>
 
                     <p class="text-xs text-gray-400 mt-1">
-                        Statistik layanan akan muncul setelah ada booking
+                        Statistik layanan akan muncul setelah ada pesanan
                     </p>
 
                 </div>

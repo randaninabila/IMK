@@ -257,7 +257,7 @@
                 </h2>
 
                 <p class="text-sm text-gray-500 mt-1">
-                    Layanan dengan booking terbanyak bulan ini
+                    Layanan dengan pesanan terbanyak bulan ini
                 </p>
             </div>
 
@@ -353,7 +353,7 @@
                         <span
                             class="text-sm font-medium text-gray-500">
 
-                            booking
+                            pesanan
 
                         </span>
 
@@ -381,7 +381,7 @@
             </h3>
 
             <p class="text-sm text-gray-500">
-                Belum ada booking pada kategori ini bulan ini.
+                Belum ada pesanan pada kategori ini bulan ini.
             </p>
 
         </div>
@@ -401,7 +401,7 @@
             </h3>
 
             <p class="text-gray-500 text-sm">
-                Belum ada booking selesai pada periode ini.
+                Belum ada pesanan selesai pada periode ini.
             </p>
 
         </div>
@@ -491,7 +491,7 @@
 
                                         {{
                                             $item['branches'][$cabang->cabang_id]['count']
-                                        }} booking
+                                        }} pesanan
 
                                     </span>
 
@@ -517,7 +517,7 @@
                                 <div class="leading-6">
 
                                     <span class="font-medium">
-                                        {{ $item['selected_count'] }} booking
+                                        {{ $item['selected_count'] }} pesanan
                                     </span>
 
                                     <br>
@@ -567,7 +567,7 @@
                                 </h3>
 
                                 <p class="text-sm text-gray-500">
-                                    Belum ada booking layanan selesai pada periode ini.
+                                    Belum ada pesanan layanan selesai pada periode ini.
                                 </p>
 
                             </div>
@@ -596,7 +596,7 @@
                 </h3>
 
                 <p class="text-sm text-gray-500">
-                    Belum ada booking layanan selesai pada kategori ini.
+                    Belum ada pesanan layanan selesai pada kategori ini.
                 </p>
             </div>
 
