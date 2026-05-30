@@ -6,45 +6,60 @@
         {{-- NAVIGATION LINKS --}}
         <div class="space-y-1 flex-1">
 
+        {{-- LINK KE HALAMAN PUBLIK --}}
+        <a href="{{ route('home') }}"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] transition
+                text-[#7A6262] hover:bg-[#FFF4F4] hover:text-[#3E382D] mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-[18px] h-[18px] shrink-0"
+                fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 12H9m0 0l3-3m-3 3l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/>
+            </svg>
+            <span class="truncate">Lihat Halaman Publik</span>
+        </a>
+
+          <div class="h-px bg-[#F1DFDF] mb-2"></div>
             {{-- PROFILE --}}
             <a href="{{ route('pegawai.profile') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->routeIs('pegawai.profile*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->routeIs('pegawai.profile*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Profil</span>
             </a>
 
             {{-- DASHBOARD --}}
             <a href="{{ route('pegawai.dashboard') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->routeIs('pegawai.dashboard*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->routeIs('pegawai.dashboard*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Beranda</span>
             </a>
 
             {{-- HISTORY --}}
             <a href="{{ route('pegawai.history') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->routeIs('pegawai.history*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->routeIs('pegawai.history*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Riwayat Aktivitas</span>
             </a>
 
             {{-- JADWAL KERJA --}}
             <a href="{{ url('/pegawai/jadwal') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->is('pegawai/jadwal*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->is('pegawai/jadwal*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Jadwal Kerja</span>
             </a>
 
             {{-- BOOKING --}}
             <a href="{{ route('pegawai.booking') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->routeIs('pegawai.booking*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->routeIs('pegawai.booking*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Pesanan</span>
             </a>
 
             {{-- NOTIFIKASI --}}
             <a href="{{ route('pegawai.notifikasi') }}"
                class="flex items-center gap-4 px-5 py-3 rounded-2xl text-[18px] font-medium transition
-               {{ request()->routeIs('pegawai.notifikasi*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34]' }}">
+               {{ request()->routeIs('pegawai.notifikasi*') ? 'bg-[#F5A6AF] shadow-sm text-white' : 'text-[#3e3a34] hover:bg-[#fce1e4] hover:text' }}">
                 <span>Notifikasi</span>
             </a>
 
