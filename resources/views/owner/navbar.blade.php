@@ -4,7 +4,7 @@ $current = request()->path();
 $navItems = [
     [
         'href'  => '/dashboard',
-        'label' => 'Dashboard',
+        'label' => 'Beranda',
         'icon'  => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
     ],
     [
@@ -41,6 +41,23 @@ $navItems = [
 
     {{-- NAV ITEMS --}}
     <nav class="flex flex-col gap-0.5 px-3 pt-4 flex-1 overflow-y-auto">
+
+        {{-- LINK KE HALAMAN PUBLIK --}}
+        <a href="{{ route('home') }}"
+        class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] transition
+                text-[#7A6262] hover:bg-[#FFF4F4] hover:text-[#3E382D] mb-2">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                class="w-[18px] h-[18px] shrink-0"
+                fill="none" viewBox="0 0 24 24"
+                stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 12H9m0 0l3-3m-3 3l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/>
+            </svg>
+            <span class="truncate">Lihat Halaman Publik</span>
+        </a>
+
+        <div class="h-px bg-[#F1DFDF] mb-2"></div>
+
         @foreach ($navItems as $item)
             @php
                 $slug    = ltrim($item['href'], '/');

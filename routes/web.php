@@ -254,7 +254,7 @@ Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
 // =====================
 // PELANGGAN
 // =====================
-Route::middleware(['auth', 'role:pelanggan'])
+Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
