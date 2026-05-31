@@ -16,7 +16,6 @@ class BookingController extends Controller
     {
         $user = Auth::user();
 
-        // === REGULAR BOOKING (single layanan) ===
         if (!$layanan_cabang_id) {
             abort(404, 'Layanan tidak ditemukan.');
         }
@@ -56,26 +55,23 @@ class BookingController extends Controller
     public function createFromPaket($paket_id, $cabang_id)
     {
         $user = Auth::user();
-        
-        // Ambil info paket
+
         $paket = DB::table('paket_layanan')
             ->where('paket_id', $paket_id)
             ->firstOrFail();
-        
-        // Ambil harga paket untuk cabang ini
+
         $paketCabang = DB::table('paket_cabang')
             ->where('paket_id', $paket_id)
             ->where('cabang_id', $cabang_id)
             ->first();
-        
+
         if (!$paketCabang || $paketCabang->status !== 'tersedia') {
             abort(404, 'Paket tidak tersedia di cabang ini.');
         }
-        
-        // Ambil semua layanan dalam paket untuk cabang ini
+
         $layananList = DB::table('paket_detail as pd')
             ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
-            ->join('layanan_cabang as lc', function($join) use ($cabang_id) {
+            ->join('layanan_cabang as lc', function ($join) use ($cabang_id) {
                 $join->on('l.layanan_id', '=', 'lc.layanan_id')
                     ->where('lc.cabang_id', $cabang_id)
                     ->where('lc.status', 'tersedia');
@@ -88,43 +84,39 @@ class BookingController extends Controller
                 'l.kategori_pelanggan', 'c.nama_cabang', 'c.alamat'
             )
             ->get();
-        
+
         if ($layananList->isEmpty()) {
             abort(404, 'Layanan dalam paket tidak tersedia.');
         }
-        
-        // Format cover foto
+
         foreach ($layananList as $item) {
             $item->cover_foto = !empty($item->cover_foto)
                 ? asset('layanan/' . basename($item->cover_foto))
                 : asset('layanan/default.jpg');
         }
-    
-        $hargaPaket = $paketCabang->harga_promo > 0 
-            ? $paketCabang->harga_promo 
-            : $paketCabang->harga_normal;
 
-        $totalHarga = $hargaPaket;
-        
-        // Ambil jadwal operasional
+        $hargaPaket  = $paketCabang->harga_promo > 0
+            ? $paketCabang->harga_promo
+            : $paketCabang->harga_normal;
+        $totalHarga  = $hargaPaket;
+
         $jadwalOperasional = DB::table('jadwal_operasional')
             ->where('cabang_id', $cabang_id)
             ->get()
             ->keyBy('hari');
-        
-        // Siapkan data paket untuk view
+
         $packageData = [
-            'paket' => $paket,
+            'paket'      => $paket,
             'paketCabang' => $paketCabang,
-            'totalHarga' => $totalHarga
+            'totalHarga' => $totalHarga,
         ];
-        
+
         $isPackageBooking = true;
 
         return view('user.booking.create', compact(
-            'layananList', 
-            'user', 
-            'jadwalOperasional', 
+            'layananList',
+            'user',
+            'jadwalOperasional',
             'packageData',
             'isPackageBooking',
             'cabang_id'
@@ -135,193 +127,192 @@ class BookingController extends Controller
     // STORE — Simpan booking (single maupun paket)
     // =====================================================================
     public function store(Request $request)
-{
-    $isPaket = $request->boolean('is_paket');
-
-    if ($isPaket) {
-        $request->validate([
-            'paket_cabang_id' => 'required|integer|exists:paket_cabang,paket_id',
-            'tanggal'         => 'required|date|after_or_equal:today',
-            'jam'             => 'required',
-        ], [
-            'tanggal.after_or_equal'   => 'Tanggal booking tidak boleh di masa lalu.',
-            'tanggal.required'         => 'Tanggal booking wajib diisi.',
-            'jam.required'             => 'Jam booking wajib dipilih.',
-            'paket_cabang_id.required' => 'Paket tidak boleh kosong.',
-        ]);
-    } else {
-        $request->validate([
-            'layanan_cabang_id'   => 'required|array|min:1|max:1',
-            'layanan_cabang_id.*' => 'integer|exists:layanan_cabang,layanan_cabang_id',
-            'tanggal'             => 'required|date|after_or_equal:today',
-            'jam'                 => 'required',
-        ], [
-            'tanggal.after_or_equal'     => 'Tanggal booking tidak boleh di masa lalu.',
-            'tanggal.required'           => 'Tanggal booking wajib diisi.',
-            'jam.required'               => 'Jam booking wajib dipilih.',
-            'layanan_cabang_id.required' => 'Layanan tidak boleh kosong.',
-        ]);
-    }
-
-    $user      = Auth::user();
-    $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
-
-    if (!$pelanggan) {
-        \Log::error('Pelanggan not found', ['user_id' => $user->user_id]);
-        return back()->withErrors(['error' => 'Data pelanggan tidak ditemukan. Hubungi admin.'])->withInput();
-    }
-
-    // Cek double booking
-    $conflict = DB::table('booking')
-        ->where('pelanggan_id', $pelanggan->pelanggan_id)
-        ->where('tanggal_booking', $request->tanggal)
-        ->where('jam_booking', $request->jam)
-        ->whereNotIn('status', ['cancelled'])
-        ->exists();
-
-    if ($conflict) {
-        return back()->withErrors(['error' => 'Anda sudah memiliki booking pada tanggal dan jam tersebut.'])->withInput();
-    }
-
-    // Validasi ketersediaan & hitung harga snapshot
-    if ($isPaket) {
-        $paketHarga = DB::table('paket_cabang')
-            ->where('paket_id', $request->paket_cabang_id)
-            ->where('status', 'tersedia')
-            ->first();
-
-        if (!$paketHarga) {
-            return back()->withErrors(['error' => 'Paket tidak tersedia.'])->withInput();
-        }
-
-        $hargaSnapshot = $paketHarga->harga_promo > 0
-            ? $paketHarga->harga_promo
-            : $paketHarga->harga_normal;
-
-    } else {
-        $lcId = $request->layanan_cabang_id[0];
-
-        $layananHarga = DB::table('layanan_cabang')
-            ->where('layanan_cabang_id', $lcId)
-            ->where('status', 'tersedia')
-            ->first();
-
-        if (!$layananHarga) {
-            return back()->withErrors(['error' => 'Layanan tidak tersedia.'])->withInput();
-        }
-
-        $hargaSnapshot = $layananHarga->harga_promo > 0
-            ? $layananHarga->harga_promo
-            : $layananHarga->harga;
-    }
-
-    DB::beginTransaction();
-    try {
-        $bookingId = DB::table('booking')->insertGetId([
-            'pelanggan_id'    => $pelanggan->pelanggan_id,
-            'tanggal_booking' => $request->tanggal,
-            'jam_booking'     => $request->jam,
-            'status'          => 'pending',
-            'tipe_booking'    => 'online',
-            'pegawai_id'      => null,
-            'created_by'      => $user->user_id,
-        ]);
+    {
+        $isPaket = $request->boolean('is_paket');
 
         if ($isPaket) {
-            DB::table('booking_detail')->insert([
-                'booking_id'        => $bookingId,
-                'layanan_cabang_id' => null,
-                'paket_cabang_id'   => $request->paket_cabang_id,
-                'harga_snapshot'    => $hargaSnapshot, // ✅
+            $request->validate([
+                'paket_cabang_id' => 'required|integer|exists:paket_cabang,paket_id',
+                'tanggal'         => 'required|date|after_or_equal:today',
+                'jam'             => 'required',
+            ], [
+                'tanggal.after_or_equal'   => 'Tanggal booking tidak boleh di masa lalu.',
+                'tanggal.required'         => 'Tanggal booking wajib diisi.',
+                'jam.required'             => 'Jam booking wajib dipilih.',
+                'paket_cabang_id.required' => 'Paket tidak boleh kosong.',
             ]);
         } else {
-            DB::table('booking_detail')->insert([
-                'booking_id'        => $bookingId,
-                'layanan_cabang_id' => $lcId,
-                'paket_cabang_id'   => null,
-                'harga_snapshot'    => $hargaSnapshot, // ✅
+            $request->validate([
+                'layanan_cabang_id'   => 'required|array|min:1|max:1',
+                'layanan_cabang_id.*' => 'integer|exists:layanan_cabang,layanan_cabang_id',
+                'tanggal'             => 'required|date|after_or_equal:today',
+                'jam'                 => 'required',
+            ], [
+                'tanggal.after_or_equal'     => 'Tanggal booking tidak boleh di masa lalu.',
+                'tanggal.required'           => 'Tanggal booking wajib diisi.',
+                'jam.required'               => 'Jam booking wajib dipilih.',
+                'layanan_cabang_id.required' => 'Layanan tidak boleh kosong.',
             ]);
         }
 
-        DB::commit();
-        return redirect()->route('pelanggan.payment.show', $bookingId)
-            ->with('success', 'Booking berhasil dibuat! Silakan lanjutkan pembayaran.');
+        $user      = Auth::user();
+        $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
 
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Booking store FAILED', [
-            'message' => $e->getMessage(),
-            'trace'   => $e->getTraceAsString(),
-        ]);
-        return back()->withErrors(['error' => 'Gagal membuat booking: ' . $e->getMessage()])->withInput();
+        if (!$pelanggan) {
+            \Log::error('Pelanggan not found', ['user_id' => $user->user_id]);
+            return back()->withErrors(['error' => 'Data pelanggan tidak ditemukan. Hubungi admin.'])->withInput();
+        }
+
+        // Cek double booking
+        $conflict = DB::table('booking')
+            ->where('pelanggan_id', $pelanggan->pelanggan_id)
+            ->where('tanggal_booking', $request->tanggal)
+            ->where('jam_booking', $request->jam)
+            ->whereNotIn('status', ['cancelled'])
+            ->exists();
+
+        if ($conflict) {
+            return back()->withErrors(['error' => 'Anda sudah memiliki booking pada tanggal dan jam tersebut.'])->withInput();
+        }
+
+        // Validasi ketersediaan & hitung harga snapshot
+        if ($isPaket) {
+            $paketHarga = DB::table('paket_cabang')
+                ->where('paket_id', $request->paket_cabang_id)
+                ->where('status', 'tersedia')
+                ->first();
+
+            if (!$paketHarga) {
+                return back()->withErrors(['error' => 'Paket tidak tersedia.'])->withInput();
+            }
+
+            $hargaSnapshot = $paketHarga->harga_promo > 0
+                ? $paketHarga->harga_promo
+                : $paketHarga->harga_normal;
+        } else {
+            $lcId = $request->layanan_cabang_id[0];
+
+            $layananHarga = DB::table('layanan_cabang')
+                ->where('layanan_cabang_id', $lcId)
+                ->where('status', 'tersedia')
+                ->first();
+
+            if (!$layananHarga) {
+                return back()->withErrors(['error' => 'Layanan tidak tersedia.'])->withInput();
+            }
+
+            $hargaSnapshot = $layananHarga->harga_promo > 0
+                ? $layananHarga->harga_promo
+                : $layananHarga->harga;
+        }
+
+        DB::beginTransaction();
+        try {
+            $bookingId = DB::table('booking')->insertGetId([
+                'pelanggan_id'    => $pelanggan->pelanggan_id,
+                'tanggal_booking' => $request->tanggal,
+                'jam_booking'     => $request->jam,
+                'status'          => 'pending',
+                'tipe_booking'    => 'online',
+                'pegawai_id'      => null,
+                'created_by'      => $user->user_id,
+            ]);
+
+            if ($isPaket) {
+                DB::table('booking_detail')->insert([
+                    'booking_id'        => $bookingId,
+                    'layanan_cabang_id' => null,
+                    'paket_cabang_id'   => $request->paket_cabang_id,
+                    'harga_snapshot'    => $hargaSnapshot,
+                ]);
+            } else {
+                DB::table('booking_detail')->insert([
+                    'booking_id'        => $bookingId,
+                    'layanan_cabang_id' => $lcId,
+                    'paket_cabang_id'   => null,
+                    'harga_snapshot'    => $hargaSnapshot,
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->route('pelanggan.payment.show', $bookingId)
+                ->with('success', 'Booking berhasil dibuat! Silakan lanjutkan pembayaran.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Booking store FAILED', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+            return back()->withErrors(['error' => 'Gagal membuat booking: ' . $e->getMessage()])->withInput();
+        }
     }
-}
-
 
     // =====================================================================
     // HISTORY — Riwayat booking pelanggan
     // =====================================================================
     public function history(Request $request)
-{
-    $user      = Auth::user();
-    $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
+    {
+        $user      = Auth::user();
+        $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
 
-    if (!$pelanggan) {
-        abort(403, 'Data pelanggan tidak ditemukan.');
+        if (!$pelanggan) {
+            abort(403, 'Data pelanggan tidak ditemukan.');
+        }
+
+        $query = DB::table('booking as b')
+            ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
+            ->leftJoin('pembayaran as p', function ($join) {
+                $join->on('p.booking_id', '=', 'b.booking_id')
+                    ->whereIn('p.status', ['pending', 'verified']);
+            })
+            ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+            ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+            ->leftJoin('cabang as lc_cabang', 'lc_cabang.cabang_id', '=', 'lc.cabang_id')
+            ->leftJoin('paket_cabang as pc', 'pc.paket_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pl2', 'pl2.paket_id', '=', 'pc.paket_id')
+            ->leftJoin('cabang as pc_cabang', 'pc_cabang.cabang_id', '=', 'pc.cabang_id')
+            ->leftJoin('booking_reschedule as br', 'br.booking_id', '=', 'b.booking_id')
+            ->where('pl.user_id', $user->user_id)
+            ->groupBy(
+                'b.booking_id', 'b.tanggal_booking', 'b.jam_booking',
+                'b.status',          // ← FIX: masuk groupBy agar tidak acak
+                'b.tipe_booking', 'b.created_at',
+                'p.pembayaran_id', 'p.metode_pembayaran', 'p.jumlah',
+                'p.status', 'p.bukti_pembayaran'
+            )
+            ->select(
+                'b.booking_id', 'b.tanggal_booking', 'b.jam_booking',
+                DB::raw('COALESCE(b.status, "pending") as booking_status'), // ← FIX: tidak pakai MAX()
+                'b.tipe_booking', 'b.created_at',
+                'p.pembayaran_id', 'p.metode_pembayaran',
+                'p.jumlah as total_bayar', 'p.status as payment_status',
+                'p.bukti_pembayaran',
+                DB::raw('COALESCE(GROUP_CONCAT(DISTINCT l.nama_layanan SEPARATOR ", "), MAX(pl2.nama_paket)) as layanan_nama'),
+                DB::raw('COUNT(DISTINCT bd.booking_detail_id) as jumlah_layanan'),
+                DB::raw('COALESCE(MAX(lc_cabang.nama_cabang), MAX(pc_cabang.nama_cabang)) as nama_cabang'),
+                DB::raw('COALESCE(MAX(lc_cabang.alamat), MAX(pc_cabang.alamat)) as alamat'),
+                DB::raw('IF(COUNT(br.booking_id) > 0, 1, 0) as is_rescheduled')
+            );
+
+        if ($request->filled('status')) {
+            $query->where('b.status', $request->status);
+        }
+
+        $bookings = $query->orderBy('b.created_at', 'desc')->paginate(10);
+
+        return view('user.booking.history', compact('bookings', 'user'));
     }
-
-    $query = DB::table('booking as b')
-    ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
-    ->leftJoin('pembayaran as p', function ($join) {
-        $join->on('p.booking_id', '=', 'b.booking_id')
-            ->whereIn('p.status', ['pending', 'verified']);
-    })
-    ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
-    ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-    ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
-    ->leftJoin('cabang as lc_cabang', 'lc_cabang.cabang_id', '=', 'lc.cabang_id') // ✅ cabang dari layanan
-    ->leftJoin('paket_cabang as pc', 'pc.paket_id', '=', 'bd.paket_cabang_id')
-    ->leftJoin('paket_layanan as pl2', 'pl2.paket_id', '=', 'pc.paket_id')
-    ->leftJoin('cabang as pc_cabang', 'pc_cabang.cabang_id', '=', 'pc.cabang_id') // ✅ cabang dari paket
-    ->leftJoin('booking_reschedule as br', 'br.booking_id', '=', 'b.booking_id')
-    ->where('pl.user_id', $user->user_id)
-    ->groupBy(
-        'b.booking_id', 'b.tanggal_booking', 'b.jam_booking',
-        'b.tipe_booking', 'b.created_at',
-        'p.pembayaran_id', 'p.metode_pembayaran', 'p.jumlah',
-        'p.status', 'p.bukti_pembayaran'
-    )
-    ->select(
-        'b.booking_id', 'b.tanggal_booking', 'b.jam_booking',
-        DB::raw('COALESCE(MAX(b.status), "pending") as booking_status'),
-        'b.tipe_booking', 'b.created_at',
-        'p.pembayaran_id', 'p.metode_pembayaran',
-        'p.jumlah as total_bayar', 'p.status as payment_status',
-        'p.bukti_pembayaran',
-        DB::raw('COALESCE(GROUP_CONCAT(DISTINCT l.nama_layanan SEPARATOR ", "), MAX(pl2.nama_paket)) as layanan_nama'),
-        DB::raw('COUNT(DISTINCT bd.booking_detail_id) as jumlah_layanan'),
-        DB::raw('COALESCE(MAX(lc_cabang.nama_cabang), MAX(pc_cabang.nama_cabang)) as nama_cabang'), // ✅
-        DB::raw('COALESCE(MAX(lc_cabang.alamat), MAX(pc_cabang.alamat)) as alamat'),               // ✅
-        DB::raw('IF(COUNT(br.booking_id) > 0, 1, 0) as is_rescheduled')
-    );
-
-    if ($request->filled('status')) {
-        $query->where('b.status', $request->status);
-    }
-
-    $bookings = $query->orderBy('b.created_at', 'desc')->paginate(10);
-
-    return view('user.booking.history', compact('bookings', 'user'));
-}
 
     // =====================================================================
     // SHOW — Detail booking
     // =====================================================================
     public function show($booking_id)
     {
-        $user = Auth::user();
+        $user      = Auth::user();
         $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
-        
+
         $booking = DB::table('booking as b')
             ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
             ->leftJoin('pegawai as pg', 'b.pegawai_id', '=', 'pg.pegawai_id')
@@ -330,76 +321,72 @@ class BookingController extends Controller
             ->where('pl.user_id', $user->user_id)
             ->select('b.*', 'u_pg.nama as nama_pegawai')
             ->first();
-        
+
         if (!$booking) abort(404);
 
-        // ✅ CEK apakah ini booking paket
         $isPaketBooking = DB::table('booking_detail')
             ->where('booking_id', $booking_id)
             ->whereNotNull('paket_cabang_id')
             ->exists();
 
         if ($isPaketBooking) {
-            // 🔹 BOOKING PAKET: Ambil dari paket_cabang dan paket_detail
-            $layananList = DB::table('booking_detail as bd')
-                ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
-                ->join('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
-                ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
-                ->leftJoin('cabang as c', 'pc.cabang_id', '=', 'c.cabang_id')
-                ->where('bd.booking_id', $booking_id)
-                ->select(
-                    'l.layanan_id',
-                    'l.nama_layanan',
-                    'l.deskripsi',
-                    'l.durasi',
-                    'l.kategori_pelanggan',
-                    'l.cover_foto',
-                    'pc.harga_normal',
-                    'pc.harga_promo',
-                    'c.nama_cabang',
-                    'c.alamat'
-                )
-                ->distinct() // ✅ Hindari duplikasi
-                ->get();
+    $paketCabangId = DB::table('booking_detail')
+        ->where('booking_id', $booking_id)
+        ->value('paket_cabang_id');
 
-            // Hitung total dari harga paket
-            $paketHarga = DB::table('booking_detail as bd')
-                ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
-                ->where('bd.booking_id', $booking_id)
-                ->select('pc.harga_promo', 'pc.harga_normal')
-                ->first();
-            
-            $total = $paketHarga 
-                ? ($paketHarga->harga_promo > 0 ? $paketHarga->harga_promo : $paketHarga->harga_normal)
-                : 0;
+    $paketCabang = DB::table('paket_cabang')
+        ->where('paket_id', $paketCabangId)
+        ->first();
+
+    // FIX: ambil cabang terpisah, tidak lewat join
+    $cabang = DB::table('cabang')
+        ->where('cabang_id', $paketCabang->cabang_id)
+        ->first();
+
+    $layananList = DB::table('paket_detail as pd')
+        ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
+        ->where('pd.paket_id', $paketCabang->paket_id)
+        ->select(
+            'l.layanan_id',
+            'l.nama_layanan',
+            'l.deskripsi',
+            'l.durasi',
+            'l.kategori_pelanggan',
+            'l.cover_foto',
+            DB::raw("{$paketCabang->harga_normal} as harga_normal"),
+            DB::raw("{$paketCabang->harga_promo} as harga_promo")
+        )
+        ->get();
+
+    // Inject data cabang ke setiap item
+    foreach ($layananList as $item) {
+        $item->nama_cabang = $cabang->nama_cabang ?? null;
+        $item->alamat      = $cabang->alamat ?? null;
+    }
+
+    $total = $paketCabang->harga_promo > 0
+        ? $paketCabang->harga_promo
+        : $paketCabang->harga_normal;
 
         } else {
-            // 🔹 SINGLE LAYANAN: Query seperti biasa
             $layananList = DB::table('booking_detail as bd')
                 ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
                 ->join('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
                 ->leftJoin('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
                 ->where('bd.booking_id', $booking_id)
                 ->select(
-                    'l.layanan_id',
-                    'l.nama_layanan',
-                    'l.deskripsi',
-                    'l.durasi',
-                    'l.kategori_pelanggan',
-                    'l.cover_foto',
-                    'lc.harga',
-                    'lc.harga_promo',
-                    'c.nama_cabang',
-                    'c.alamat'
+                    'l.layanan_id', 'l.nama_layanan', 'l.deskripsi', 'l.durasi',
+                    'l.kategori_pelanggan', 'l.cover_foto',
+                    'lc.harga', 'lc.harga_promo',
+                    'c.nama_cabang', 'c.alamat'
                 )
                 ->get();
 
-            $total = $layananList->sum(function($item) {
+            $total = $layananList->sum(function ($item) {
                 return $item->harga_promo > 0 ? $item->harga_promo : $item->harga;
             });
         }
 
-        // Format cover foto
         foreach ($layananList as $item) {
             $item->cover_foto = !empty($item->cover_foto)
                 ? asset('layanan/' . basename($item->cover_foto))
@@ -412,11 +399,7 @@ class BookingController extends Controller
             ->first();
 
         return view('user.booking.detail', compact(
-            'booking',
-            'layananList',
-            'pembayaran',
-            'total',
-            'user'
+            'booking', 'layananList', 'pembayaran', 'total', 'user'
         ));
     }
 
@@ -428,14 +411,14 @@ class BookingController extends Controller
         $user      = Auth::user();
         $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
 
-        // Cek sudah pernah reschedule
-$sudahReschedule = DB::table('booking_reschedule')
-    ->where('booking_id', $booking_id)
-    ->exists();
+        $sudahReschedule = DB::table('booking_reschedule')
+            ->where('booking_id', $booking_id)
+            ->exists();
 
-if ($sudahReschedule) {
-    return back()->withErrors(['error' => 'Booking ini sudah pernah direschedule.']);
-}
+        if ($sudahReschedule) {
+            return back()->withErrors(['error' => 'Booking ini sudah pernah direschedule.']);
+        }
+
         $booking = DB::table('booking as b')
             ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
             ->leftJoin('pembayaran as p', 'p.booking_id', '=', 'b.booking_id')
@@ -450,10 +433,13 @@ if ($sudahReschedule) {
             return back()->withErrors(['error' => 'Booking ini tidak dapat direschedule.']);
         }
 
+        // FIX: support paket booking (cabang_id tidak NULL lagi)
         $cabangId = DB::table('booking_detail as bd')
-            ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
+            ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
+            ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
             ->where('bd.booking_id', $booking_id)
-            ->value('lc.cabang_id');
+            ->selectRaw('COALESCE(lc.cabang_id, pc.cabang_id) as cabang_id')
+            ->value('cabang_id');
 
         $jadwalOperasional = DB::table('jadwal_operasional')
             ->where('cabang_id', $cabangId)
@@ -461,24 +447,24 @@ if ($sudahReschedule) {
             ->keyBy('hari');
 
         $layananList = DB::table('booking_detail as bd')
-    ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
-    ->leftJoin('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
-    ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
-    ->leftJoin('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
-    ->where('bd.booking_id', $booking_id)
-    ->select(
-        DB::raw('COALESCE(l.nama_layanan, pl.nama_paket) as nama_layanan'),
-        DB::raw('COALESCE(l.durasi, 0) as durasi'),
-        'bd.harga_snapshot'
-    )
-    ->distinct()
-    ->get();
+            ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
+            ->leftJoin('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
+            ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
+            ->leftJoin('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
+            ->where('bd.booking_id', $booking_id)
+            ->select(
+                DB::raw('COALESCE(l.nama_layanan, pl.nama_paket) as nama_layanan'),
+                DB::raw('COALESCE(l.durasi, 0) as durasi'),
+                'bd.harga_snapshot'
+            )
+            ->distinct()
+            ->get();
 
+        $total = $layananList->sum('harga_snapshot');
 
-$total = $layananList->sum('harga_snapshot');
-
-
-        return view('user.booking.reschedule', compact('booking', 'jadwalOperasional', 'layananList', 'total', 'user'));
+        return view('user.booking.reschedule', compact(
+            'booking', 'jadwalOperasional', 'layananList', 'total', 'user'
+        ));
     }
 
     // =====================================================================
@@ -504,27 +490,27 @@ $total = $layananList->sum('harga_snapshot');
             ->first();
 
         if (!$booking) {
-    return back()->withErrors([
-        'error' => 'Booking tidak ditemukan atau tidak dapat direschedule.'
-    ]);
-}
+            return back()->withErrors([
+                'error' => 'Booking tidak ditemukan atau tidak dapat direschedule.'
+            ]);
+        }
 
-if (
-    $booking->tanggal_booking == $request->new_tanggal &&
-    $booking->jam_booking == $request->new_jam
-) {
-    return back()->withErrors([
-        'error' => 'Silakan pilih tanggal atau jam yang berbeda dari jadwal saat ini.'
-    ])->withInput();
-}
+        if (
+            $booking->tanggal_booking == $request->new_tanggal &&
+            $booking->jam_booking == $request->new_jam
+        ) {
+            return back()->withErrors([
+                'error' => 'Silakan pilih tanggal atau jam yang berbeda dari jadwal saat ini.'
+            ])->withInput();
+        }
 
-$conflict = DB::table('booking')
-    ->where('tanggal_booking', $request->new_tanggal)
-    ->where('jam_booking', $request->new_jam)
-    ->where('status', '!=', 'cancelled')
-    ->where('booking_id', '!=', $booking_id)
-    ->exists();
-    
+        $conflict = DB::table('booking')
+            ->where('tanggal_booking', $request->new_tanggal)
+            ->where('jam_booking', $request->new_jam)
+            ->where('status', '!=', 'cancelled')
+            ->where('booking_id', '!=', $booking_id)
+            ->exists();
+
         if ($conflict) {
             return back()->withErrors(['error' => 'Slot waktu tersebut sudah terisi. Silakan pilih waktu lain.'])->withInput();
         }
@@ -542,12 +528,12 @@ $conflict = DB::table('booking')
             ]);
 
             DB::table('booking')
-    ->where('booking_id', $booking_id)
-    ->update([
-        'tanggal_booking' => $request->new_tanggal,
-        'jam_booking'     => $request->new_jam,
-        'status'          => 'pending',
-    ]);
+                ->where('booking_id', $booking_id)
+                ->update([
+                    'tanggal_booking' => $request->new_tanggal,
+                    'jam_booking'     => $request->new_jam,
+                    'status'          => 'pending',
+                ]);
 
             DB::table('notifikasi')->insert([
                 'user_id'     => $user->user_id,

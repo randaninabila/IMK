@@ -64,7 +64,7 @@
 @endphp
 
                 @if($isRescheduled)
-    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-600">
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-orange-500">
         Reschedule
     </span>
 @else
