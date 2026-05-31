@@ -52,13 +52,26 @@
                         'confirmed'   => ['bg' => 'bg-blue-100', 'text' => 'text-blue-700', 'label' => 'Dikonfirmasi'],
                         'in_progress' => ['bg' => 'bg-purple-100', 'text' => 'text-purple-700', 'label' => 'Sedang Berlangsung'],
                         'completed'   => ['bg' => 'bg-green-100', 'text' => 'text-green-700', 'label' => 'Selesai'],
-                        'rescheduled'   => ['bg' => 'bg-red-100', 'text' => 'text-red-700', 'label' => 'Dibatalkan'],
+                        'rescheduled'  => ['bg' => 'bg-orange-100', 'text' => 'text-orange-700', 'label' => 'Jadwal Ulang'],
                     ];
                     $cfg = $statusConfig[$booking->status] ?? ['bg' => 'bg-gray-100', 'text' => 'text-gray-700', 'label' => ucfirst($booking->status)];
                 @endphp
-                <span class="px-4 py-2 rounded-full text-sm font-semibold {{ $cfg['bg'] }} {{ $cfg['text'] }}">
-                    {{ $cfg['label'] }}
-                </span>
+
+                @php
+    $isRescheduled = DB::table('booking_reschedule')
+        ->where('booking_id', $booking->booking_id)
+        ->exists();
+@endphp
+
+                @if($isRescheduled)
+    <span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-600">
+        Reschedule
+    </span>
+@else
+<span class="px-4 py-2 rounded-full text-sm font-semibold {{ $cfg['bg'] }} {{ $cfg['text'] }}">
+    {{ $cfg['label'] }}
+</span>
+@endif
             </div>
 
             {{-- CONTENT --}}
@@ -207,6 +220,7 @@
 
             </div>
 
+            
             {{-- ACTION BUTTONS --}}
             <div class="p-6 border-t border-pink-100 bg-gray-50">
                 <div class="flex flex-wrap gap-3">
@@ -221,12 +235,12 @@
                         </a>
                     @endif
 
-                    @if($booking->status === 'pending' && (!$pembayaran || $pembayaran->status !== 'verified'))
-                        <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
-                        class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-3 rounded-xl text-center text-sm transition border border-blue-200">
-                            Reschedule
-                        </a>
-                    @endif
+                    @if($booking->status === 'pending' && (!$pembayaran || $pembayaran->status !== 'verified') && !$isRescheduled)
+    <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
+       class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-3 rounded-xl text-center text-sm transition border border-blue-200">
+        Reschedule
+    </a>
+@endif
 
                     @if(in_array($booking->status, ['Menunggu', 'Dikonfirmasi']))
                         <a href="https://wa.me/6287869590802?text=Halo%20Admin,%20saya%20ingin%20tanya%20tentang%20booking%20#{{ $booking->booking_id }}" target="_blank" class="flex-1 min-w-[120px] bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-3 rounded-xl text-center text-sm transition border border-green-200">

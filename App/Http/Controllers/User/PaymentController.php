@@ -204,93 +204,109 @@ class PaymentController extends Controller
     }
 
     public function success($booking_id)
-    {
-        $user = Auth::user();
-        $booking = DB::table('booking as b')
-            ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
-            ->where('b.booking_id', $booking_id)
-            ->where('pl.user_id', $user->user_id)
-            ->select('b.*')
+{
+    $user = Auth::user();
+    
+    $booking = DB::table('booking as b')
+        ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
+        ->where('b.booking_id', $booking_id)
+        ->where('pl.user_id', $user->user_id)
+        ->select('b.*')
+        ->first();
+
+    if (!$booking) abort(404);
+
+    $pembayaran = DB::table('pembayaran')
+        ->where('booking_id', $booking_id)
+        ->orderByDesc('pembayaran_id')
+        ->first();
+
+    $bookingDetail = DB::table('booking_detail')
+        ->where('booking_id', $booking_id)
+        ->first();
+
+    if (!$bookingDetail) abort(404, 'Detail booking tidak ditemukan.');
+
+    $isPaket = !empty($bookingDetail->paket_cabang_id);
+
+    // Query layananList & total
+    if ($isPaket) {
+        $layananList = DB::table('booking_detail as bd')
+            ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
+            ->join('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
+            ->join('paket_detail as pd', 'pl.paket_id', '=', 'pd.paket_id')
+            ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
+            ->where('bd.booking_id', $booking_id)
+            ->select('l.nama_layanan', 'l.durasi', 'pl.nama_paket', 'pc.harga_normal', 'pc.harga_promo')
+            ->distinct()
+            ->get();
+
+        $paketHarga = DB::table('paket_cabang')
+            ->where('paket_id', $bookingDetail->paket_cabang_id)
             ->first();
 
-        if (!$booking) abort(404);
+        $total = $paketHarga
+            ? ($paketHarga->harga_promo > 0 ? $paketHarga->harga_promo : $paketHarga->harga_normal)
+            : 0;
 
-        $pembayaran = DB::table('pembayaran')
-            ->where('booking_id', $booking_id)
-            ->orderByDesc('pembayaran_id')
+        // Ambil cabang dari paket_cabang
+        $cabang = DB::table('paket_cabang as pc')
+            ->join('cabang as c', 'pc.cabang_id', '=', 'c.cabang_id')
+            ->where('pc.paket_id', $bookingDetail->paket_cabang_id)
+            ->select('c.nama_cabang', 'c.alamat')
             ->first();
 
-        // ✅ CEK TIPE BOOKING
-        $bookingDetail = DB::table('booking_detail')
-            ->where('booking_id', $booking_id)
+    } else {
+        $layananList = DB::table('booking_detail as bd')
+            ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
+            ->join('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
+            ->where('bd.booking_id', $booking_id)
+            ->select('l.nama_layanan', 'l.durasi', 'lc.harga', 'lc.harga_promo')
+            ->get();
+
+        $total = $layananList->sum(fn($item) => $item->harga_promo > 0 ? $item->harga_promo : $item->harga);
+
+        // Ambil cabang dari layanan_cabang
+        $cabang = DB::table('layanan_cabang as lc')
+            ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
+            ->where('lc.layanan_cabang_id', $bookingDetail->layanan_cabang_id)
+            ->select('c.nama_cabang', 'c.alamat')
             ->first();
-
-        if (!$bookingDetail) {
-            abort(404, 'Detail booking tidak ditemukan.');
-        }
-
-        $isPaket = !empty($bookingDetail->paket_cabang_id);
-
-        if ($isPaket) {
-            // 🔹 BOOKING PAKET
-            $paketInfo = DB::table('booking_detail as bd')
-                ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_id')
-                ->join('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
-                ->join('paket_detail as pd', 'pl.paket_id', '=', 'pd.paket_id')
-                ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
-                ->join('cabang as c', 'pc.cabang_id', '=', 'c.cabang_id')
-                ->where('bd.booking_id', $booking_id)
-                ->select(
-                    'l.nama_layanan',
-                    'l.durasi',
-                    'pl.nama_paket',
-                    'pc.harga_normal',
-                    'pc.harga_promo',
-                    'c.nama_cabang',
-                    'c.alamat'
-                )
-                ->distinct()
-                ->get();
-
-            // Hitung total dari harga paket
-            $paketHarga = DB::table('paket_cabang')
-                ->where('paket_id', $bookingDetail->paket_cabang_id)
-                ->first();
-
-            $total = $paketHarga 
-                ? ($paketHarga->harga_promo > 0 ? $paketHarga->harga_promo : $paketHarga->harga_normal)
-                : 0;
-
-            $layananList = $paketInfo;
-
-        } else {
-            // 🔹 BOOKING SINGLE
-            $layananList = DB::table('booking_detail as bd')
-                ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
-                ->join('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
-                ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
-                ->where('bd.booking_id', $booking_id)
-                ->select(
-                    'l.nama_layanan',
-                    'l.durasi',
-                    'lc.harga',
-                    'lc.harga_promo',
-                    'c.nama_cabang',
-                    'c.alamat'
-                )
-                ->get();
-
-            $total = $layananList->sum(function($item) {
-                return $item->harga_promo > 0 ? $item->harga_promo : $item->harga;
-            });
-        }
-
-        return view('user.booking.success', compact(
-            'booking',
-            'pembayaran',
-            'layananList',
-            'total',
-            'user'
-        ));
     }
+
+    // nama_item & tipe_booking
+    $nama_item   = '';
+    $tipe_booking = '';
+    $detail_item  = null;
+
+    if (!empty($bookingDetail->layanan_cabang_id)) {
+        $detail_item  = DB::table('layanan_cabang as lc')
+            ->join('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
+            ->where('lc.layanan_cabang_id', $bookingDetail->layanan_cabang_id)
+            ->select('l.nama_layanan')
+            ->first();
+        $nama_item    = $detail_item?->nama_layanan ?? 'Layanan Tidak Diketahui';
+        $tipe_booking = 'layanan';
+    } elseif (!empty($bookingDetail->paket_cabang_id)) {
+        $detail_item  = DB::table('paket_cabang as pc')
+            ->join('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
+            ->where('pc.paket_id', $bookingDetail->paket_cabang_id)
+            ->select('pl.nama_paket')
+            ->first();
+        $nama_item    = $detail_item?->nama_paket ?? 'Paket Tidak Diketahui';
+        $tipe_booking = 'paket';
+    }
+
+    return view('user.booking.success', compact(
+        'booking',
+        'pembayaran',
+        'bookingDetail',
+        'nama_item',
+        'tipe_booking',
+        'detail_item',
+        'layananList',
+        'total',
+        'cabang'        // ✅ tambah ini
+    ));
+}
 }

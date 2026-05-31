@@ -64,25 +64,34 @@
                         </div>
                         
                         {{-- BADGE STATUS BOOKING --}}
-                        @php
-                            $statusColors = [
-                                'pending' => 'bg-amber-100 text-amber-700',
-                                'confirmed' => 'bg-blue-100 text-blue-700',
-                                'ongoing' => 'bg-purple-100 text-purple-700',
-                                'completed' => 'bg-green-100 text-green-700',
-                                'Rescheduled' => 'bg-red-100 text-red-700',
-                            ];
-                            $statusLabels = [
-                                'pending' => 'Menunggu',
-                                'confirmed' => 'Dikonfirmasi',
-                                'ongoing' => 'Berlangsung',
-                                'completed' => 'Selesai',
-                                'rescheduled' => 'JadwalUlang',
-                            ];
-                        @endphp
-                        <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$booking->booking_status] ?? 'bg-gray-100 text-gray-700' }}">
-                            {{ $statusLabels[$booking->booking_status] ?? ucfirst($booking->booking_status) }}
-                        </span>
+@php
+    $statusColors = [
+        'pending'   => 'bg-amber-100 text-amber-700',
+        'confirmed' => 'bg-blue-100 text-blue-700',
+        'ongoing'   => 'bg-purple-100 text-purple-700',
+        'completed' => 'bg-green-100 text-green-700',
+        'cancelled' => 'bg-red-100 text-red-700',
+    ];
+    $statusLabels = [
+        'pending'   => 'Pending',
+        'confirmed' => 'Dikonfirmasi',
+        'ongoing'   => 'Berlangsung',
+        'completed' => 'Selesai',
+        'cancelled' => 'Dibatalkan',
+    ];
+@endphp
+<div class="flex flex-col items-end gap-1">
+    @if($booking->is_rescheduled)
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-orange-500">
+            Reschedule
+        </span>
+    @endif
+    @if(!$booking->is_rescheduled || $booking->booking_status !== 'pending')
+        <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$booking->booking_status] ?? 'bg-gray-100 text-gray-700' }}">
+            {{ $statusLabels[$booking->booking_status] ?? ucfirst($booking->booking_status) }}
+        </span>
+    @endif
+</div>
                     </div>
 
                     {{-- CONTENT --}}
@@ -167,12 +176,12 @@
                             </a>
 
                             
-                            @if(in_array($booking->booking_status, ['pending', 'confirmed']))
-                                <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
-                                class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-blue-200">
-                                Reschedule
-                                </a>
-                            @endif
+                            @if(in_array($booking->booking_status, ['pending', 'confirmed']) && !$booking->is_rescheduled)
+    <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
+       class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-blue-200">
+        Reschedule
+    </a>
+@endif
 
                             {{-- Ulasan (jika completed) --}}
                             @if($booking->booking_status === 'completed')

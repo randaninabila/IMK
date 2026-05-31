@@ -323,14 +323,11 @@
                                 </div>
  
                                 @if($lc->layanan_cabang_id)
-                                <a href="{{ route('pelanggan.booking.paket', [
-                                    'paket_id' => $paket->paket_id, 
-                                    'cabang_id' => $cabang->cabang_id
-                                ]) }}" 
-                                class="booking-btn flex-shrink-0 bg-rose-400 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all duration-200">
-                                    Pesan
-                                </a>
-                                @endif
+<a href="{{ route('pelanggan.booking.create', $lc->layanan_cabang_id) }}" 
+   class="booking-btn flex-shrink-0 bg-rose-400 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all duration-200">
+    Pesan
+</a>
+@endif
                             </div>
                         </div>
                         @endforeach

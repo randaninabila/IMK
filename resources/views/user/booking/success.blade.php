@@ -161,17 +161,13 @@
                             {{ substr($booking->jam_booking, 0, 5) }} WIB
                         </p>
                     </div>
-                    @if($layananList->first()?->alamat)
-                    <div class="col-span-2 bg-pink-50 rounded-2xl p-4">
-                        <p class="text-gray-400 text-xs mb-1">Lokasi</p>
-                        <p class="font-semibold text-[#3E382D]">
-                            {{ $layananList->first()->nama_cabang }}
-                        </p>
-                        <p class="text-xs text-gray-500 mt-0.5">
-                            {{ $layananList->first()->alamat }}
-                        </p>
-                    </div>
-                    @endif
+                    @if($cabang?->alamat)
+<div class="col-span-2 bg-pink-50 rounded-2xl p-4">
+    <p class="text-gray-400 text-xs mb-1">Lokasi</p>
+    <p class="font-semibold text-[#3E382D]">{{ $cabang->nama_cabang }}</p>
+    <p class="text-xs text-gray-500 mt-0.5">{{ $cabang->alamat }}</p>
+</div>
+@endif
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Metode Bayar</p>
                         <p class="font-semibold text-[#3E382D]">
