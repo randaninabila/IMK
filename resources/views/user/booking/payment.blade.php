@@ -45,11 +45,11 @@
                     {{-- PILIH METODE --}}
                     <div class="bg-white rounded-3xl shadow-sm border border-pink-100 p-8">
                         <h2 class="text-lg font-bold text-[#3E382D] mb-6">Pilih Metode Pembayaran</h2>
-                        <div class="space-y-4">
+                        <div class="space-y-4 text-left">
 
                             {{-- QRIS --}}
-                            <label class="flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 border-pink-100 hover:border-rose-300 has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50" id="label-qris">
-                                <input type="radio" name="metode_pembayaran" value="qris" class="mt-1 accent-rose-400 peer" onchange="togglePaymentMethod('qris')" {{ old('metode_pembayaran') == 'qris' ? 'checked' : '' }}>
+                            <label class="flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 border-pink-100 hover:border-rose-300 has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50" id="label-qris">
+                                <input type="radio" name="metode_pembayaran" value="qris" class="accent-rose-400 peer" onchange="togglePaymentMethod('qris')" {{ old('metode_pembayaran') == 'qris' ? 'checked' : '' }}>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xs shrink-0">QRIS</div>
@@ -62,8 +62,8 @@
                             </label>
 
                             {{-- TUNAI --}}
-                            <label class="flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 border-pink-100 hover:border-rose-300 has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50" id="label-cash">
-                                <input type="radio" name="metode_pembayaran" value="cash" class="mt-1 accent-rose-400" onchange="togglePaymentMethod('cash')" {{ old('metode_pembayaran') == 'cash' ? 'checked' : '' }}>
+                            <label class="flex items-center gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 border-pink-100 hover:border-rose-300 has-[:checked]:border-rose-400 has-[:checked]:bg-rose-50" id="label-cash">
+                                <input type="radio" name="metode_pembayaran" value="cash" class="accent-rose-400" onchange="togglePaymentMethod('cash')" {{ old('metode_pembayaran') == 'cash' ? 'checked' : '' }}>
                                 <div class="flex-1">
                                     <div class="flex items-center gap-3">
                                         <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center shrink-0">
@@ -137,14 +137,14 @@
                                 </svg>
                                 <div class="text-sm text-green-800 space-y-1">
                                     <p class="font-semibold">Menunggu Verifikasi Admin</p>
-                                    <p>Silakan bayar tunai sebesar <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong> saat kedatangan. Admin akan memverifikasi & mengkonfirmasi booking.</p>
+                                    <p>Silakan bayar tunai sebesar <strong>Rp {{ number_format($total, 0, ',', '.') }}</strong> saat kedatangan. Admin akan memverifikasi & mengkonfirmasi pesanan.</p>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-4 text-sm text-gray-500 space-y-1">
-                            <p>• Hadir sesuai tanggal & jam booking</p>
+                            <p>• Hadir sesuai tanggal & jam pemesanan</p>
                             <p>• Uang pas sangat disarankan</p>
-                            <p>• Tunjukkan kode booking ke kasir</p>
+                            <p>• Tunjukkan kode pesanan ke kasir</p>
                         </div>
                     </div>
 
@@ -164,7 +164,7 @@
             <div class="space-y-4">
                 <div class="bg-white rounded-3xl shadow-sm border border-pink-100 overflow-hidden sticky top-24">
                     <div class="bg-gradient-to-r from-rose-400 to-pink-400 p-5">
-                        <p class="text-white text-xs font-semibold opacity-80 uppercase tracking-wide">Ringkasan Booking</p>
+                        <p class="text-white text-xs font-semibold opacity-80 uppercase tracking-wide">Ringkasan Pesanan</p>
                         <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                     </div>
                     <div class="p-6 space-y-4 text-sm">

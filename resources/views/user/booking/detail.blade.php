@@ -5,7 +5,7 @@
 
         {{-- HEADER --}}
         <div class="text-center mb-10 mt-14">
-            <h1 class="text-7xl font-bold text-[#3E382D]">Detail Booking</h1>
+            <h1 class="text-7xl font-bold text-[#3E382D]">Rincian Pemesanan</h1>
             <p class="text-sm text-gray-500 mt-2">Informasi lengkap pemesanan kamu</p>
         </div>
 
@@ -40,7 +40,7 @@
                         </svg>
                     </div>
                     <div>
-                        <p class="text-white text-xs font-semibold opacity-90">Booking ID</p>
+                        <p class="text-white text-xs font-semibold opacity-90">No. Pesanan</p>
                         <p class="text-white text-xl font-bold">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                     </div>
                 </div>
@@ -189,7 +189,7 @@
                             </svg>
                             <div>
                                 <p class="text-amber-800 font-semibold text-sm">Belum Ada Pembayaran</p>
-                                <p class="text-amber-700 text-sm mt-0.5">Silakan lanjutkan ke halaman pembayaran untuk menyelesaikan booking ini.</p>
+                                <p class="text-amber-700 text-sm mt-0.5">Silakan lanjutkan ke halaman pembayaran untuk menyelesaikan pesanan ini.</p>
                             </div>
                         </div>
                     </div>
@@ -205,8 +205,7 @@
                         ← Kembali
                     </a>
 
-                    {{-- Bayar (jika pending & belum verified) --}}
-                    @if($booking->status === 'pending' && (!$pembayaran || $pembayaran->status !== 'verified'))
+                    @if($booking->status === 'pending' && (!$pembayaran || ($pembayaran->metode_pembayaran === 'qris' && $pembayaran->status !== 'verified')))
                         <a href="{{ route('pelanggan.payment.show', $booking->booking_id) }}" class="flex-1 min-w-[120px] bg-rose-400 hover:bg-rose-500 text-white font-semibold py-3 rounded-xl text-center text-sm transition">
                             Bayar Sekarang
                         </a>
@@ -219,7 +218,7 @@
                         </a>
                     @endif
 
-                    @if(in_array($booking->status, ['pending', 'confirmed']))
+                    @if(in_array($booking->status, ['Menunggu', 'Dikonfirmasi']))
                         <a href="https://wa.me/6287869590802?text=Halo%20Admin,%20saya%20ingin%20tanya%20tentang%20booking%20#{{ $booking->booking_id }}" target="_blank" class="flex-1 min-w-[120px] bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-3 rounded-xl text-center text-sm transition border border-green-200">
                             Hubungi Admin
                         </a>

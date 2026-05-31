@@ -6,8 +6,8 @@
 
         {{-- TITLE --}}
         <div class="text-center mb-10 mt-14">
-            <h1 class="text-7xl font-bold text-[#3E382D]">Booking Layanan</h1>
-            <p class="text-sm text-gray-500 mt-2">Isi data booking treatment kamu</p>
+            <h1 class="text-7xl font-bold text-[#3E382D]">Pesan Layanan</h1>
+            <p class="text-sm text-gray-500 mt-2">Isi data layanan kamu</p>
         </div>
 
         {{-- ERROR --}}
@@ -59,7 +59,7 @@
                     {{-- Tanggal --}}
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-[#3E382D] mb-2">
-                            Tanggal Booking <span class="text-rose-400">*</span>
+                            Tanggal Pemesanan <span class="text-rose-400">*</span>
                         </label>
                         <input type="date"
                                id="tanggalInput"
@@ -77,7 +77,7 @@
                     {{-- Jam --}}
                     <div class="mb-6">
                         <label class="block text-sm font-semibold text-[#3E382D] mb-2">
-                            Jam Booking <span class="text-rose-400">*</span>
+                            Jam Pemesanan <span class="text-rose-400">*</span>
                         </label>
                         <select name="jam"
                                 id="jamSelect"
@@ -118,7 +118,7 @@
                             <svg class="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
                             </svg>
-                            <p>Setelah booking, kamu akan diarahkan ke halaman pembayaran. Pilih metode <strong>QRIS</strong> atau <strong>Tunai (bayar di lokasi)</strong>.</p>
+                            <p>Setelah pesan, kamu akan diarahkan ke halaman pembayaran. Pilih metode <strong>QRIS</strong> atau <strong>Tunai (bayar di lokasi)</strong>.</p>
                         </div>
                     </div>
 
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Validasi: jam tidak boleh sudah lewat jika tanggal hari ini
         if (selectedDate === today && selectedJam && selectedJam.substring(0,5) <= currentTime) {
             e.preventDefault();
-            alert('Jam booking tidak boleh di masa lalu. Silakan pilih jam yang masih tersedia.');
+            alert('Jam Pemesanan tidak boleh di jam yang sudah lewat. Silakan pilih jam yang masih tersedia.');
             jamSelect.focus();
             return;
         }

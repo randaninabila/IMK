@@ -47,7 +47,7 @@
                 class="relative hover:text-[#3E382D] transition
                 {{ request()->is('/') ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Home
+                    Beranda
 
                     @if(request()->is('/'))
                         <span class="
@@ -63,7 +63,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'service' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Service
+                    Layanan
 
                     @if($current == 'service')
                         <span class="
@@ -81,7 +81,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'specialist' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Specialist
+                    Spesialis
 
                     @if($current == 'specialist')
                         <span class="
@@ -99,7 +99,7 @@
                     class="relative hover:text-[#3E382D] transition
                     {{ $current == 'gallery' ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                    Gallery
+                    Galeri
 
                     @if($current == 'gallery')
                         <span class="
@@ -115,24 +115,22 @@
             </nav>
 
             @auth
-                @if(auth()->user()->role === 'pelanggan')
-                    <a href="{{ route('pelanggan.bookings') }}"
-                        class="relative hover:text-[#3E382D] transition
-                        {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
+                <a href="{{ route('pelanggan.bookings') }}"
+                    class="relative hover:text-[#3E382D] transition
+                    {{ request()->is('pelanggan/bookings*') ? 'font-semibold text-[#3E382D]' : '' }}">
 
-                        Riwayat Booking
+                    Riwayat Pemesanan
 
-                        @if(request()->is('pelanggan/bookings*'))
-                            <span class="
-                                absolute left-0 -bottom-1
-                                w-full h-[2px]
-                                bg-[#3E382D]
-                                rounded
-                            "></span>
-                        @endif
+                    @if(request()->is('pelanggan/bookings*'))
+                        <span class="
+                            absolute left-0 -bottom-1
+                            w-full h-[2px]
+                            bg-[#3E382D]
+                            rounded
+                        "></span>
+                    @endif
 
-                    </a>
-                @endif
+                </a>
             @endauth
 
 
@@ -219,6 +217,29 @@
                     "
                 >
 
+                    {{-- DASHBOARD LINK — hanya untuk non-pelanggan --}}
+                    @if(in_array(auth()->user()->role, ['owner', 'admin', 'pegawai']))
+                        @php
+                            $dashboardRoute = match(auth()->user()->role) {
+                                'owner'   => '/dashboard',
+                                'admin'   => '/admin/dashboard',
+                                'pegawai' => '/pegawai/dashboard',
+                            };
+                        @endphp
+
+                        <a href="{{ $dashboardRoute }}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#FFF4F4] text-sm text-[#3E382D] transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                            </svg>
+                            Beranda
+                        </a>
+
+                        <div class="h-px bg-[#F1DFDF] my-1"></div>
+                    @endif
+
                     {{-- PROFILE --}}
                     <a
                         href="{{ route('profile') }}"
@@ -250,7 +271,7 @@
 
                         </svg>
 
-                        Edit Profile
+                        Kelola Profil
 
                     </a>
 
@@ -286,7 +307,7 @@
 
                         </svg>
 
-                        Change Password
+                        Ganti Kata Sandi
 
                     </a>
 
@@ -294,12 +315,15 @@
 
 
                 {{-- LOGOUT --}}
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
+                <div
+                    x-data="{ logoutOpen:false }"
+                    class="relative"
+                >
 
+                    {{-- BUTTON --}}
                     <button
-                        type="submit"
-
+                        type="button"
+                        @click="logoutOpen = !logoutOpen"
                         class="
                             group relative
                             flex items-center justify-center
@@ -332,29 +356,123 @@
 
                     </button>
 
-                </form>
+
+                    {{-- MINI CONFIRM --}}
+                    <div
+                        x-show="logoutOpen"
+                        x-transition
+                        x-cloak
+                        @click.outside="logoutOpen = false"
+
+                        class="
+                            absolute right-0 top-12
+                            w-44
+                            bg-white
+                            border border-[#F1DFDF]
+                            rounded-2xl
+                            shadow-xl
+                            p-3
+                            z-[999]
+                        "
+                    >
+
+                        <p class="
+                            text-xs
+                            text-[#3E382D]
+                            mb-3
+                        ">
+                            Keluar dari akun?
+                        </p>
+
+                        <div class="flex justify-end gap-2">
+
+                            {{-- CANCEL --}}
+                            <button
+                                type="button"
+                                @click="logoutOpen = false"
+
+                                class="
+                                    px-3 py-1.5
+                                    rounded-lg
+                                    text-xs
+                                    bg-gray-100
+                                    hover:bg-gray-200
+                                    transition
+                                "
+                            >
+                                Batal
+                            </button>
+
+
+                            {{-- CONFIRM --}}
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+
+                                <button
+                                    type="submit"
+
+                                    class="
+                                        px-3 py-1.5
+                                        rounded-lg
+                                        text-xs
+                                        bg-red-500
+                                        hover:bg-red-600
+                                        text-white
+                                        transition
+                                    "
+                                >
+                                    Keluar
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 
             @else
+            
+    {{-- GUEST: Login + Register Buttons --}}
+    <div class="flex items-center gap-3">
+        
+        {{-- REGISTER BUTTON --}}
+        <a href="{{ route('register') }}"
+           class="
+               px-5 py-2
+               rounded-full
+               text-sm
+               font-medium
+               text-[#3E382D]
+               border-2 border-[#3E382D]
+               hover:bg-[#3E382D]
+               hover:text-white
+               transition-all duration-200
+           ">
+            Daftar
+        </a>
 
-            {{-- LOGIN --}}
-            <a href="/login"
-                class="
-                    bg-[#3E382D]
-                    text-white
-                    px-5 py-2
-                    rounded-full
-                    text-sm
-                    hover:opacity-90
-                    transition
-                ">
-
-                Log In
-
-            </a>
-
-            @endauth
+        {{-- LOGIN BUTTON --}}
+        <a href="{{ route('login') }}"
+           class="
+               bg-[#3E382D]
+               text-white
+               px-5 py-2
+               rounded-full
+               text-sm
+               font-medium
+               hover:opacity-90
+               hover:shadow-lg
+               transition-all duration-200
+           ">
+            Masuk
+        </a>
+        
+    </div>
+@endauth
 
         </div>
 
