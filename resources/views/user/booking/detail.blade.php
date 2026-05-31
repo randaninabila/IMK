@@ -66,7 +66,9 @@
 
                 {{-- LAYANAN --}}
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">Layanan</h3>
+                    <h3 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                        {{ isset($isPaketBooking) && $isPaketBooking ? 'Layanan dalam Paket' : 'Layanan' }}
+                    </h3>
                     <div class="space-y-3">
                         @foreach($layananList as $item)
                             <div class="flex items-start justify-between gap-4 p-4 bg-pink-50 rounded-2xl">
@@ -82,14 +84,11 @@
                                     @endif
                                     <div>
                                         <p class="font-semibold text-[#3E382D]">{{ $item->nama_layanan }}</p>
-                                        <p class="text-xs text-gray-500 mt-0.5">{{ $item->durasi }} menit · {{ $item->kategori_pelanggan }}</p>
-                                        @if($item->harga_promo > 0)
+                                        <p class="text-xs text-gray-500 mt-0.5">{{ $item->durasi }} menit</p>
+                                        @if(isset($item->harga_promo) && $item->harga_promo > 0)
                                             <p class="text-xs text-rose-500 font-semibold mt-1">
-                                                Promo: Rp {{ number_format($item->harga_promo, 0, ',', '.') }}
-                                                <span class="text-gray-400 line-through font-normal ml-1">Rp {{ number_format($item->harga, 0, ',', '.') }}</span>
+                                                Rp {{ number_format($item->harga_promo, 0, ',', '.') }}
                                             </p>
-                                        @else
-                                            <p class="text-xs text-gray-500 mt-1">Rp {{ number_format($item->harga, 0, ',', '.') }}</p>
                                         @endif
                                     </div>
                                 </div>
@@ -111,6 +110,7 @@
                             {{ \Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMMM Y') }}
                         </p>
                     </div>
+                    
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <div class="flex items-center gap-2 text-gray-400 mb-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,8 +118,11 @@
                             </svg>
                             <span class="text-xs uppercase">Jam</span>
                         </div>
-                        <p class="font-semibold text-[#3E382D]">{{ substr($booking->jam_booking, 0, 5) }} WIB</p>
+                        <p class="font-semibold text-[#3E382D]">
+                            {{ substr($booking->jam_booking, 0, 5) }} WIB
+                        </p>
                     </div>
+                    
                     <div class="md:col-span-2 bg-pink-50 rounded-2xl p-4">
                         <div class="flex items-start gap-2 text-gray-400 mb-1">
                             <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,8 +130,15 @@
                             </svg>
                             <span class="text-xs uppercase">Lokasi</span>
                         </div>
-                        <p class="font-semibold text-[#3E382D]">{{ $layananList->first()->nama_cabang ?? '-' }}</p>
-                        <p class="text-sm text-gray-500">{{ $layananList->first()->alamat ?? '-' }}</p>
+                        @php
+                            $firstLayanan = $layananList->first();
+                        @endphp
+                        @if($firstLayanan && $firstLayanan->nama_cabang)
+                            <p class="font-semibold text-[#3E382D]">{{ $firstLayanan->nama_cabang }}</p>
+                            <p class="text-sm text-gray-500">{{ $firstLayanan->alamat ?? '-' }}</p>
+                        @else
+                            <p class="text-sm text-gray-400 italic">Lokasi tidak tersedia</p>
+                        @endif
                     </div>
                 </div>
 

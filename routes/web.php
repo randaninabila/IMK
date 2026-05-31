@@ -2,12 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
-use App\Models\Album;
 
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Hash;
@@ -26,7 +22,7 @@ use App\Http\Controllers\User\LayananDetailController;
 use App\Http\Controllers\User\ProfileController;
 use App\Http\Controllers\User\BookingController;
 use App\Http\Controllers\User\PaymentController;
-use App\Http\Controllers\User\HomeController; 
+use App\Http\Controllers\User\HomeController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -38,70 +34,45 @@ use App\Http\Controllers\ForgotPasswordController;
 
 
 // =====================
-// PUBLIC / USER
+// PUBLIC
 // =====================
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::middleware('guest')->group(function () {
-    Route::get('/login', function () {
-        return view('auth.login');
-    })->name('login');
-
-    Route::get('/register', function () {
-        return view('auth.register');
-    })->name('register');
+    Route::get('/login', fn() => view('auth.login'))->name('login');
+    Route::get('/register', fn() => view('auth.register'))->name('register');
 });
 
-// STEP 1 — Forgot password form + send OTP
-Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])
-    ->name('password.request');
- 
-Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])
-    ->name('password.send-otp');
- 
-// STEP 2 — OTP verification form + verify + resend
-Route::get('/verify-otp', [ForgotPasswordController::class, 'showOtpForm'])
-    ->name('password.otp');
- 
-Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])
-    ->name('password.verify-otp');
- 
-Route::post('/resend-otp', [ForgotPasswordController::class, 'resendOtp'])
-    ->name('password.resend-otp');
- 
-// STEP 3 — New password form + update
-Route::get('/reset-password', [ForgotPasswordController::class, 'showNewPasswordForm'])
-    ->name('password.reset.form');
- 
-Route::post('/reset-password', [ForgotPasswordController::class, 'updatePassword'])
-    ->name('password.update');
+// Forgot Password
+Route::get('/forgot-password', [ForgotPasswordController::class, 'showForgotForm'])->name('password.request');
+Route::post('/forgot-password', [ForgotPasswordController::class, 'sendOtp'])->name('password.send-otp');
+Route::get('/verify-otp', [ForgotPasswordController::class, 'showOtpForm'])->name('password.otp');
+Route::post('/verify-otp', [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify-otp');
+Route::post('/resend-otp', [ForgotPasswordController::class, 'resendOtp'])->name('password.resend-otp');
+Route::get('/reset-password', [ForgotPasswordController::class, 'showNewPasswordForm'])->name('password.reset.form');
+Route::post('/reset-password', [ForgotPasswordController::class, 'updatePassword'])->name('password.update');
 
-// Service list
+// Service (publik — boleh dilihat tanpa login)
 Route::get('/service', [ServiceDetailController::class, 'index']);
-
 Route::get('/service/{jenis_layanan_id}', [ServiceDetailController::class, 'show'])
     ->name('service.detail')
     ->whereNumber('jenis_layanan_id');
-
-Route::get('/specialist', [SpecialistController::class, 'index']);
-
+Route::get('/service/{jenis_layanan_id}/paket/{paket_id}', [ServiceDetailController::class, 'showPaketDetail'])
+    ->name('service.paket.detail')
+    ->whereNumber(['jenis_layanan_id', 'paket_id']);
 Route::get('/service/layanan/{layanan_id}', [LayananDetailController::class, 'show'])
     ->name('service.layanan');
 
-Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
-    ->name('specialist.show')
-    ->whereNumber('pegawai_id');
-
-// =====================
-// GALLERY
-// =====================
+// Gallery
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery.index');
 Route::get('/gallery/{slug}', [GalleryController::class, 'show'])->name('gallery.detail');
 
-// =====================
-// SPECIALIST DETAIL
-// =====================
+// Specialist
+Route::get('/specialist', [SpecialistController::class, 'index']);
+Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
+    ->name('specialist.show')
+    ->whereNumber('pegawai_id');
 Route::get('/specialist/{slug}', function ($slug) {
     $specialists = [
         'aisyah-rahmawati' => [
@@ -123,6 +94,7 @@ Route::get('/specialist/{slug}', function ($slug) {
     return view('user.specialist.spdetail', compact('specialist'));
 })->name('specialist.detail');
 
+
 // =====================
 // AUTH
 // =====================
@@ -130,9 +102,6 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
-// =====================
-// QUICK VERIFY DEV
-// =====================
 Route::post('/fake-verify-email', function () {
     $user = auth()->user();
     $user->email_verified_at = now();
@@ -147,26 +116,17 @@ Route::get('/logout-test', function () {
     return redirect('/login');
 });
 
+
 // =====================
 // EMAIL VERIFICATION
 // =====================
 Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', function () {
-        return view('auth.verify-email');
-    })->name('verification.notice');
-
-
-    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])
-        ->middleware('auth')
-        ->name('verification.notice');
-
-    Route::get('/verify-email/{otp}', [AuthController::class, 'verifyEmail'])
-        ->name('verification.verify');
-
-    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
-        ->middleware('auth')
-        ->name('verification.resend');
+    Route::get('/email/verify', fn() => view('auth.verify-email'))->name('verification.notice');
+    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])->name('verification.notice');
+    Route::get('/verify-email/{otp}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->name('verification.resend');
 });
+
 
 // =====================
 // OWNER
@@ -190,6 +150,7 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::get('/customers', [CustomerController::class, 'index'])->name('owner.customer');
 });
 
+
 // =====================
 // ADMIN
 // =====================
@@ -197,10 +158,9 @@ Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        Route::get('/dashboard', function () {
-            return view('admin.dashboard');
-        })->name('dashboard');
+        Route::get('/dashboard', fn() => view('admin.dashboard'))->name('dashboard');
     });
+
 
 // =====================
 // PEGAWAI
@@ -209,87 +169,59 @@ Route::middleware(['auth', 'role:pegawai'])
     ->prefix('pegawai')
     ->name('pegawai.')
     ->group(function () {
+        Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/history', [PBookingController::class, 'history'])->name('history');
+        Route::get('/booking', [PBookingController::class, 'index'])->name('booking');
+        Route::post('/booking/{booking_id}/update-status', [PBookingController::class, 'updateStatus'])->name('booking.updateStatus');
 
-        // Dashboard
-        Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
-            ->name('dashboard');
-
-        Route::get('/pegawai/history', [PBookingController::class, 'history'])
-        ->name('history');
-
-        Route::get('/notifikasi', [NotifikasiController::class, 'index'])
-        ->name('notifikasi');
-    
-        Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])
-        ->name('notifikasi.dibaca');
-    
+        Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi');
+        Route::put('/notifikasi/{id}/dibaca', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.dibaca');
         Route::post('/notifikasi/{id}/dismiss', [NotifikasiController::class, 'dismiss'])->name('notifikasi.dismiss');
-    
-        Route::get('/notifikasi/{id}/dibaca', function () {
-            return redirect()->route('pegawai.notifikasi');
-        });
+        Route::get('/notifikasi/{id}/dibaca', fn() => redirect()->route('pegawai.notifikasi'));
 
-    
         Route::get('/profile', [PProfileController::class, 'index'])->name('profile');
         Route::put('/profile/update', [PProfileController::class, 'update'])->name('profile.update');
         Route::put('/profile/password-update', [PProfileController::class, 'updatePassword'])->name('profile.password');
 
-        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])
-        ->name('jadwal-kerja');
-    
-        Route::get('/pegawai/booking', [PBookingController::class, 'index'])
-        ->name('booking');
-        Route::post('/booking/{booking_id}/update-status', [PBookingController::class, 'updateStatus'
-        ])->name('booking.updateStatus');
+        Route::get('/jadwal', [JadwalPegawaiController::class, 'index'])->name('jadwal-kerja');
     });
 
-
-        // routes/web.php
-// Ganti Route::post menjadi Route::match agar terima POST & PATCH
 Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
     PBookingController::class, 'updateStatus'
 ])->name('booking.updateStatus');
-    
+
 
 // =====================
-// PELANGGAN
+// PELANGGAN (+ owner/pegawai/admin boleh akses)
 // =====================
 Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
 
-        Route::get('/profile', function () {
-            return view('pelanggan.profile');
-        })->name('profile');
+        Route::get('/profile', fn() => view('pelanggan.profile'))->name('profile');
 
+        Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
+                    ->name('booking.paket')
+                    ->whereNumber(['paket_id', 'cabang_id']);
+
+        // Booking single layanan
         Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
             ->name('booking.create');
 
         Route::post('/booking/store', [BookingController::class, 'store'])
             ->name('booking.store');
 
-        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
-            ->name('payment.show');
-        
-        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
-            ->name('payment.process');
-        
-        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
-            ->name('payment.success');
+        Route::get('/bookings', [BookingController::class, 'history'])->name('bookings');
+        Route::get('/booking/{booking_id}', [BookingController::class, 'show'])->name('booking.show');
+        Route::get('/booking/{booking_id}/reschedule', [BookingController::class, 'showReschedule'])->name('booking.reschedule');
+        Route::post('/booking/{booking_id}/reschedule', [BookingController::class, 'processReschedule'])->name('booking.reschedule.process');
 
-        Route::get('/bookings', [App\Http\Controllers\User\BookingController::class, 'history'])
-            ->name('bookings');
-            
-        Route::get('/booking/{booking_id}', [App\Http\Controllers\User\BookingController::class, 'show'])
-            ->name('booking.show');
-        
-        Route::get('/booking/{booking_id}/reschedule', [App\Http\Controllers\User\BookingController::class, 'showReschedule'])
-            ->name('booking.reschedule');
-        
-        Route::post('/booking/{booking_id}/reschedule', [App\Http\Controllers\User\BookingController::class, 'processReschedule'])
-            ->name('booking.reschedule.process');
-        });
+        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])->name('payment.show');
+        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])->name('payment.process');
+        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])->name('payment.success');
+    });
+
 
 // =====================
 // PROFILE
@@ -297,4 +229,3 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
 Route::get('/profile', [ProfileController::class, 'index'])->name('profile');
 Route::put('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
-

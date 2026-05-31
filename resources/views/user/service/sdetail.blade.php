@@ -152,9 +152,12 @@
             <div class="border border-gray-200 bg-[#fff8f8] p-6 rounded-2xl shadow-sm hover:shadow-md transition">
                 <h3 class="font-bold text-base text-[#3E382D] mb-2">{{ $paket->nama_paket }}</h3>
                 <p class="text-xs text-gray-500 italic mb-4">{{ $paket->deskripsi ?? '-' }}</p>
-                <a href="#"
-                   class="block text-center bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
-                    Pilih Paket
+                <a href="{{ route('service.paket.detail', [
+                        'jenis_layanan_id' => $jenisLayanan->jenis_layanan_id, 
+                        'paket_id' => $paket->paket_id
+                    ]) }}"
+                class="block text-center bg-rose-200 text-rose-800 text-xs font-bold px-4 py-2 rounded-lg hover:bg-rose-300 transition">
+                    Lihat Rincian Paket
                 </a>
             </div>
             @endforeach

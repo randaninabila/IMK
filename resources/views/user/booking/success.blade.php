@@ -115,36 +115,68 @@
                     <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                 </div>
                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold 
-                    {{ $booking->status === 'Dikonfirmasi' ? 'bg-green-400 text-white' : 'bg-white/30 text-white' }}">
+                    {{ $booking->status === 'confirmed' ? 'bg-green-400 text-white' : 'bg-white/30 text-white' }}">
                     {{ strtoupper($booking->status) }}
                 </span>
             </div>
 
             <div class="p-6 space-y-5">
-                @foreach($layananList as $item)
-                    <div class="flex items-start justify-between gap-4 pb-4 border-b border-pink-50 last:border-0 last:pb-0">
-                        <div>
-                            <p class="font-semibold text-[#3E382D]">{{ $item->nama_layanan }}</p>
-                            <p class="text-xs text-gray-400">{{ $item->nama_cabang }} · {{ $item->durasi }} menit</p>
-                            <p class="text-xs text-gray-400 mt-0.5">{{ $item->alamat }}</p>
-                        </div>
-                        <p class="font-bold text-rose-400 whitespace-nowrap">Rp {{ number_format($item->harga_promo > 0 ? $item->harga_promo : $item->harga, 0, ',', '.') }}</p>
+                
+                {{-- List Layanan --}}
+                <div>
+                    <p class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-3">
+                        {{ $layananList->count() > 1 ? 'Layanan dalam Paket' : 'Layanan' }}
+                    </p>
+                    <div class="space-y-3">
+                        @foreach($layananList as $item)
+                            <div class="flex items-start justify-between gap-4 pb-3 border-b border-pink-50 last:border-0 last:pb-0">
+                                <div class="flex-1">
+                                    <p class="font-semibold text-[#3E382D]">{{ $item->nama_layanan }}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">
+                                        {{ $item->durasi }} menit
+                                    </p>
+                                </div>
+                                {{-- ✅ HANYA tampilkan harga jika single layanan (bukan paket) --}}
+                                @if($layananList->count() === 1)
+                                    <p class="font-bold text-rose-400 whitespace-nowrap">
+                                        Rp {{ number_format($item->harga_promo > 0 ? $item->harga_promo : $item->harga, 0, ',', '.') }}
+                                    </p>
+                                @endif
+                            </div>
+                        @endforeach
                     </div>
-                @endforeach
+                </div>
 
-                {{-- Info jadwal --}}
+                {{-- Info jadwal & lokasi --}}
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Tanggal</p>
-                        <p class="font-semibold text-[#3E382D]">{{ \Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMM Y') }}</p>
+                        <p class="font-semibold text-[#3E382D]">
+                            {{ \Carbon\Carbon::parse($booking->tanggal_booking)->isoFormat('dddd, D MMM Y') }}
+                        </p>
                     </div>
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Jam</p>
-                        <p class="font-semibold text-[#3E382D]">{{ substr($booking->jam_booking, 0, 5) }} WIB</p>
+                        <p class="font-semibold text-[#3E382D]">
+                            {{ substr($booking->jam_booking, 0, 5) }} WIB
+                        </p>
                     </div>
+                    @if($layananList->first()?->alamat)
+                    <div class="col-span-2 bg-pink-50 rounded-2xl p-4">
+                        <p class="text-gray-400 text-xs mb-1">Lokasi</p>
+                        <p class="font-semibold text-[#3E382D]">
+                            {{ $layananList->first()->nama_cabang }}
+                        </p>
+                        <p class="text-xs text-gray-500 mt-0.5">
+                            {{ $layananList->first()->alamat }}
+                        </p>
+                    </div>
+                    @endif
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Metode Bayar</p>
-                        <p class="font-semibold text-[#3E382D]">{{ $pembayaran ? strtoupper($pembayaran->metode_pembayaran) : '-' }}</p>
+                        <p class="font-semibold text-[#3E382D]">
+                            {{ $pembayaran ? strtoupper($pembayaran->metode_pembayaran) : '-' }}
+                        </p>
                     </div>
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Status Bayar</p>
@@ -157,11 +189,23 @@
                     </div>
                 </div>
 
-                {{-- Total --}}
-                <div class="flex items-center justify-between pt-4 border-t border-pink-100">
-                    <p class="font-bold text-[#3E382D]">Total</p>
-                    <p class="text-2xl font-bold text-rose-400">Rp {{ number_format($total, 0, ',', '.') }}</p>
+                {{-- TOTAL PAKET / LAYANAN --}}
+                <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-5 border border-rose-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-gray-500">Total Pembayaran</p>
+                            @if($layananList->count() > 1)
+                                <p class="text-xs text-green-600 font-medium mt-0.5">
+                                    ✅ Hemat dengan paket combo!
+                                </p>
+                            @endif
+                        </div>
+                        <p class="text-2xl font-bold text-rose-500">
+                            Rp {{ number_format($total, 0, ',', '.') }}
+                        </p>
+                    </div>
                 </div>
+
             </div>
         </div>
 
