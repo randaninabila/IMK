@@ -27,8 +27,6 @@ class User extends Authenticatable
         'foto_profile',
         'role',
         'status_akun',
-        'reset_token',
-        'reset_token_expires_at',
     ];
 
     protected $hidden = [

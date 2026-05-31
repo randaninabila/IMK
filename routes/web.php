@@ -101,13 +101,7 @@ Route::get('/specialist/{slug}', function ($slug) {
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
-
-Route::post('/fake-verify-email', function () {
-    $user = auth()->user();
-    $user->email_verified_at = now();
-    $user->save();
-    return redirect()->intended('/');
-})->middleware('auth');
+Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
 
 Route::get('/logout-test', function () {
     Auth::logout();
@@ -121,9 +115,7 @@ Route::get('/logout-test', function () {
 // EMAIL VERIFICATION
 // =====================
 Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', fn() => view('auth.verify-email'))->name('verification.notice');
-    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])->name('verification.notice');
-    Route::get('/verify-email/{otp}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
+    Route::get('/email/verify', [AuthController::class, 'verifyEmailNotice'])->name('verification.notice');
     Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->name('verification.resend');
 });
 
