@@ -84,18 +84,25 @@ class PegawaiDashboardController extends Controller
     $bulanBerikutnya  = $carbonBulan->copy()->addMonth();
     $bulanSebelumnya  = $carbonBulan->copy()->subMonth();
 
-    // Ongoing: status 'ongoing' = sedang berjalan (setelah tekan mulai servis)
-    $ongoing = Booking::where('pegawai_id', $pegawaiId)
+    // in_progress: status 'in_progress' = sedang berjalan (setelah tekan mulai servis)
+    $in_progress = Booking::with([
+        'details.layananCabang.layanan',
+        'details.paketCabang.paketLayanan',
+        'details.paketCabang.details.layanan',
+        'pelanggan.user',
+    ])
+    ->where('pegawai_id', $pegawaiId)
     ->whereDate('tanggal_booking', $today)
-    ->where('status', 'ongoing')
+    ->where('status', 'in_progress')
     ->orderBy('jam_booking')
     ->first();
-    
 
     // Upcoming: confirmed = telah ditugaskan, masuk jadwal pegawai, belum mulai
     $upcoming = Booking::with([
             'details.layananCabang.layanan.jenisLayanan',
             'pelanggan.user',
+            'details.paketCabang.paketLayanan',
+'details.paketCabang.details.layanan',
         ])
         ->where('pegawai_id', $pegawaiId)
         ->where('status', 'confirmed')
@@ -113,7 +120,7 @@ class PegawaiDashboardController extends Controller
                             ->where('status', 'completed')->count();
         $totalBerjalan  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
-                            ->where('status', 'ongoing')->count();
+                            ->where('status', 'in_progress')->count();
         $totalMenunggu  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
                             ->where('status', 'confirmed')->count();
@@ -178,7 +185,7 @@ $jadwalText = $jadwalBerikutnya
             'bulanBerikutnya' => $bulanBerikutnya->month,
             'tahunBerikutnya' => $bulanBerikutnya->year,
             // booking
-            'ongoing'         => $ongoing,
+            'in_progress'         => $in_progress,
             'upcoming'        => $upcoming,
             // summary
             'totalBooking'    => $totalBooking,

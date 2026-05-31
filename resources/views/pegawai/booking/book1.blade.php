@@ -10,13 +10,13 @@
         <p class="mt-2 text-[16px]">Lihat informasi lengkap dari pesanan yang masuk</p>
     </div>
 
-    {{-- ONGOING --}}
+    {{-- in_progress --}}
     <div class="mb-7">
 
         <h2 class="text-[18px] font-bold mb-2">Sedang Berlangsung</h2>
 
-        @if ($ongoing)
-            @include('pegawai.partial.booking-card', ['booking' => $ongoing, 'isOngoing' => true])
+        @if ($in_progress)
+            @include('pegawai.partial.booking-card', ['booking' => $in_progress, 'isin_progress' => true])
         @else
             <div class="bg-white border-[3px] border-[#EAB7BF] rounded-[30px] px-8 py-10 text-center text-[#C4AAAA] text-[16px]">
                 Tidak ada booking yang sedang berjalan.
@@ -31,7 +31,7 @@
         <h2 class="text-[18px] font-bold mb-2">Pesanan Yang Akan Datang</h2>
 
         @forelse ($upcoming as $booking)
-            @include('pegawai.partial.booking-card', ['booking' => $booking, 'isOngoing' => false])
+            @include('pegawai.partial.booking-card', ['booking' => $booking, 'isin_progress' => false])
         @empty
             <div class="bg-white border-[3px] border-[#EAB7BF] rounded-[30px] px-8 py-10 text-center text-[#C4AAAA] text-[16px]">
                 Tidak ada upcoming booking hari ini.

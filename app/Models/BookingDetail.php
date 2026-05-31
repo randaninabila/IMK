@@ -26,4 +26,10 @@ class BookingDetail extends Model
     {
         return $this->belongsTo(LayananCabang::class, 'layanan_cabang_id');
     }
+
+public function paketCabang()
+{
+    return $this->belongsTo(PaketCabang::class, 'paket_cabang_id', 'paket_id');
+}
+
 }

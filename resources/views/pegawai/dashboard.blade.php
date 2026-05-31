@@ -135,14 +135,17 @@
 {{-- RIGHT SIDE --}}
 <div class="w-[360px] pt-17">
 
-    {{-- ONGOING --}}
+    {{-- in_progress --}}
     <div>
         <h3 class="text-[#3E382D] text-[18px] font-bold mb-3">Sedang Berlangsung</h3>
 
-        @if ($ongoing)
+        @if ($in_progress)
         @php
-            $jamMulai    = \Carbon\Carbon::parse($ongoing->tanggal_booking . ' ' . $ongoing->jam_booking);
-            $totalDurasi = $ongoing->details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
+            $jamMulai    = \Carbon\Carbon::parse($in_progress->tanggal_booking . ' ' . $in_progress->jam_booking);
+$totalDurasi = $in_progress->details->sum(fn($d) => $d->layanan_cabang_id
+    ? ($d->layananCabang?->layanan?->durasi ?? 0)
+    : ($d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0)
+);
             $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
         @endphp
 
@@ -151,32 +154,32 @@
                 {{-- DATE BUBBLE --}}
                 <div class="w-18 h-18 rounded-full bg-[#F3B5B5] flex flex-col items-center justify-center shrink-0">
                     <span class="text-[15px] font-semibold text-[#3B302D] leading-none">
-                        {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->format('d') }}
+                        {{ \Carbon\Carbon::parse($in_progress->tanggal_booking)->format('d') }}
                     </span>
                     <span class="text-[15px] text-[#3B302D]">
-                        {{ \Carbon\Carbon::parse($ongoing->tanggal_booking)->locale('id')->translatedFormat('M') }}
+                        {{ \Carbon\Carbon::parse($in_progress->tanggal_booking)->locale('id')->translatedFormat('M') }}
                     </span>
                 </div>
 
                 <div>
                     <p class="text-[#E8B1B6] text-sm font-bold mb-2">
-        No Pesanan : #{{ str_pad($ongoing->booking_id, 5, '0', STR_PAD_LEFT) }}
+        No Pesanan : #{{ str_pad($in_progress->booking_id, 5, '0', STR_PAD_LEFT) }}
     </p>
                     <h2 class="text-[17px] font-bold text-[#934A4A] leading-none">
                         {{ $jamMulai->format('H:i') }} – {{ $jamSelesai->format('H:i') }}
                     </h2>
                     <p class="text-[14px] text-[#B56B6B]">
-                        {{ $ongoing->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                        {{ $in_progress->details->first()?->layanan_cabang_id ? $in_progress->details->first()?->layananCabang?->layanan?->nama_layanan : $in_progress->details->first()?->paketCabang?->paketLayanan?->nama_paket ?? '-' }}
                     </p>
                     <p class="text-[14px] text-[#934A4A] mt-2 font-medium">
-                        {{ $ongoing->pelanggan?->user?->nama ?? '-' }}
+                        {{ $in_progress->pelanggan?->user?->nama ?? '-' }}
                     </p>
                 </div>
             </div>
 
             <div class="space-y-2 mt-6">
-                {{-- MARK AS DONE: ongoing → completed --}}
-                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $ongoing) }}">
+                {{-- MARK AS DONE: in_progress → completed --}}
+                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $in_progress) }}">
                     @csrf 
                     <input type="hidden" name="status" value="completed">
                     <button type="submit"
@@ -206,7 +209,11 @@
             @forelse ($upcoming as $booking)
             @php
                 $jamMulaiUp   = \Carbon\Carbon::parse($booking->tanggal_booking . ' ' . $booking->jam_booking);
-                $durasiUp     = $booking->details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
+                $durasiUp     = $booking->details->sum(function($d) {
+                    return $d->layanan_cabang_id
+                        ? ($d->layananCabang?->layanan?->durasi ?? 0)
+                        : ($d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0);
+                });
                 $jamSelesaiUp = $jamMulaiUp->copy()->addMinutes($durasiUp);
                 $bisaStartUp  = \Carbon\Carbon::now()->gte($jamMulaiUp);
             @endphp
@@ -232,7 +239,7 @@
                             {{ $jamMulaiUp->format('H:i') }} – {{ $jamSelesaiUp->format('H:i') }}
                         </h3>
                         <p class="text-[#B56B6B] text-[15px]">
-                            {{ $booking->details->first()?->layananCabang?->layanan?->nama_layanan ?? '-' }}
+                            {{ $booking->details->first()?->layanan_cabang_id ? $booking->details->first()?->layananCabang?->layanan?->nama_layanan : $booking->details->first()?->paketCabang?->paketLayanan?->nama_paket ?? '-' }}
                         </p>
                         <p class="text-[#3B302D] text-[16px] mt-2 font-medium">
                             {{ $booking->pelanggan?->user?->nama ?? '-' }}
@@ -240,10 +247,10 @@
                     </div>
                 </div>
 
-                {{-- START SERVICE: confirmed → ongoing --}}
+                {{-- START SERVICE: confirmed → in_progress --}}
                 <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
                     @csrf
-                    <input type="hidden" name="status" value="ongoing">
+                    <input type="hidden" name="status" value="in_progress">
                     
                     @if($bisaStartUp)
                         <button type="submit"

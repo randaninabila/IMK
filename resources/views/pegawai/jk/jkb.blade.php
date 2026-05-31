@@ -96,7 +96,9 @@
             $namaPelanggan = $booking->pelanggan->user->nama ?? '-';
 
             // ambil layanan pertama (kalau multi service)
-            $layanan = $booking->details?->first()?->layananCabang?->layanan?->nama_layanan ?? '-' 
+            $layanan = ($booking->details?->first()?->layanan_cabang_id
+    ? $booking->details?->first()?->layananCabang?->layanan?->nama_layanan
+    : $booking->details?->first()?->paketCabang?->paketLayanan?->nama_paket) ?? '-'
         @endphp
 
         <div class="mb-4">
@@ -181,7 +183,9 @@
     @php
         $booking_id = $booking->booking_id;
         $namaPelanggan = $booking->pelanggan->user->nama ?? '-';
-        $layanan = $booking->details?->first()?->layananCabang?->layanan?->nama_layanan ?? '-';
+        $layanan = ($booking->details?->first()?->layanan_cabang_id
+    ? $booking->details?->first()?->layananCabang?->layanan?->nama_layanan
+    : $booking->details?->first()?->paketCabang?->paketLayanan?->nama_paket) ?? '-'
     @endphp
 
     <div class="mb-4">

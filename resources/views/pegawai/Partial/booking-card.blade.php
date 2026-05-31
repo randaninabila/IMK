@@ -3,7 +3,14 @@
     $user       = $pelanggan?->user;
     $details    = $booking->details;
 
-    $totalDurasi = $details->sum(fn($d) => $d->layananCabang?->layanan?->durasi ?? 0);
+$totalDurasi = $details->sum(function($d) {
+    if ($d->layanan_cabang_id) {
+        return $d->layananCabang?->layanan?->durasi ?? 0;
+    } else {
+        // Paket: sum durasi semua layanan dalam paket
+        return $d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0;
+    }
+});
     $jamMulai    = \Carbon\Carbon::parse($booking->jam_booking);
     $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
 
@@ -11,7 +18,7 @@
     $statusLabel = match($booking->status) {
         'pending'    => 'Menunggu',
         'confirmed'  => 'Terjadwal',
-        'ongoing'    => 'Sedang Berjalan',
+        'in_progress'    => 'Sedang Berjalan',
         'completed'  => 'Selesai',
         'cancelled'  => 'Dibatalkan',
         default      => ucfirst($booking->status),
@@ -20,7 +27,7 @@
     $statusColor = match($booking->status) {
         'pending'    => 'bg-[#FDE68A] text-[#92400E]',
         'confirmed'  => 'bg-[#E8B1B6] text-[#3E382D]',
-        'ongoing'    => 'bg-[#A8D5A2] text-[#2D6A27]',
+        'in_progress'    => 'bg-[#A8D5A2] text-[#2D6A27]',
         'completed'  => 'bg-[#B5D5F5] text-[#1D4E89]',
         'cancelled'  => 'bg-[#F5C6CB] text-[#7B2D32]',
         default      => 'bg-[#E8E1E1] text-[#3B302D]',
@@ -63,15 +70,23 @@
 
 
             {{-- Daftar Layanan --}}
-            @foreach ($details as $detail)
-            @php
-                $layanan      = $detail->layananCabang?->layanan;
-                $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis ?? 'Layanan';
-            @endphp
-            <p class="text-[14px]">
-                ● {{ $layanan?->nama_layanan ?? '-' }} | {{ $jenisLayanan }}
-            </p>
-            @endforeach
+@foreach ($details as $detail)
+@php
+    if ($detail->layanan_cabang_id) {
+        $layanan      = $detail->layananCabang?->layanan;
+        $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis ?? 'Layanan';
+        $namaLayanan  = $layanan?->nama_layanan ?? '-';
+    } else {
+        // Booking paket
+        $paketCabang  = $detail->paketCabang;
+        $namaLayanan  = $paketCabang?->paketLayanan?->nama_paket ?? 'Paket';
+        $jenisLayanan = 'Paket Layanan';
+    }
+@endphp
+<p class="text-[14px]">
+    ● {{ $namaLayanan }} | {{ $jenisLayanan }}
+</p>
+@endforeach
 
             {{-- Waktu --}}
             <h4 class="text-[17px] font-semibold mt-2 mb-4">
@@ -91,10 +106,10 @@
 
                 @if($booking->status === 'confirmed')
 
-                    {{-- START SERVICE: confirmed → ongoing --}}
+                    {{-- START SERVICE: confirmed → in_progress --}}
                     <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
                         @csrf
-                        <input type="hidden" name="status" value="ongoing">
+                        <input type="hidden" name="status" value="in_progress">
                         
                         @if($bisaStart)
                             <button type="submit"
@@ -131,9 +146,9 @@
                         </button>
                     </form>
 
-                @elseif($booking->status === 'ongoing')
+                @elseif($booking->status === 'in_progress')
 
-                    {{-- SELESAI: ongoing → completed --}}
+                    {{-- SELESAI: in_progress → completed --}}
                     <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
                         @csrf 
                         <input type="hidden" name="status" value="completed">
