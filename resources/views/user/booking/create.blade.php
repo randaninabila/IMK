@@ -273,107 +273,119 @@
 </div>
 </div>
 
-{{-- JAVASCRIPT --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const tanggalInput = document.getElementById('tanggalInput');
-        const jamSelect = document.getElementById('jamSelect');
-        const tanggalHint = document.getElementById('tanggalHint');
-        const submitBtn = document.getElementById('submitBtn');
-        const submitLabel = document.getElementById('submitLabel');
+document.addEventListener('DOMContentLoaded', function() {
+    const tanggalInput = document.getElementById('tanggalInput');
+    const jamSelect = document.getElementById('jamSelect');
+    const tanggalHint = document.getElementById('tanggalHint');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitLabel = document.getElementById('submitLabel');
 
-        const jamOperasional = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+    const jamOperasional = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
 
-        // ✅ AWAL: Disable jam select sampai tanggal dipilih
-        jamSelect.disabled = true;
-        jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih tanggal terlebih dahulu --</option>';
+    // 🔹 1. CEK WEEKEND - Jika Sabtu/Minggu, disable form
+    const todayDate = new Date();
+    const dayOfWeek = todayDate.getDay(); // 0 = Minggu, 6 = Sabtu
+    
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+        // Disable semua input kecuali hidden
+        document.getElementById('bookingForm').querySelectorAll('input:not([type="hidden"]), select, button').forEach(el => {
+            el.disabled = true;
+        });
+        
+        // Tampilkan pesan
+        alert('⚠️ Booking online tidak tersedia pada hari Sabtu dan Minggu.\n\nSilakan coba lagi pada hari Senin-Jumat atau hubungi WhatsApp kami untuk booking offline.');
+        
+        // Optional: redirect atau tampilkan banner
+        return; // ⚠️ STOP di sini, jangan jalankan kode lain
+    }
 
-        function updateJamOptions() {
-            const selectedDate = tanggalInput.value;
-            
-            // ✅ Jika tanggal belum dipilih, reset & disable jam
-            if (!selectedDate) {
-                jamSelect.disabled = true;
-                jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih tanggal terlebih dahulu --</option>';
-                if (tanggalHint) tanggalHint.classList.add('hidden');
-                return;
-            }
+    // 🔹 2. LOGIC NORMAL (Senin-Jumat) - Jalankan hanya jika bukan weekend
+    jamSelect.disabled = true;
+    jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih tanggal terlebih dahulu --</option>';
 
-            // ✅ Enable jam select jika tanggal sudah dipilih
-            jamSelect.disabled = false;
-            
-            const today = new Date().toISOString().split('T')[0];
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-            const oldJam = @json(old('jam') ?? '');
-
-            jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih jam --</option>';
-
-            jamOperasional.forEach(jam => {
-                const jamValue = jam + ':00';
-                const isToday = selectedDate === today;
-                const isPast = isToday && jam <= currentTime;
-
-                const option = document.createElement('option');
-                option.value = jamValue;
-                option.textContent = jam + ' WIB' + (isPast ? ' (Sudah lewat)' : '');
-
-                if (isPast) {
-                    option.disabled = true;
-                    option.classList.add('text-gray-300');
-                }
-
-                if (oldJam === jamValue && !isPast) {
-                    option.selected = true;
-                }
-
-                jamSelect.appendChild(option);
-            });
-
-            // Tampilkan hint jika hari ini
-            if (selectedDate === today && tanggalHint) {
-                tanggalHint.classList.remove('hidden');
-            } else if (tanggalHint) {
-                tanggalHint.classList.add('hidden');
-            }
+    function updateJamOptions() {
+        const selectedDate = tanggalInput.value;
+        
+        if (!selectedDate) {
+            jamSelect.disabled = true;
+            jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih tanggal terlebih dahulu --</option>';
+            if (tanggalHint) tanggalHint.classList.add('hidden');
+            return;
         }
 
-        // ✅ Event listener: update jam saat tanggal berubah
-        tanggalInput.addEventListener('change', function() {
-            updateJamOptions();
-        });
+        jamSelect.disabled = false;
+        
+        const todayString = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        const oldJam = @json(old('jam') ?? '');
 
-        // ✅ Inisialisasi: jika ada old date (misal setelah validasi gagal), enable jam
-        if (tanggalInput.value) {
-            updateJamOptions();
-        }
+        jamSelect.innerHTML = '<option value="" disabled selected>-- Pilih jam --</option>';
 
-        // ✅ Form submit handling
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
-            const selectedJam = jamSelect.value;
-            const selectedDate = tanggalInput.value;
-            const today = new Date().toISOString().split('T')[0];
-            const now = new Date();
-            const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+        jamOperasional.forEach(jam => {
+            const jamValue = jam + ':00';
+            const isToday = selectedDate === todayString;
+            const isPast = isToday && jam <= currentTime;
 
-            // Validasi: jam tidak boleh sudah lewat jika tanggal hari ini
-            if (selectedDate === today && selectedJam && selectedJam.substring(0,5) <= currentTime) {
-                e.preventDefault();
-                alert('Jam booking tidak boleh di masa lalu. Silakan pilih jam yang masih tersedia.');
-                jamSelect.focus();
-                return;
+            const option = document.createElement('option');
+            option.value = jamValue;
+            option.textContent = jam + ' WIB' + (isPast ? ' (Sudah lewat)' : '');
+
+            if (isPast) {
+                option.disabled = true;
+                option.classList.add('text-gray-300');
             }
 
-            // Disable tombol agar tidak double submit
-            submitBtn.disabled = true;
-            submitLabel.innerHTML = `
-                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                Memproses...
-            `;
+            if (oldJam === jamValue && !isPast) {
+                option.selected = true;
+            }
+
+            jamSelect.appendChild(option);
         });
+
+        if (selectedDate === todayString && tanggalHint) {
+            tanggalHint.classList.remove('hidden');
+        } else if (tanggalHint) {
+            tanggalHint.classList.add('hidden');
+        }
+    }
+
+    // Event listener untuk tanggal
+    tanggalInput.addEventListener('change', function() {
+        jamSelect.value = '';
+        updateJamOptions();
     });
+
+    // Inisialisasi jika ada old date
+    if (tanggalInput.value) {
+        updateJamOptions();
+    }
+
+    // Form submit handling
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        const selectedJam = jamSelect.value;
+        const selectedDate = tanggalInput.value;
+        const todayString = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+        if (selectedDate === todayString && selectedJam && selectedJam.substring(0,5) <= currentTime) {
+            e.preventDefault();
+            alert('Jam booking tidak boleh di masa lalu. Silakan pilih jam yang masih tersedia.');
+            jamSelect.focus();
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitLabel.innerHTML = `
+            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Memproses...
+        `;
+    });
+});
 </script>
 @endsection

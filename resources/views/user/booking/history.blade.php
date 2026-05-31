@@ -176,7 +176,7 @@
                             </a>
 
                             
-                            @if(in_array($booking->booking_status, ['pending', 'confirmed']) && !$booking->is_rescheduled)
+                            @if($booking->booking_status === 'pending' && !$booking->is_rescheduled)
     <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
        class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-blue-200">
         Reschedule

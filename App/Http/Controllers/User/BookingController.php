@@ -171,6 +171,17 @@ class BookingController extends Controller
         return back()->withErrors(['error' => 'Data pelanggan tidak ditemukan. Hubungi admin.'])->withInput();
     }
 
+    $selectedDate = \Carbon\Carbon::parse($request->tanggal);
+    
+    $today = \Carbon\Carbon::today();
+    if ($today->isSaturday() || $today->isSunday()) {
+        return back()->withErrors([
+            'tanggal' => 'Maaf, booking online tidak tersedia pada hari Sabtu dan Minggu. Silakan coba lagi pada hari Senin-Jumat atau hubungi WhatsApp kami untuk booking offline.'
+        ])->withInput();
+    }
+
+    $isPaket = $request->boolean('is_paket');
+
     // Cek double booking
     $conflict = DB::table('booking')
         ->where('pelanggan_id', $pelanggan->pelanggan_id)
