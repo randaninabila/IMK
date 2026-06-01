@@ -29,10 +29,17 @@ class ServiceController extends Controller
         $topLayanan  = $this->getTopLayanan($selectedCabang, $selectedMonth, $selectedCategory);
         $leaderboard = $this->getLeaderboardData($selectedCabang, $selectedMonth, $selectedCategory, $perPage, $selectedSort);
 
+        // Hitung total kategori dari data leaderboard aktual (bukan semua jenis_layanan)
+        $totalKategori = collect($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $leaderboard->getCollection()
+            : $leaderboard
+        )->pluck('category')->filter()->unique()->count();
+
         return view('owner.service.service', compact(
             'cabangs', 'months', 'jenisLayanan',
             'selectedCabang', 'selectedMonth', 'selectedCategory',
-            'topLayanan', 'leaderboard', 'perPage', 'selectedSort'
+            'topLayanan', 'leaderboard', 'perPage', 'selectedSort',
+            'totalKategori',
         ));
     }
 
@@ -48,6 +55,12 @@ class ServiceController extends Controller
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
             ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $parsedMonth->month)
             ->whereYear('b.tanggal_booking', $parsedMonth->year);
 
@@ -60,6 +73,12 @@ class ServiceController extends Controller
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
             ->join('cabang as c', 'pc.cabang_id', '=', 'c.cabang_id')
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $parsedMonth->month)
             ->whereYear('b.tanggal_booking', $parsedMonth->year);
 
@@ -129,37 +148,26 @@ class ServiceController extends Controller
         // ── BULAN INI
         $currentQuery = DB::table('booking_detail as bd')
             ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->leftJoin('pembayaran as py', function ($join) { $join->on('b.booking_id', '=', 'py.booking_id')->where('py.status', '=', 'verified'); })
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->leftJoin('layanan as l_direct', 'lc.layanan_id', '=', 'l_direct.layanan_id')
             ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
             ->leftJoin('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
-            ->leftJoinSub(
-                DB::table('paket_detail')
-                    ->select(
-                        'paket_id',
-                        DB::raw('COUNT(*) as jumlah_layanan')
-                    )
-                    ->groupBy('paket_id'),
-                'pd_count',
-                function ($join) {
-                    $join->on('pc.paket_id', '=', 'pd_count.paket_id');
-                }
-            )
             ->leftJoin('layanan as l_paket', 'pd.layanan_id', '=', 'l_paket.layanan_id')
-            ->leftJoin(
-                'jenis_layanan as jl',
+            ->leftJoin('jenis_layanan as jl',
                 DB::raw('COALESCE(l_direct.jenis_layanan_id, l_paket.jenis_layanan_id)'),
-                '=',
-                'jl.jenis_layanan_id'
+                '=', 'jl.jenis_layanan_id'
             )
-            ->leftJoin(
-                'cabang as c',
+            ->leftJoin('cabang as c',
                 DB::raw('COALESCE(lc.cabang_id, pc.cabang_id)'),
-                '=',
-                'c.cabang_id'
+                '=', 'c.cabang_id'
             )
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $currentMonth->month)
             ->whereYear('b.tanggal_booking', $currentMonth->year);
 
@@ -178,26 +186,22 @@ class ServiceController extends Controller
         foreach ($cabangList as $cabang) {
             $dynamicCabangSelect[] = DB::raw("
                 SUM(
-                    CASE
-                        WHEN c.cabang_id = {$cabang->cabang_id}
-                        THEN 1 ELSE 0
-                    END
+                    CASE WHEN c.cabang_id = {$cabang->cabang_id}
+                    THEN 1 ELSE 0 END
                 ) as cabang{$cabang->cabang_id}_count
             ");
             $dynamicCabangSelect[] = DB::raw("
                 SUM(
-                    CASE
-                        WHEN c.cabang_id = {$cabang->cabang_id}
-                        THEN
-                        CASE
-                            WHEN bd.paket_cabang_id IS NOT NULL
-                            THEN COALESCE(py.jumlah,0) /
-                                NULLIF(pd_count.jumlah_layanan,0)
-
-                            ELSE COALESCE(py.jumlah,0)
+                    CASE WHEN c.cabang_id = {$cabang->cabang_id}
+                    THEN
+                        CASE WHEN bd.paket_cabang_id IS NOT NULL
+                        THEN COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                            SELECT COUNT(*) FROM paket_detail pd2
+                            WHERE pd2.paket_id = pc.paket_id
+                        ), 0)
+                        ELSE COALESCE(bd.harga_snapshot, 0)
                         END
-                        ELSE 0
-                    END
+                    ELSE 0 END
                 ) as cabang{$cabang->cabang_id}_revenue
             ");
         }
@@ -208,15 +212,15 @@ class ServiceController extends Controller
                 DB::raw('COALESCE(l_direct.nama_layanan, l_paket.nama_layanan) as nama_layanan'),
                 'jl.nama_jenis',
                 DB::raw("
-                SUM(
-                    CASE
-                        WHEN bd.paket_cabang_id IS NOT NULL
-                        THEN COALESCE(py.jumlah,0) /
-                            NULLIF(pd_count.jumlah_layanan,0)
-
-                        ELSE COALESCE(py.jumlah,0)
-                    END
-                ) as total_revenue
+                    SUM(
+                        CASE WHEN bd.paket_cabang_id IS NOT NULL
+                        THEN COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                            SELECT COUNT(*) FROM paket_detail pd2
+                            WHERE pd2.paket_id = pc.paket_id
+                        ), 0)
+                        ELSE COALESCE(bd.harga_snapshot, 0)
+                        END
+                    ) as total_revenue
                 "),
                 DB::raw('COUNT(*) as total_count'),
             ],
@@ -248,23 +252,10 @@ class ServiceController extends Controller
         // ── BULAN LALU (untuk growth)
         $prevData = DB::table('booking_detail as bd')
             ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->leftJoin('pembayaran as py', function ($join) { $join->on('b.booking_id', '=', 'py.booking_id')->where('py.status', '=', 'verified'); })
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->leftJoin('layanan as l_direct', 'lc.layanan_id', '=', 'l_direct.layanan_id')
             ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
             ->leftJoin('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
-            ->leftJoinSub(
-                DB::table('paket_detail')
-                    ->select(
-                        'paket_id',
-                        DB::raw('COUNT(*) as jumlah_layanan')
-                    )
-                    ->groupBy('paket_id'),
-                'pd_count',
-                function ($join) {
-                    $join->on('pc.paket_id', '=', 'pd_count.paket_id');
-                }
-            )
             ->leftJoin('layanan as l_paket', 'pd.layanan_id', '=', 'l_paket.layanan_id')
             ->leftJoin(
                 'jenis_layanan as jl',
@@ -279,6 +270,12 @@ class ServiceController extends Controller
                 'c.cabang_id'
             )
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $prevMonth->month)
             ->whereYear('b.tanggal_booking', $prevMonth->year)
             ->when(
@@ -370,38 +367,46 @@ class ServiceController extends Controller
     {
         $parsedMonth = Carbon::parse($month);
 
-        $query = DB::table('pembayaran')
-            ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
-            ->where('pembayaran.status', 'verified')
+        // Layanan langsung
+        $layananQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->where('booking.status', 'completed')
-            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
-            ->whereYear('booking.tanggal_booking', $parsedMonth->year);
-
-        if ($cabangId != 'all') {
-            $query->whereExists(function ($sub) use ($cabangId) {
+            ->whereExists(function ($sub) {
                 $sub->select(DB::raw(1))
-                    ->from('booking_detail')
-                    ->leftJoin(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
-                    ->leftJoin(
-                        'paket_cabang',
-                        'booking_detail.paket_cabang_id',
-                        '=',
-                        'paket_cabang.paket_cabang_id'
-                    )
-                    ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where(function ($q) use ($cabangId) {
-                        $q->where('layanan_cabang.cabang_id', $cabangId)
-                        ->orWhere('paket_cabang.cabang_id', $cabangId);
-                    });
-            });
-        }
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
+            ->whereYear('booking.tanggal_booking', $parsedMonth->year)
+            ->when($cabangId != 'all', fn($q) => $q->where('lc.cabang_id', $cabangId))
+            ->select(DB::raw('COALESCE(bd.harga_snapshot, 0) as jumlah'));
 
-        return $query->sum('pembayaran.jumlah');
+        // Layanan dari paket (harga_snapshot dibagi rata per layanan dalam paket)
+        $paketQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
+            ->join('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
+            ->where('booking.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
+            ->whereYear('booking.tanggal_booking', $parsedMonth->year)
+            ->when($cabangId != 'all', fn($q) => $q->where('pc.cabang_id', $cabangId))
+            ->select(DB::raw('
+                COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                    SELECT COUNT(*) FROM paket_detail pd2 WHERE pd2.paket_id = pc.paket_id
+                ), 0) as jumlah
+            '));
+
+        return DB::query()
+            ->fromSub($layananQuery->unionAll($paketQuery), 'combined')
+            ->sum('jumlah');
     }
 
     public function edit(Request $request)
@@ -421,10 +426,16 @@ class ServiceController extends Controller
         $totalRevenue = $this->getTotalRevenue($selectedCabang, $selectedMonth);
         $months       = $this->getMonthOptions();
 
+        $totalKategori = collect($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $leaderboard->getCollection()
+            : $leaderboard
+        )->pluck('category')->filter()->unique()->count();
+
         return view('owner.service.eservice', compact(
             'cabangs', 'selectedCabang', 'selectedMonth', 'selectedSortCabang',
             'jenisLayanan', 'leaderboard', 'totalRevenue',
-            'months', 'selectedSort', 'selectedDir'
+            'months', 'selectedSort', 'selectedDir',
+            'totalKategori'
         ));
     }
 }

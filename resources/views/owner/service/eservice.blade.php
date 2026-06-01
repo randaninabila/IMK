@@ -115,7 +115,7 @@
         <div class="bg-white rounded-3xl p-5 shadow-sm">
             <p class="text-sm text-gray-500 mb-2">Total Kategori</p>
             <h2 class="text-3xl font-bold text-[#f45b69]">
-                {{ $jenisLayanan->count() }}
+                {{ $totalKategori }}
             </h2>
         </div>
 

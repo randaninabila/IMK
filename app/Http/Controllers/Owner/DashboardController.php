@@ -171,7 +171,8 @@ class DashboardController extends Controller
     {
         $query = DB::table('booking')
             ->join('pelanggan', 'booking.pelanggan_id', '=', 'pelanggan.pelanggan_id')
-            ->whereDate('booking.tanggal_booking', today());
+            ->whereDate('booking.tanggal_booking', today())
+            ->where('booking.status', 'completed');
 
         if ($selectedCabang) {
             $query->whereExists(function ($sub) use ($selectedCabang) {
@@ -241,19 +242,45 @@ class DashboardController extends Controller
 
     private function getPopularServices($selectedCabang = null)
     {
-        $services = DB::table('booking_detail')
-            ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
-            ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
-            ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
+        // Layanan langsung
+        $layananQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
+            ->join('layanan', 'lc.layanan_id', '=', 'layanan.layanan_id')
             ->where('booking.status', 'completed')
-            ->where(function ($q) {
-                $q->whereNull('booking.booking_id')
-                ->orWhereYear('booking.tanggal_booking', now()->year);
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
             })
+            ->whereYear('booking.tanggal_booking', now()->year)
             ->whereMonth('booking.tanggal_booking', now()->month)
-            ->when($selectedCabang, fn($q) => $q->where('layanan_cabang.cabang_id', $selectedCabang))
-            ->select('layanan.nama_layanan', DB::raw('COUNT(*) as total'))
-            ->groupBy('layanan.nama_layanan')
+            ->when($selectedCabang, fn($q) => $q->where('lc.cabang_id', $selectedCabang))
+            ->select('layanan.nama_layanan');
+
+        // Layanan dari paket
+        $paketQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
+            ->join('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
+            ->join('layanan', 'pd.layanan_id', '=', 'layanan.layanan_id')
+            ->where('booking.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->whereYear('booking.tanggal_booking', now()->year)
+            ->whereMonth('booking.tanggal_booking', now()->month)
+            ->when($selectedCabang, fn($q) => $q->where('pc.cabang_id', $selectedCabang))
+            ->select('layanan.nama_layanan');
+
+        $services = DB::query()
+            ->fromSub($layananQuery->unionAll($paketQuery), 'combined')
+            ->select('nama_layanan', DB::raw('COUNT(*) as total'))
+            ->groupBy('nama_layanan')
             ->orderByDesc('total')
             ->limit(5)
             ->get();
@@ -261,28 +288,38 @@ class DashboardController extends Controller
         return $services->map(function ($service) {
             return (object) [
                 'nama_layanan' => $service->nama_layanan,
-                'total' => $service->total
+                'total'        => $service->total,
             ];
         });
     }
 
     private function getStaffPerformance($selectedCabang = null)
     {
+        $verifiedBookings = DB::table('booking')
+            ->whereYear('tanggal_booking', now()->year)
+            ->where('status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->select('booking_id', 'pegawai_id');
+
         $staff = DB::table('pegawai')
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
-            ->leftJoin('booking', function ($join) {
-                $join->on('pegawai.pegawai_id', '=', 'booking.pegawai_id')
-                    ->whereYear('booking.tanggal_booking', 2026);
+            ->leftJoinSub($verifiedBookings, 'vb', function ($join) {
+                $join->on('pegawai.pegawai_id', '=', 'vb.pegawai_id');
             })
-            // ->whereIn('users.role', ['pegawai', 'admin'])
             ->where('users.role', 'pegawai')
             ->where('pegawai.status_kerja', 'aktif')
+            ->when($selectedCabang, fn($q) => $q->where('pegawai.cabang_id', $selectedCabang))
             ->select(
                 'pegawai.pegawai_id',
                 'pegawai.cabang_id',
                 DB::raw('`users`.`nama` as nama_pegawai'),
                 'users.foto_profile',
-                DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
+                DB::raw('COUNT(DISTINCT vb.booking_id) as total_booking'),
             )
             ->groupBy('pegawai.pegawai_id', 'pegawai.cabang_id', 'users.nama', 'users.foto_profile')
             ->orderByDesc('total_booking')
@@ -292,9 +329,9 @@ class DashboardController extends Controller
         return $staff->map(function ($staffData) {
             $cabang = Cabang::find($staffData->cabang_id);
             return (object) [
-                'nama' => $staffData->nama_pegawai,
-                'foto_profile' => $staffData->foto_profile,
-                'cabang' => $cabang?->nama_cabang ?? '-',
+                'nama'          => $staffData->nama_pegawai,
+                'foto_profile'  => $staffData->foto_profile,
+                'cabang'        => $cabang?->nama_cabang ?? '-',
                 'total_booking' => $staffData->total_booking,
             ];
         });

@@ -114,22 +114,22 @@
                     <p class="text-white text-xs font-semibold opacity-80 uppercase tracking-wide">Rincian Pemesanan</p>
                     <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                 </div>
-                @php
-$statusColors = [
-    'pending'     => 'bg-amber-100 text-amber-700',
-    'confirmed'   => 'bg-blue-100 text-blue-700',
-    'in_progress' => 'bg-purple-100 text-purple-700',
-    'completed'   => 'bg-green-100 text-green-700',
-    'cancelled'   => 'bg-red-100 text-red-700',
-];
+@php
+    $statusColors = [
+        'pending' => 'bg-amber-100 text-amber-700',
+        'confirmed' => 'bg-blue-100 text-blue-700',
+        'in_progress' => 'bg-purple-100 text-purple-700',
+        'completed' => 'bg-green-100 text-green-700',
+        'cancelled' => 'bg-red-100 text-red-700',
+    ];
 
-$statusLabels = [
-    'pending'     => 'Pending',
-    'confirmed'   => 'Dikonfirmasi',
-    'in_progress' => 'Berlangsung',
-    'completed'   => 'Selesai',
-    'cancelled'   => 'Dibatalkan',
-];
+    $statusLabels = [
+        'pending' => 'Pending',
+        'confirmed' => 'Dikonfirmasi',
+        'in_progress' => 'Berlangsung',
+        'completed' => 'Selesai',
+        'cancelled' => 'Dibatalkan',
+    ];
 @endphp
 
 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $statusColors[$booking->status] ?? 'bg-gray-100 text-gray-700' }}">
