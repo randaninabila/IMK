@@ -29,10 +29,17 @@ class ServiceController extends Controller
         $topLayanan  = $this->getTopLayanan($selectedCabang, $selectedMonth, $selectedCategory);
         $leaderboard = $this->getLeaderboardData($selectedCabang, $selectedMonth, $selectedCategory, $perPage, $selectedSort);
 
+        // Hitung total kategori dari data leaderboard aktual (bukan semua jenis_layanan)
+        $totalKategori = collect($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $leaderboard->getCollection()
+            : $leaderboard
+        )->pluck('category')->filter()->unique()->count();
+
         return view('owner.service.service', compact(
             'cabangs', 'months', 'jenisLayanan',
             'selectedCabang', 'selectedMonth', 'selectedCategory',
-            'topLayanan', 'leaderboard', 'perPage', 'selectedSort'
+            'topLayanan', 'leaderboard', 'perPage', 'selectedSort',
+            'totalKategori',
         ));
     }
 
@@ -48,6 +55,12 @@ class ServiceController extends Controller
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
             ->join('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $parsedMonth->month)
             ->whereYear('b.tanggal_booking', $parsedMonth->year);
 
@@ -60,6 +73,12 @@ class ServiceController extends Controller
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
             ->join('cabang as c', 'pc.cabang_id', '=', 'c.cabang_id')
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $parsedMonth->month)
             ->whereYear('b.tanggal_booking', $parsedMonth->year);
 
@@ -143,6 +162,12 @@ class ServiceController extends Controller
                 '=', 'c.cabang_id'
             )
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $currentMonth->month)
             ->whereYear('b.tanggal_booking', $currentMonth->year);
 
@@ -245,6 +270,12 @@ class ServiceController extends Controller
                 'c.cabang_id'
             )
             ->where('b.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
             ->whereMonth('b.tanggal_booking', $prevMonth->month)
             ->whereYear('b.tanggal_booking', $prevMonth->year)
             ->when(
@@ -336,38 +367,46 @@ class ServiceController extends Controller
     {
         $parsedMonth = Carbon::parse($month);
 
-        $query = DB::table('pembayaran')
-            ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
-            ->where('pembayaran.status', 'verified')
+        // Layanan langsung
+        $layananQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->where('booking.status', 'completed')
-            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
-            ->whereYear('booking.tanggal_booking', $parsedMonth->year);
-
-        if ($cabangId != 'all') {
-            $query->whereExists(function ($sub) use ($cabangId) {
+            ->whereExists(function ($sub) {
                 $sub->select(DB::raw(1))
-                    ->from('booking_detail')
-                    ->leftJoin(
-                        'layanan_cabang',
-                        'booking_detail.layanan_cabang_id',
-                        '=',
-                        'layanan_cabang.layanan_cabang_id'
-                    )
-                    ->leftJoin(
-                        'paket_cabang',
-                        'booking_detail.paket_cabang_id',
-                        '=',
-                        'paket_cabang.paket_cabang_id'
-                    )
-                    ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where(function ($q) use ($cabangId) {
-                        $q->where('layanan_cabang.cabang_id', $cabangId)
-                        ->orWhere('paket_cabang.cabang_id', $cabangId);
-                    });
-            });
-        }
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
+            ->whereYear('booking.tanggal_booking', $parsedMonth->year)
+            ->when($cabangId != 'all', fn($q) => $q->where('lc.cabang_id', $cabangId))
+            ->select(DB::raw('COALESCE(bd.harga_snapshot, 0) as jumlah'));
 
-        return $query->sum('pembayaran.jumlah');
+        // Layanan dari paket (harga_snapshot dibagi rata per layanan dalam paket)
+        $paketQuery = DB::table('booking_detail as bd')
+            ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
+            ->join('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
+            ->join('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
+            ->where('booking.status', 'completed')
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
+            })
+            ->whereMonth('booking.tanggal_booking', $parsedMonth->month)
+            ->whereYear('booking.tanggal_booking', $parsedMonth->year)
+            ->when($cabangId != 'all', fn($q) => $q->where('pc.cabang_id', $cabangId))
+            ->select(DB::raw('
+                COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                    SELECT COUNT(*) FROM paket_detail pd2 WHERE pd2.paket_id = pc.paket_id
+                ), 0) as jumlah
+            '));
+
+        return DB::query()
+            ->fromSub($layananQuery->unionAll($paketQuery), 'combined')
+            ->sum('jumlah');
     }
 
     public function edit(Request $request)
@@ -387,10 +426,16 @@ class ServiceController extends Controller
         $totalRevenue = $this->getTotalRevenue($selectedCabang, $selectedMonth);
         $months       = $this->getMonthOptions();
 
+        $totalKategori = collect($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator
+            ? $leaderboard->getCollection()
+            : $leaderboard
+        )->pluck('category')->filter()->unique()->count();
+
         return view('owner.service.eservice', compact(
             'cabangs', 'selectedCabang', 'selectedMonth', 'selectedSortCabang',
             'jenisLayanan', 'leaderboard', 'totalRevenue',
-            'months', 'selectedSort', 'selectedDir'
+            'months', 'selectedSort', 'selectedDir',
+            'totalKategori'
         ));
     }
 }
