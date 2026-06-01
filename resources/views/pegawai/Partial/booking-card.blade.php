@@ -7,30 +7,28 @@ $totalDurasi = $details->sum(function($d) {
     if ($d->layanan_cabang_id) {
         return $d->layananCabang?->layanan?->durasi ?? 0;
     } else {
-        // Paket: sum durasi semua layanan dalam paket
         return $d->paketCabang?->details->sum(fn($pd) => $pd->layanan?->durasi ?? 0) ?? 0;
     }
 });
     $jamMulai    = \Carbon\Carbon::parse($booking->jam_booking);
     $jamSelesai  = $jamMulai->copy()->addMinutes($totalDurasi);
 
-    // Status labels & colors
     $statusLabel = match($booking->status) {
-        'pending'    => 'Menunggu',
-        'confirmed'  => 'Terjadwal',
-        'in_progress'    => 'Sedang Berjalan',
-        'completed'  => 'Selesai',
-        'cancelled'  => 'Dibatalkan',
-        default      => ucfirst($booking->status),
+        'pending'     => 'Menunggu',
+        'confirmed'   => 'Terjadwal',
+        'in_progress' => 'Sedang Berjalan',
+        'completed'   => 'Selesai',
+        'cancelled'   => 'Dibatalkan',
+        default       => ucfirst($booking->status),
     };
 
     $statusColor = match($booking->status) {
-        'pending'    => 'bg-[#FDE68A] text-[#92400E]',
-        'confirmed'  => 'bg-[#E8B1B6] text-[#3E382D]',
-        'in_progress'    => 'bg-[#A8D5A2] text-[#2D6A27]',
-        'completed'  => 'bg-[#B5D5F5] text-[#1D4E89]',
-        'cancelled'  => 'bg-[#F5C6CB] text-[#7B2D32]',
-        default      => 'bg-[#E8E1E1] text-[#3B302D]',
+        'pending'     => 'bg-[#FDE68A] text-[#92400E]',
+        'confirmed'   => 'bg-[#E8B1B6] text-[#3E382D]',
+        'in_progress' => 'bg-[#A8D5A2] text-[#2D6A27]',
+        'completed'   => 'bg-[#B5D5F5] text-[#1D4E89]',
+        'cancelled'   => 'bg-[#F5C6CB] text-[#7B2D32]',
+        default       => 'bg-[#E8E1E1] text-[#3B302D]',
     };
 @endphp
 
@@ -51,13 +49,11 @@ $totalDurasi = $details->sum(function($d) {
 
         {{-- DETAIL --}}
         <div class="flex-1">
-            
-            <!-- <div class="bg-[#F5A6AF] rounded-xl px-3 py-2 inline-block"> -->
-    <p class="text-[#E8B1B6] text-sm font-bold mb-3">
-        No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
-    </p>
-   
-<!-- </div> -->
+
+            <p class="text-[#E8B1B6] text-sm font-bold mb-3">
+                No Pesanan : #{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}
+            </p>
+
             {{-- Nama + Status --}}
             <div class="flex items-center gap-3 mb-2">
                 <h3 class="text-[17px] font-semibold">
@@ -68,25 +64,56 @@ $totalDurasi = $details->sum(function($d) {
                 </span>
             </div>
 
-
             {{-- Daftar Layanan --}}
-@foreach ($details as $detail)
-@php
-    if ($detail->layanan_cabang_id) {
-        $layanan      = $detail->layananCabang?->layanan;
-        $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis ?? 'Layanan';
-        $namaLayanan  = $layanan?->nama_layanan ?? '-';
-    } else {
-        // Booking paket
-        $paketCabang  = $detail->paketCabang;
-        $namaLayanan  = $paketCabang?->paketLayanan?->nama_paket ?? 'Paket';
-        $jenisLayanan = 'Paket Layanan';
-    }
-@endphp
-<p class="text-[14px]">
-    ● {{ $namaLayanan }} | {{ $jenisLayanan }}
-</p>
-@endforeach
+            @foreach ($details as $detail)
+            @php
+                if ($detail->layanan_cabang_id) {
+                    $layanan      = $detail->layananCabang?->layanan;
+                    $jenisLayanan = $layanan?->jenisLayanan?->nama_jenis ?? 'Layanan';
+                    $namaLayanan  = $layanan?->nama_layanan ?? '-';
+                } else {
+                    $paketCabang  = $detail->paketCabang;
+                    $namaLayanan  = $paketCabang?->paketLayanan?->nama_paket ?? 'Paket';
+                    $jenisLayanan = 'Paket Layanan';
+                }
+                $paketToggleId = 'paket-' . $booking->booking_id . '-' . $loop->index;
+            @endphp
+
+            @if($detail->layanan_cabang_id)
+                {{-- Single layanan --}}
+                <p class="text-[14px]">
+                    ● {{ $namaLayanan }} | {{ $jenisLayanan }}
+                </p>
+            @else
+                {{-- Paket: accordion toggle --}}
+                <div class="mb-1">
+                    <button type="button"
+        onclick="togglePaket('{{ $paketToggleId }}')"
+        class="flex items-start gap-2 text-[14px] font-semibold text-[#3E382D] hover:text-rose-400 transition text-left w-full">
+    <span class="shrink-0">📦</span>
+    <span class="flex-1">{{ $namaLayanan }}</span>
+    <span class="shrink-0 text-[12px] font-normal text-gray-400 whitespace-nowrap">(Paket Layanan)</span>
+    <svg id="{{ $paketToggleId }}-icon"
+         class="w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 mt-0.5"
+         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+    </svg>
+</button>
+
+                    <div id="{{ $paketToggleId }}" class="hidden mt-1 ml-4 space-y-1">
+                        @forelse($detail->paketCabang?->details ?? [] as $pd)
+                            <p class="text-[13px] text-gray-600">
+                                ↳ {{ $pd->layanan?->nama_layanan ?? '-' }}
+                                <span class="text-gray-400">| {{ $pd->layanan?->durasi ?? 0 }} menit</span>
+                            </p>
+                        @empty
+                            <p class="text-[13px] text-gray-400 italic">Tidak ada detail layanan.</p>
+                        @endforelse
+                    </div>
+                </div>
+            @endif
+
+            @endforeach
 
             {{-- Waktu --}}
             <h4 class="text-[17px] font-semibold mt-2 mb-4">
@@ -106,11 +133,9 @@ $totalDurasi = $details->sum(function($d) {
 
                 @if($booking->status === 'confirmed')
 
-                    {{-- START SERVICE: confirmed → in_progress --}}
                     <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
                         @csrf
                         <input type="hidden" name="status" value="in_progress">
-                        
                         @if($bisaStart)
                             <button type="submit"
                                     class="w-full h-[40px] rounded-xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition flex items-center justify-center gap-2 cursor-pointer">
@@ -136,21 +161,58 @@ $totalDurasi = $details->sum(function($d) {
                     </form>
 
                     {{-- BATALKAN BOOKING: confirmed → pending --}}
-                    <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}"
-                          onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
-                        @csrf 
-                        <input type="hidden" name="status" value="pending">
-                        <button type="submit"
-                                class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
-                            Batalkan Booking
-                        </button>
-                    </form>
+<button type="button"
+        onclick="document.getElementById('modal-batal-{{ $booking->booking_id }}').classList.remove('hidden')"
+        class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
+    Batalkan Pesanan
+</button>
+
+{{-- MODAL KONFIRMASI BATAL --}}
+<div id="modal-batal-{{ $booking->booking_id }}"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="bg-white rounded-[24px] shadow-xl p-8 w-[380px] text-center">
+
+        {{-- ICON --}}
+        <div class="w-16 h-16 rounded-full bg-[#FFF0F1] flex items-center justify-center mx-auto mb-5">
+            <span class="text-[#F5A6AF] text-3xl font-bold">!</span>
+        </div>
+
+        {{-- TITLE --}}
+        <h2 class="text-[20px] font-bold text-[#3E382D] mb-2">
+            Yakin batalkan pesanan ini?
+        </h2>
+
+        {{-- DESC --}}
+        <p class="text-[14px] text-[#7A6262] mb-6">
+            Pesanan <span class="font-semibold text-[#3E382D]">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</span>
+            akan dikembalikan ke antrian.
+        </p>
+
+        {{-- BUTTONS --}}
+        <div class="flex gap-3">
+            <button type="button"
+                    onclick="document.getElementById('modal-batal-{{ $booking->booking_id }}').classList.add('hidden')"
+                    class="flex-1 py-2.5 rounded-2xl bg-[#F3EDED] text-[#3E382D] font-semibold hover:bg-[#EDE3E3] transition">
+                Kembali
+            </button>
+
+            <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}" class="flex-1">
+                @csrf
+                <input type="hidden" name="status" value="pending">
+                <button type="submit"
+                        class="w-full py-2.5 rounded-2xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition">
+                    Ya, Batalkan
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
 
                 @elseif($booking->status === 'in_progress')
 
-                    {{-- SELESAI: in_progress → completed --}}
                     <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}">
-                        @csrf 
+                        @csrf
                         <input type="hidden" name="status" value="completed">
                         <button type="submit"
                                 class="w-full h-[40px] rounded-xl bg-[#A8D5A2] text-[#2D6A27] font-semibold hover:opacity-90 transition">
@@ -172,10 +234,8 @@ $totalDurasi = $details->sum(function($d) {
         <h3 class="text-[17px] font-semibold mb-4">Informasi Pelanggan</h3>
 
         <div class="flex gap-4 mb-4">
-            {{-- Foto Profile --}}
             <img src="{{ $user?->foto_profile ? asset('storage/' . $user->foto_profile) : 'https://ui-avatars.com/api/?name=' . urlencode($user?->nama ?? 'P') . '&background=E8B1B6&color=3E382D' }}"
                  class="w-[70px] h-[70px] rounded-full object-cover">
-
             <div>
                 <h4 class="text-[16px] font-semibold">
                     Nama : {{ $user?->nama ?? '-' }}
@@ -186,7 +246,6 @@ $totalDurasi = $details->sum(function($d) {
             </div>
         </div>
 
-        {{-- Notes --}}
         <div>
             <h4 class="text-[16px] font-semibold">Notes :</h4>
             <p class="text-[14px] leading-relaxed">
@@ -197,3 +256,12 @@ $totalDurasi = $details->sum(function($d) {
     </div>
 
 </div>
+
+<script>
+function togglePaket(id) {
+    const el   = document.getElementById(id);
+    const icon = document.getElementById(id + '-icon');
+    el.classList.toggle('hidden');
+    icon.classList.toggle('rotate-180');
+}
+</script>

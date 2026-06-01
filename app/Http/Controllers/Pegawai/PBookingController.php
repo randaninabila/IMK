@@ -19,7 +19,7 @@ class PBookingController extends Controller
         // in_progress: status 'in_progress' = sedang berjalan (setelah tekan mulai servis)
         $in_progress = Booking::with([
                 'details.layananCabang.layanan.jenisLayanan',
-                'pelanggan.user', 'details.paketCabang.paketLayanan',
+                'pelanggan.user', 'details.paketCabang.paketLayanan', 'details.paketCabang.details.layanan',
             ])
             ->where('pegawai_id', $pegawaiId)
             ->whereDate('tanggal_booking', $today)
@@ -51,6 +51,8 @@ class PBookingController extends Controller
     $filter          = $request->get('filter', 'semua');
     $jenisLayananId  = $request->get('jenis_layanan');
     $tanggal         = $request->get('tanggal'); // ← Single parameter tanggal
+    $bulan          = $request->get('bulan');   // ← TAMBAH
+$tahun          = $request->get('tahun');   // ← TAMBAH
 
     /*
     |--------------------------------------------------------------------------
@@ -62,7 +64,7 @@ class PBookingController extends Controller
     'details.layananCabang.layanan.jenisLayanan',
     'details.paketCabang.paketLayanan',
     'details.paketCabang.details.layanan', // ✅ untuk hitung durasi paket
-    'pelanggan.user',
+    'pelanggan.user', 
 ])
         ->where('pegawai_id', $pegawaiId)
         ->whereIn('status', ['completed', 'cancelled']);
@@ -74,13 +76,22 @@ class PBookingController extends Controller
     */
 
     if ($filter == 'hariini') {
-        $query->whereDate('tanggal_booking', now());
-    } elseif ($filter == 'bulanan') {
-        $query->whereMonth('tanggal_booking', now()->month)
-              ->whereYear('tanggal_booking', now()->year);
-    } elseif ($filter == 'tahunan') {
-        $query->whereYear('tanggal_booking', now()->year);
-    }
+    $query->whereDate('tanggal_booking', now());
+
+} elseif ($filter == 'bulanan') {
+    // Kalau ada pilihan bulan+tahun spesifik, pakai itu
+    // Kalau tidak, default bulan ini
+    $filterBulan = $bulan ?: now()->month;
+    $filterTahun = $tahun ?: now()->year;
+    $query->whereMonth('tanggal_booking', $filterBulan)
+          ->whereYear('tanggal_booking', $filterTahun);
+
+} elseif ($filter == 'tahunan') {
+    // Kalau ada pilihan tahun spesifik, pakai itu
+    // Kalau tidak, default tahun ini
+    $filterTahun = $tahun ?: now()->year;
+    $query->whereYear('tanggal_booking', $filterTahun);
+}
 
     /*
     |--------------------------------------------------------------------------
@@ -188,7 +199,9 @@ class PBookingController extends Controller
         ->unique()
         ->count();
 
-    $totalSesi = $bookings
+    $totalSesi = $bookings->where('status', 'completed')->count();
+
+    $totalSesis = $bookings
     ->where('status', 'completed')
     ->filter(function ($b) {
         return $b->details->contains(fn($d) => !is_null($d->layanan_cabang_id));
@@ -223,10 +236,13 @@ $totalPaket = $bookings
         'totalDurasi',
         'totalKlien',
         'totalPaket',
+        'totalSesis',
         'filter',
         'jenisLayananList',
         'jenisLayananId',
         'tanggal',  // ← Updated: pass single $tanggal
+        'bulan',    // ← TAMBAH
+    'tahun', 
     ));
 }
 
