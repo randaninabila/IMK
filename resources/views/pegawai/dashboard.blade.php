@@ -277,16 +277,53 @@ $totalDurasi = $in_progress->details->sum(fn($d) => $d->layanan_cabang_id
                 </form>
 
                 {{-- BATALKAN BOOKING: confirmed → pending --}}
-                <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}"
-                      onsubmit="return confirm('Yakin batalkan booking ini? Booking akan dikembalikan ke antrian.')">
-                    @csrf
-                    <input type="hidden" name="status" value="pending">
-                    <button type="submit"
-                            class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
-                        Batalkan Pesanan
-                    </button>
-                </form>
-            </div>
+<button type="button"
+        onclick="document.getElementById('modal-batal-{{ $booking->booking_id }}').classList.remove('hidden')"
+        class="w-full h-[40px] rounded-xl border border-[#C98B93] text-[#3E382D] font-semibold bg-[#FFF9F9] hover:bg-[#FFF1F3] transition">
+    Batalkan Pesanan
+</button>
+
+{{-- MODAL KONFIRMASI BATAL --}}
+<div id="modal-batal-{{ $booking->booking_id }}"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="bg-white rounded-[24px] shadow-xl p-8 w-[380px] text-center">
+
+        {{-- ICON --}}
+        <div class="w-16 h-16 rounded-full bg-[#FFF0F1] flex items-center justify-center mx-auto mb-5">
+            <span class="text-[#F5A6AF] text-3xl font-bold">!</span>
+        </div>
+
+        {{-- TITLE --}}
+        <h2 class="text-[20px] font-bold text-[#3E382D] mb-2">
+            Yakin batalkan pesanan ini?
+        </h2>
+
+        {{-- DESC --}}
+        <p class="text-[14px] text-[#7A6262] mb-6">
+            Pesanan <span class="font-semibold text-[#3E382D]">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</span>
+            akan dikembalikan ke antrian.
+        </p>
+
+        {{-- BUTTONS --}}
+        <div class="flex gap-3">
+            <button type="button"
+                    onclick="document.getElementById('modal-batal-{{ $booking->booking_id }}').classList.add('hidden')"
+                    class="flex-1 py-2.5 rounded-2xl bg-[#F3EDED] text-[#3E382D] font-semibold hover:bg-[#EDE3E3] transition">
+                Kembali
+            </button>
+
+            <form method="POST" action="{{ route('pegawai.booking.updateStatus', $booking) }}" class="flex-1">
+                @csrf
+                <input type="hidden" name="status" value="pending">
+                <button type="submit"
+                        class="w-full py-2.5 rounded-2xl bg-[#F5A6AF] text-white font-semibold hover:bg-[#e8919b] transition">
+                    Ya, Batalkan
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
             @empty
                 <div class="bg-white border-[3px] border-[#F1A9B1] rounded-[30px] p-6 text-center text-[#C4AAAA] text-[15px]">
                     Tidak ada Pesanan Mendatang hari ini.
