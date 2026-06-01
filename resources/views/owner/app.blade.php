@@ -83,8 +83,102 @@
         </div>
     </header>
 
+
+    {{-- GLOBAL NOTIFICATION --}}
+    <div
+        class="
+            fixed top-20 left-[240px] right-6
+            z-[999]
+            pointer-events-none
+        "
+    >
+
+        {{-- SUCCESS --}}
+        @if(session('success') || session('success_password'))
+
+            <div
+                x-data="{ show:true }"
+                x-init="setTimeout(() => show = false, 3000)"
+                x-show="show"
+                x-transition.opacity
+                class="
+                    mb-4
+                    bg-green-100
+                    text-green-700
+                    px-5 py-4
+                    rounded-2xl
+                    flex items-center justify-between
+                    shadow-lg
+                    pointer-events-auto
+                "
+            >
+
+                <span>
+                    {{ session('success') ?? session('success_password') }}
+                </span>
+
+                <button
+                    @click="show = false"
+                    class="
+                        ml-4
+                        text-lg
+                        font-bold
+                        hover:opacity-70
+                    "
+                >
+                    ✕
+                </button>
+
+            </div>
+
+        @endif
+
+        {{-- ERROR --}}
+        @if(session('error'))
+
+            <div
+                x-data="{ show:true }"
+                x-init="setTimeout(() => show = false, 3000)"
+                x-show="show"
+                x-transition.opacity
+                class="
+                    mb-4
+                    bg-red-100
+                    text-red-700
+                    px-5 py-4
+                    rounded-2xl
+                    flex items-center justify-between
+                    shadow-lg
+                    pointer-events-auto
+                "
+            >
+
+                <span>
+                    {{ session('error') }}
+                </span>
+
+                <button
+                    @click="show = false"
+                    class="
+                        ml-4
+                        text-lg
+                        font-bold
+                        hover:opacity-70
+                    "
+                >
+                    ✕
+                </button>
+
+            </div>
+
+        @endif
+
+    </div>
+
+
     {{-- ===== SIDEBAR ===== --}}
     @include('owner.navbar')
+
 
     {{-- ===== MAIN CONTENT ===== --}}
     {{-- mt = tinggi header (64px), ml = lebar sidebar (220px) --}}

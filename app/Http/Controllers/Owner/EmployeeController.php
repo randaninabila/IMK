@@ -352,12 +352,12 @@ class EmployeeController extends Controller
                     'cabang' => request('cabang', 'all'),
                     'bulan'  => request('bulan', Carbon::now()->format('Y-m')),
                 ])
-                ->with('success', 'Employee berhasil ditambahkan. Password default: ' . $plainPassword);
+                ->with('success', 'Pegawai berhasil ditambahkan. Password default: ' . $plainPassword);
 
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Gagal tambah employee', ['message' => $e->getMessage(), 'line' => $e->getLine(), 'file' => $e->getFile()]);
-            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menambahkan employee.');
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menambahkan pegawai.');
         }
     }
 
@@ -383,7 +383,7 @@ class EmployeeController extends Controller
             return redirect()->back()->with('success', 'Status hari ini berhasil diupdate.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal update status hari ini.');
+            return redirect()->back()->with('error', 'Gagal memperbarui status hari ini.');
         }
     }
 
@@ -403,7 +403,7 @@ class EmployeeController extends Controller
             return redirect()->back()->with('success', 'Role berhasil diupdate');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal update role');
+            return redirect()->back()->with('error', 'Gagal memperbarui peran');
         }
     }
 
@@ -421,7 +421,7 @@ class EmployeeController extends Controller
             return redirect()->back()->with('success', 'Pegawai berhasil diresign');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal resign pegawai');
+            return redirect()->back()->with('error', 'Gagal mengeluarkan pegawai');
         }
     }
 
@@ -431,7 +431,7 @@ class EmployeeController extends Controller
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
             ->where('pegawai_id', $pegawai_id)->first();
 
-        if (!$pegawai) return redirect()->back()->with('error', 'Employee tidak ditemukan');
+        if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 
         $cabangs = DB::table('cabang')->where('status', 'BUKA')->get();
         return view('owner.employees.edit-employee', compact('pegawai', 'cabangs'));
@@ -440,7 +440,7 @@ class EmployeeController extends Controller
     public function updateEmployee(Request $request, $pegawai_id)
     {
         $pegawai = DB::table('pegawai')->where('pegawai_id', $pegawai_id)->first();
-        if (!$pegawai) return redirect()->back()->with('error', 'Employee tidak ditemukan');
+        if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 
         $userId = $pegawai->user_id;
 
@@ -466,10 +466,10 @@ class EmployeeController extends Controller
             }
             DB::table('users')->where('user_id', $userId)->update($updateData);
             DB::commit();
-            return redirect()->route('owner.employee.edit')->with('success', 'Employee berhasil diupdate');
+            return redirect()->route('owner.employee.edit')->with('success', 'Pegawai berhasil diperbarui');
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->withInput()->with('error', 'Gagal update employee');
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui pegawai');
         }
     }
 
