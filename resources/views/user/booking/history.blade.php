@@ -183,12 +183,16 @@
     </a>
 @endif
 
-                            {{-- Ulasan (jika completed) --}}
-                            @if($booking->booking_status === 'completed')
-                                <a href="#" 
-                                   class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-green-200">
+                            @if($booking->booking_status === 'completed' && !$booking->sudah_ulasan)
+                                <a href="{{ route('pelanggan.booking.ulasan', $booking->booking_id) }}" 
+                                class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-green-200">
                                     Beri Ulasan ⭐
                                 </a>
+                            @elseif($booking->booking_status === 'completed' && $booking->sudah_ulasan)
+                                {{-- Tampilkan badge "Sudah Diulas" jika sudah review --}}
+                                <span class="flex-1 bg-gray-100 text-gray-400 font-semibold py-2.5 rounded-xl text-center text-sm cursor-not-allowed">
+                                    ✓ Sudah Diulas
+                                </span>
                             @endif
                         </div>
 

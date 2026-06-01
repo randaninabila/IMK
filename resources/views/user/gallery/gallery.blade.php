@@ -187,9 +187,6 @@
     font-weight: 500;
     padding: 0.45rem 1.1rem;
     border-radius: 999px;
-    border: 1.5px solid #e8d0cc;
-    background: transparent;
-    color: var(--sand-lt);
     cursor: pointer;
     transition: all 0.2s ease;
     letter-spacing: 0.02em;
@@ -225,14 +222,14 @@
 }
 .search-wrap input::placeholder { color: #c4b0ac; }
 .search-wrap input:focus { border-color: var(--rose); }
-.search-wrap svg {
+/* .search-wrap svg {
     position: absolute;
     right: 0.9rem; top: 50%;
     transform: translateY(-50%);
     color: var(--rose);
     pointer-events: none;
     width: 16px; height: 16px;
-}
+} */
 
 /* ── CARD GRID ── */
 #galleryGrid {
@@ -455,26 +452,39 @@
         </div>
 
         {{-- Toolbar --}}
-        <div class="toolbar">
+<div class="toolbar flex flex-wrap justify-between items-center gap-4 mb-8">
 
-            <div class="filter-pills" id="filterBtns">
-                <button data-filter="all" class="filter-btn active">Semua</button>
-                @foreach($roles as $role)
-                <button data-filter="{{ strtolower($role) }}" class="filter-btn capitalize">
-                    {{ ucfirst($role) }}
-                </button>
-                @endforeach
-            </div>
+    {{-- Filter Pills --}}
+    <div class="filter-pills flex flex-wrap gap-2" id="filterBtns">
+        {{-- Tombol Aktif (Semua) --}}
+        <button data-filter="all"
+                class="filter-btn active px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-200
+                       bg-gradient-to-r from-rose-400 to-pink-400 border-transparent text-white shadow-md shadow-rose-200/50">
+            Semua
+        </button>
 
-            <div class="search-wrap">
-                <input type="text" id="searchInput" placeholder="Cari layanan…">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </div>
+        {{-- Tombol Lainnya (Inactive) --}}
+        @foreach($roles as $role)
+            <button data-filter="{{ strtolower($role) }}"
+                    class="filter-btn px-4 py-2 rounded-full text-xs font-semibold border border-rose-200 text-rose-500
+                           bg-white hover:bg-rose-50 hover:border-rose-300 transition-all duration-200 capitalize">
+                {{ ucfirst($role) }}
+            </button>
+        @endforeach
+    </div>
 
-        </div>
+    {{-- Search Input --}}
+    <div class="search-wrap relative w-full sm:w-auto max-w-[260px]">
+    <input type="text" id="searchInput" placeholder="Cari layanan…"
+           class="w-full h-[42px] bg-white border border-rose-200 rounded-full pl-4 pr-11 text-sm text-[#3E382D]
+                  placeholder-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-300/50 focus:border-rose-400 transition-all">
+    
+    <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-rose-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+</div>
+
+</div>
 
         {{-- Cards --}}
         <div id="galleryGrid">
@@ -497,6 +507,9 @@
                     <h3 class="card-title">{{ $item->nama_layanan }}</h3>
                     <p class="card-desc">{{ $item->album_deskripsi }}</p>
                     <div class="card-footer">
+                        @php
+                            $detailId = !empty($item->album_id) ? $item->album_id : $item->layanan_id;
+                        @endphp
                         <a href="{{ route('gallery.detail', $item->slug) }}" class="btn-detail">
                             Lihat Detail
                             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">

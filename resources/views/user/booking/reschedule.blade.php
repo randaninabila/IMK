@@ -5,7 +5,7 @@
 
         {{-- HEADER --}}
         <div class="text-center mb-10 mt-14">
-            <h1 class="text-4xl font-bold text-[#3E382D]">Reschedule Booking</h1>
+            <h1 class="text-7xl font-bold text-[#3E382D]">Reschedule Booking</h1>
             <p class="text-sm text-gray-500 mt-2">Ubah jadwal layanan kamu</p>
         </div>
 

@@ -28,6 +28,8 @@ use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\User\GalleryController;
 use App\Http\Controllers\User\TestimoniController;
+use App\Http\Controllers\User\UlasanController;
+use App\Http\Controllers\User\PromoController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -601,6 +603,12 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
+
+        Route::get('/booking/{booking_id}/ulasan', [UlasanController::class, 'create'])->name('booking.ulasan');
+        Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])->name('booking.ulasan.store');
+
+        Route::get('/promo/data', [PromoController::class, 'index'])
+        ->name('pelanggan.promo.data');
 
         Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
             ->name('booking.paket')
