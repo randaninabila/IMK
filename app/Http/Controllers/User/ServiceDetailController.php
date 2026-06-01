@@ -63,11 +63,19 @@ class ServiceDetailController extends Controller
 
     public function showPaketDetail($jenis_layanan_id, $paket_id)
 {
-    // Ambil info paket + harga dari paket_cabang (default cabang 1)
+    // Ambil cabang pertama yang tersedia untuk paket ini (tidak hardcoded)
+    $paketCabangDefault = DB::table('paket_cabang')
+        ->where('paket_id', $paket_id)
+        ->where('status', 'tersedia')
+        ->first();
+
+    $defaultCabangId = $paketCabangDefault?->cabang_id ?? null;
+
+    // Ambil info paket + harga dari cabang default
     $paket = DB::table('paket_layanan as pl')
-        ->leftJoin('paket_cabang as pc', function($join) {
+        ->leftJoin('paket_cabang as pc', function($join) use ($defaultCabangId) {
             $join->on('pl.paket_id', '=', 'pc.paket_id')
-                 ->where('pc.cabang_id', 1); // Default cabang
+                 ->where('pc.cabang_id', $defaultCabangId);
         })
         ->where('pl.paket_id', $paket_id)
         ->select(
@@ -76,15 +84,14 @@ class ServiceDetailController extends Controller
         )
         ->firstOrFail();
 
-    // ✅ DEFINISIKAN $hargaPaket
     $hargaPaket = $paket->harga_promo > 0 ? $paket->harga_promo : $paket->harga_normal;
 
-    // Ambil layanan-layanan dalam paket + harga per cabang
+    // ✅ leftJoin supaya semua layanan dalam paket tetap keluar
     $layananDalamPaket = DB::table('paket_detail as pd')
         ->join('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
-        ->join('layanan_cabang as lc', function($join) {
+        ->leftJoin('layanan_cabang as lc', function($join) use ($defaultCabangId) {
             $join->on('l.layanan_id', '=', 'lc.layanan_id')
-                 ->where('lc.cabang_id', 1);
+                 ->where('lc.cabang_id', $defaultCabangId);
         })
         ->where('pd.paket_id', $paket_id)
         ->select(
@@ -100,33 +107,29 @@ class ServiceDetailController extends Controller
             return $item;
         });
 
-    // Hitung total jika beli individual
     $totalIndividual = $layananDalamPaket->sum(function($l) {
         return $l->harga_promo > 0 ? $l->harga_promo : $l->harga;
     });
 
-    // Hitung hemat
     $hemat = $totalIndividual - $hargaPaket;
 
-    // Ambil jenis layanan untuk breadcrumb
     $jenisLayanan = DB::table('jenis_layanan')
         ->where('jenis_layanan_id', $jenis_layanan_id)
         ->first();
 
-    // ✅ TAMBAH INI: Ambil daftar cabang aktif
     $cabangList = DB::table('cabang')
         ->where('status', 'BUKA')
         ->orderBy('nama_cabang')
         ->get();
 
     return view('user.service.paket-detail', compact(
-        'paket', 
-        'layananDalamPaket', 
-        'totalIndividual', 
-        'hemat', 
+        'paket',
+        'layananDalamPaket',
+        'totalIndividual',
+        'hemat',
         'jenisLayanan',
         'hargaPaket',
-        'cabangList'  
+        'cabangList'
     ));
 }
 }
