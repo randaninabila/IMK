@@ -19,7 +19,7 @@ class PBookingController extends Controller
         // in_progress: status 'in_progress' = sedang berjalan (setelah tekan mulai servis)
         $in_progress = Booking::with([
                 'details.layananCabang.layanan.jenisLayanan',
-                'pelanggan.user', 'details.paketCabang.paketLayanan',
+                'pelanggan.user', 'details.paketCabang.paketLayanan', 'details.paketCabang.details.layanan',
             ])
             ->where('pegawai_id', $pegawaiId)
             ->whereDate('tanggal_booking', $today)
@@ -62,7 +62,7 @@ class PBookingController extends Controller
     'details.layananCabang.layanan.jenisLayanan',
     'details.paketCabang.paketLayanan',
     'details.paketCabang.details.layanan', // ✅ untuk hitung durasi paket
-    'pelanggan.user',
+    'pelanggan.user', 
 ])
         ->where('pegawai_id', $pegawaiId)
         ->whereIn('status', ['completed', 'cancelled']);
