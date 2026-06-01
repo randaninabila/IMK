@@ -171,7 +171,8 @@ class DashboardController extends Controller
     {
         $query = DB::table('booking')
             ->join('pelanggan', 'booking.pelanggan_id', '=', 'pelanggan.pelanggan_id')
-            ->whereDate('booking.tanggal_booking', today());
+            ->whereDate('booking.tanggal_booking', today())
+            ->where('booking.status', 'completed');
 
         if ($selectedCabang) {
             $query->whereExists(function ($sub) use ($selectedCabang) {
@@ -246,10 +247,13 @@ class DashboardController extends Controller
             ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
             ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
             ->where('booking.status', 'completed')
-            ->where(function ($q) {
-                $q->whereNull('booking.booking_id')
-                ->orWhereYear('booking.tanggal_booking', now()->year);
+            ->whereExists(function ($sub) {
+                $sub->select(DB::raw(1))
+                    ->from('pembayaran')
+                    ->whereColumn('pembayaran.booking_id', 'booking.booking_id')
+                    ->where('pembayaran.status', 'verified');
             })
+            ->whereYear('booking.tanggal_booking', now()->year)
             ->whereMonth('booking.tanggal_booking', now()->month)
             ->when($selectedCabang, fn($q) => $q->where('layanan_cabang.cabang_id', $selectedCabang))
             ->select('layanan.nama_layanan', DB::raw('COUNT(*) as total'))

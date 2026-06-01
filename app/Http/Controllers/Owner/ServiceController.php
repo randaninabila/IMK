@@ -129,35 +129,18 @@ class ServiceController extends Controller
         // ── BULAN INI
         $currentQuery = DB::table('booking_detail as bd')
             ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->leftJoin('pembayaran as py', function ($join) { $join->on('b.booking_id', '=', 'py.booking_id')->where('py.status', '=', 'verified'); })
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->leftJoin('layanan as l_direct', 'lc.layanan_id', '=', 'l_direct.layanan_id')
             ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
             ->leftJoin('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
-            ->leftJoinSub(
-                DB::table('paket_detail')
-                    ->select(
-                        'paket_id',
-                        DB::raw('COUNT(*) as jumlah_layanan')
-                    )
-                    ->groupBy('paket_id'),
-                'pd_count',
-                function ($join) {
-                    $join->on('pc.paket_id', '=', 'pd_count.paket_id');
-                }
-            )
             ->leftJoin('layanan as l_paket', 'pd.layanan_id', '=', 'l_paket.layanan_id')
-            ->leftJoin(
-                'jenis_layanan as jl',
+            ->leftJoin('jenis_layanan as jl',
                 DB::raw('COALESCE(l_direct.jenis_layanan_id, l_paket.jenis_layanan_id)'),
-                '=',
-                'jl.jenis_layanan_id'
+                '=', 'jl.jenis_layanan_id'
             )
-            ->leftJoin(
-                'cabang as c',
+            ->leftJoin('cabang as c',
                 DB::raw('COALESCE(lc.cabang_id, pc.cabang_id)'),
-                '=',
-                'c.cabang_id'
+                '=', 'c.cabang_id'
             )
             ->where('b.status', 'completed')
             ->whereMonth('b.tanggal_booking', $currentMonth->month)
@@ -178,26 +161,22 @@ class ServiceController extends Controller
         foreach ($cabangList as $cabang) {
             $dynamicCabangSelect[] = DB::raw("
                 SUM(
-                    CASE
-                        WHEN c.cabang_id = {$cabang->cabang_id}
-                        THEN 1 ELSE 0
-                    END
+                    CASE WHEN c.cabang_id = {$cabang->cabang_id}
+                    THEN 1 ELSE 0 END
                 ) as cabang{$cabang->cabang_id}_count
             ");
             $dynamicCabangSelect[] = DB::raw("
                 SUM(
-                    CASE
-                        WHEN c.cabang_id = {$cabang->cabang_id}
-                        THEN
-                        CASE
-                            WHEN bd.paket_cabang_id IS NOT NULL
-                            THEN COALESCE(py.jumlah,0) /
-                                NULLIF(pd_count.jumlah_layanan,0)
-
-                            ELSE COALESCE(py.jumlah,0)
+                    CASE WHEN c.cabang_id = {$cabang->cabang_id}
+                    THEN
+                        CASE WHEN bd.paket_cabang_id IS NOT NULL
+                        THEN COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                            SELECT COUNT(*) FROM paket_detail pd2
+                            WHERE pd2.paket_id = pc.paket_id
+                        ), 0)
+                        ELSE COALESCE(bd.harga_snapshot, 0)
                         END
-                        ELSE 0
-                    END
+                    ELSE 0 END
                 ) as cabang{$cabang->cabang_id}_revenue
             ");
         }
@@ -208,15 +187,15 @@ class ServiceController extends Controller
                 DB::raw('COALESCE(l_direct.nama_layanan, l_paket.nama_layanan) as nama_layanan'),
                 'jl.nama_jenis',
                 DB::raw("
-                SUM(
-                    CASE
-                        WHEN bd.paket_cabang_id IS NOT NULL
-                        THEN COALESCE(py.jumlah,0) /
-                            NULLIF(pd_count.jumlah_layanan,0)
-
-                        ELSE COALESCE(py.jumlah,0)
-                    END
-                ) as total_revenue
+                    SUM(
+                        CASE WHEN bd.paket_cabang_id IS NOT NULL
+                        THEN COALESCE(bd.harga_snapshot, 0) / NULLIF((
+                            SELECT COUNT(*) FROM paket_detail pd2
+                            WHERE pd2.paket_id = pc.paket_id
+                        ), 0)
+                        ELSE COALESCE(bd.harga_snapshot, 0)
+                        END
+                    ) as total_revenue
                 "),
                 DB::raw('COUNT(*) as total_count'),
             ],
@@ -248,23 +227,10 @@ class ServiceController extends Controller
         // ── BULAN LALU (untuk growth)
         $prevData = DB::table('booking_detail as bd')
             ->join('booking as b', 'bd.booking_id', '=', 'b.booking_id')
-            ->leftJoin('pembayaran as py', function ($join) { $join->on('b.booking_id', '=', 'py.booking_id')->where('py.status', '=', 'verified'); })
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
             ->leftJoin('layanan as l_direct', 'lc.layanan_id', '=', 'l_direct.layanan_id')
             ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
             ->leftJoin('paket_detail as pd', 'pc.paket_id', '=', 'pd.paket_id')
-            ->leftJoinSub(
-                DB::table('paket_detail')
-                    ->select(
-                        'paket_id',
-                        DB::raw('COUNT(*) as jumlah_layanan')
-                    )
-                    ->groupBy('paket_id'),
-                'pd_count',
-                function ($join) {
-                    $join->on('pc.paket_id', '=', 'pd_count.paket_id');
-                }
-            )
             ->leftJoin('layanan as l_paket', 'pd.layanan_id', '=', 'l_paket.layanan_id')
             ->leftJoin(
                 'jenis_layanan as jl',
