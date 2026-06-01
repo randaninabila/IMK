@@ -272,17 +272,6 @@
             </div>
         </div>
     </div>
-
-    {{-- Indikator Gulir --}}
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <a href="#layanan" class="flex flex-col items-center gap-2 text-gray-400 hover:text-rose-400 transition-colors">
-            <span class="text-xs">Gulir</span>
-
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-            </svg>
-        </a>
-    </div>
 </section>
 
 {{-- 🏆 KENAPA PILIH KAMI - Fitur Unggulan --}}
@@ -416,11 +405,17 @@
                                     <h3 class="font-bold text-xl text-[#3E382D]">
                                         {{ $cabang->nama_cabang }}
                                     </h3>
-
-                                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full mt-2">
-                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                        Buka Sekarang
-                                    </span>
+                                    @if($cabang->is_buka_realtime)
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full mt-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                            Buka Sekarang
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded-full mt-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            Tutup
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -599,30 +594,30 @@
             <div class="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar" id="promoListContainer">
                 @if($promos->isNotEmpty())
                     <div class="space-y-3">
-                        @foreach($promos as $promo)
-                            {{-- ✅ Tambahkan data-cabang untuk filtering --}}
-                            <div class="promo-item flex items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-rose-200 hover:shadow-md transition" 
-                                 data-cabang="{{ $promo->cabang }}">
-                                
-                                <div class="flex-1 min-w-0">
-                                    <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mb-1.5 bg-blue-100 text-blue-600">
-                                        {{ $promo->kategori }}
-                                    </span>
-                                    <p class="text-sm font-bold text-[#3E382D] truncate">{{ $promo->nama }}</p>
-                                    <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
-                                        📍 {{ $promo->cabang }}
-                                    </p>
-                                </div>
+@foreach($promos as $promo)
+    <a href="{{ route('pelanggan.booking.create', $promo->layanan_cabang_id) }}"
+   class="promo-item flex items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-rose-200 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer block text-left" 
+   data-cabang="{{ $promo->cabang }}">
+        
+        <div class="flex-1 min-w-0">
+            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mb-1.5 bg-blue-100 text-blue-600">
+                {{ $promo->kategori }}
+            </span>
+            <p class="text-sm font-bold text-[#3E382D] truncate">{{ $promo->nama }}</p>
+            <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                📍 {{ $promo->cabang }}
+            </p>
+        </div>
 
-                                <div class="text-right shrink-0 pl-2">
-                                    <p class="text-xs text-gray-400 line-through">Rp {{ number_format($promo->harga_normal, 0, ',', '.') }}</p>
-                                    <p class="text-base font-black text-rose-500">Rp {{ number_format($promo->harga_promo, 0, ',', '.') }}</p>
-                                    <span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-rose-100 text-[10px] font-bold text-rose-600">
-                                        -{{ $promo->diskon }}%
-                                    </span>
-                                </div>
-                            </div>
-                        @endforeach
+        <div class="text-right shrink-0 pl-2">
+            <p class="text-xs text-gray-400 line-through">Rp {{ number_format($promo->harga_normal, 0, ',', '.') }}</p>
+            <p class="text-base font-black text-rose-500">Rp {{ number_format($promo->harga_promo, 0, ',', '.') }}</p>
+            <span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-rose-100 text-[10px] font-bold text-rose-600">
+                -{{ $promo->diskon }}%
+            </span>
+        </div>
+    </a>
+@endforeach
                     </div>
                     
                     {{-- Empty State (Hidden by default) --}}
@@ -654,12 +649,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. SMOOTH SCROLL FOR ANCHOR LINKS
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-
             const target = document.querySelector(this.getAttribute('href'));
-
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -669,44 +664,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-document.addEventListener('DOMContentLoaded', function() {
+    // 2. FILTER CABANG PROMO LOGIC (SUDAH DIPERBAIKI)
     const pills = document.querySelectorAll('.branch-pill');
     const items = document.querySelectorAll('.promo-item');
     const emptyMsg = document.getElementById('noPromoMsg');
 
-    pills.forEach(pill => {
-        pill.addEventListener('click', function() {
-            const selectedValue = this.dataset.value;
+    pills.forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
 
-            // Update style tombol aktif
-            pills.forEach(p => {
-                p.classList.remove('bg-rose-500', 'text-white', 'shadow-sm');
-                p.classList.add('bg-white', 'text-rose-500', 'border', 'border-rose-200');
+            // Atur style tombol aktif
+            pills.forEach(btn => {
+                btn.classList.remove("bg-rose-500", "text-white", "shadow-sm", "active");
+                btn.classList.add("bg-white", "border", "border-rose-200", "text-rose-500");
             });
-            this.classList.remove('bg-white', 'text-rose-500', 'border', 'border-rose-200');
-            this.classList.add('bg-rose-500', 'text-white', 'shadow-sm');
+            this.classList.remove("bg-white", "border", "border-rose-200", "text-rose-500");
+            this.classList.add("bg-rose-500", "text-white", "shadow-sm", "active");
 
-            // Filter items
+            // Ambil value filter
+            const selectedBranch = this.getAttribute("data-value").trim(); 
             let visibleCount = 0;
+            
             items.forEach(item => {
-                if (selectedValue === 'all' || item.dataset.cabang === selectedValue) {
-                    item.style.display = 'flex';
+                const itemBranch = item.getAttribute("data-cabang").trim();
+
+                if (selectedBranch === "all" || itemBranch === selectedBranch) {
+                    item.style.setProperty('display', 'flex', 'important'); 
                     visibleCount++;
                 } else {
-                    item.style.display = 'none';
+                    item.style.setProperty('display', 'none', 'important');
                 }
             });
 
-            // Tampilkan pesan jika kosong
+            // Tampilkan pesan jika tidak ada promo di cabang terpilih
             if (visibleCount === 0) {
-                emptyMsg.classList.remove('hidden');
+                if (emptyMsg) emptyMsg.style.setProperty('display', 'block', 'important');
             } else {
-                emptyMsg.classList.add('hidden');
+                if (emptyMsg) emptyMsg.style.setProperty('display', 'none', 'important');
             }
         });
     });
-});
 
+    // 3. INTERSECTION OBSERVER FOR ANIMATIONS
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -728,6 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(el);
     });
 
+    // 4. ESCAPE KEY TO CLOSE MODAL
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closePromoModal();
@@ -735,40 +735,23 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// 5. MODAL CONTROL FUNCTIONS (SINKRON & RAPI)
 function openPromoModal() {
     const modal = document.getElementById('promoModal');
-
     if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
     }
 }
 
 function closePromoModal() {
     const modal = document.getElementById('promoModal');
-
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
     }
-}
-
-function closePromoModalByOverlay(event) {
-    if (event.target.id === 'promoModal') {
-        closePromoModal();
-    }
-}
-
-function openPromoModal() {
-    document.getElementById('promoModal').classList.remove('hidden');
-    document.getElementById('promoModal').classList.add('flex');
-    document.body.style.overflow = 'hidden';
-}
-
-function closePromoModal() {
-    document.getElementById('promoModal').classList.add('hidden');
-    document.getElementById('promoModal').classList.remove('flex');
-    document.body.style.overflow = 'auto';
 }
 
 function closePromoModalByOverlay(event) {
@@ -776,13 +759,5 @@ function closePromoModalByOverlay(event) {
         closePromoModal();
     }
 }
-
-// Buka modal otomatis jika ada promo (opsional)
-document.addEventListener('DOMContentLoaded', function() {
-    // Uncomment baris di bawah jika ingin modal muncul otomatis
-    // if (document.querySelectorAll('#promoModal .bg-gray-50').length > 0) {
-    //     setTimeout(openPromoModal, 1000);
-    // }
-});
 </script>
 @endpush

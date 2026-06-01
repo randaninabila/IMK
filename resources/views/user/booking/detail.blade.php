@@ -83,7 +83,7 @@
                 <div class="flex flex-col items-end gap-1">
                     @if($isRescheduled)
                         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-orange-500">
-                            Reschedule
+                            Jadwal Ulang
                         </span>
                     @endif
                     <span class="px-4 py-2 rounded-full text-sm font-semibold {{ $cfg['bg'] }} {{ $cfg['text'] }}">
@@ -171,7 +171,7 @@
                     @php
                         $payStatus = [
                             'pending'  => ['class' => 'text-amber-600', 'label' => 'Menunggu Verifikasi'],
-                            'verified' => ['class' => 'text-green-600', 'label' => 'Lunas ✓'],
+                            'verified' => ['class' => 'text-green-600', 'label' => 'Lunas'],
                             'failed'   => ['class' => 'text-red-600',   'label' => 'Gagal'],
                             'on_hold'  => ['class' => 'text-gray-600',  'label' => 'Ditunda'],
                         ];
@@ -254,7 +254,7 @@
                     @if($booking->status === 'pending' && !$isRescheduled)
                         <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}"
                            class="flex-1 min-w-[120px] bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-3 rounded-xl text-center text-sm transition border border-blue-200">
-                            Reschedule
+                            Jadwal Ulang
                         </a>
                     @endif
 
@@ -278,11 +278,6 @@
             </div>
 
         </div>
-
-        <div class="mt-6 text-center text-xs text-gray-400">
-            <p>Butuh bantuan? <a href="https://wa.me/6287869590802" class="text-green-500 hover:underline">WhatsApp Kami</a></p>
-        </div>
-
     </div>
 </div>
 @endsection

@@ -83,7 +83,7 @@
 <div class="flex flex-col items-end gap-1">
     @if($booking->is_rescheduled)
         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-orange-500">
-            Reschedule
+            Jadwal Ulang
         </span>
     @endif
     @if(!$booking->is_rescheduled || $booking->booking_status !== 'pending')
@@ -179,7 +179,7 @@
                             @if($booking->booking_status === 'pending' && !$booking->is_rescheduled)
     <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
        class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-blue-200">
-        Reschedule
+        Jadwal Ulang
     </a>
 @endif
 

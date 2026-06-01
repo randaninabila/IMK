@@ -254,70 +254,82 @@ class BookingController extends Controller
     // app/Http/Controllers/User/BookingController.php
 
     public function history(Request $request)
-{
-    $user      = Auth::user();
-    $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
-    
-    if (!$pelanggan) {
-        abort(403, 'Data pelanggan tidak ditemukan.');
+    {
+        $user      = Auth::user();
+        $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
+
+        if (!$pelanggan) {
+            abort(403, 'Data pelanggan tidak ditemukan.');
+        }
+
+        $query = DB::table('booking as b')
+            ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
+            // Pembayaran: ambil yang paling relevan
+            ->leftJoin('pembayaran as p', function ($join) {
+                $join->on('p.booking_id', '=', 'b.booking_id')
+                    ->whereIn('p.status', ['pending', 'verified']);
+            })
+            // Detail booking
+            ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+            // Jalur layanan tunggal
+            ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l',         'l.layanan_id',          '=', 'lc.layanan_id')
+            ->leftJoin('cabang as c',          'c.cabang_id',           '=', 'lc.cabang_id')
+            // Jalur paket — cabang diambil dari paket_cabang
+            ->leftJoin('paket_cabang as pc',   'pc.paket_id',           '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pak', 'pak.paket_id',          '=', 'pc.paket_id')
+            ->leftJoin('cabang as cp',         'cp.cabang_id',          '=', 'pc.cabang_id')
+            // Ulasan & reschedule
+            ->leftJoin('ulasan as u',              'u.booking_id',   '=', 'b.booking_id')
+            ->leftJoin('booking_reschedule as br', 'br.booking_id',  '=', 'b.booking_id')
+            ->where('pl.user_id', $user->user_id)
+            ->groupBy(
+                'b.booking_id',
+                'b.tanggal_booking',
+                'b.jam_booking',
+                'b.status',
+                'b.tipe_booking',
+                'b.created_at',
+                'p.pembayaran_id',
+                'p.metode_pembayaran',
+                'p.jumlah',
+                'p.status',
+                'p.bukti_pembayaran'
+            )
+            ->select(
+                'b.booking_id',
+                'b.tanggal_booking',
+                'b.jam_booking',
+                'b.status as booking_status',
+                'b.tipe_booking',
+                'b.created_at',
+                'p.pembayaran_id',
+                'p.metode_pembayaran',
+                'p.jumlah as total_bayar',
+                'p.status as payment_status',
+                'p.bukti_pembayaran',
+                // Nama layanan: gabungkan layanan tunggal + nama paket
+                DB::raw("COALESCE(
+                    NULLIF(GROUP_CONCAT(DISTINCT l.nama_layanan ORDER BY l.nama_layanan SEPARATOR ', '), ''),
+                    MAX(pak.nama_paket),
+                    'Layanan'
+                ) as layanan_nama"),
+                DB::raw('COUNT(DISTINCT bd.booking_detail_id) as jumlah_layanan'),
+                // Cabang: dari layanan tunggal atau dari paket
+                DB::raw('COALESCE(MAX(c.nama_cabang), MAX(cp.nama_cabang)) as nama_cabang'),
+                DB::raw('COALESCE(MAX(c.alamat),      MAX(cp.alamat))      as alamat'),
+                DB::raw('IF(COUNT(DISTINCT u.ulasan_id)  > 0, 1, 0) as sudah_ulasan'),
+                DB::raw('IF(COUNT(DISTINCT br.reschedule_id) > 0, 1, 0) as is_rescheduled')
+            );
+
+        if ($request->filled('status')) {
+            $query->where('b.status', $request->status);
+        }
+
+        $bookings = $query->orderByDesc('b.created_at')->paginate(10);
+
+        return view('user.booking.history', compact('bookings', 'user'));
     }
-
-    $query = DB::table('booking as b')
-        ->join('pelanggan as pl', 'b.pelanggan_id', '=', 'pl.pelanggan_id')
-        ->leftJoin('pembayaran as p', function ($join) {
-            $join->on('p.booking_id', '=', 'b.booking_id')
-                ->whereIn('p.status', ['pending', 'verified']);
-        })
-        ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
-        ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-        ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
-        ->leftJoin('cabang as c', 'c.cabang_id', '=', 'lc.cabang_id')
-        ->leftJoin('ulasan as u', 'u.booking_id', '=', 'b.booking_id')
-        ->leftJoin('booking_reschedule as br', 'br.booking_id', '=', 'b.booking_id')
-        ->where('pl.user_id', $user->user_id)
-        ->groupBy(
-            'b.booking_id', 
-            'b.tanggal_booking', 
-            'b.jam_booking',
-            'b.tipe_booking', 
-            'b.created_at',
-            'b.status',  // ✅ Tambah status ke GROUP BY
-            'p.pembayaran_id', 
-            'p.metode_pembayaran', 
-            'p.jumlah',
-            'p.status', 
-            'p.bukti_pembayaran',
-            'c.nama_cabang',  // ✅ Tambah nama_cabang ke GROUP BY
-            'c.alamat'        // ✅ Tambah alamat ke GROUP BY
-        )
-        ->select(
-            'b.booking_id', 
-            'b.tanggal_booking', 
-            'b.jam_booking',
-            DB::raw('COALESCE(MAX(b.status), "pending") as booking_status'),
-            'b.tipe_booking', 
-            'b.created_at',
-            'p.pembayaran_id', 
-            'p.metode_pembayaran',
-            'p.jumlah as total_bayar', 
-            'p.status as payment_status',
-            'p.bukti_pembayaran',
-            DB::raw('COALESCE(GROUP_CONCAT(DISTINCT l.nama_layanan SEPARATOR ", "), "Layanan") as layanan_nama'),
-            DB::raw('COUNT(DISTINCT bd.booking_detail_id) as jumlah_layanan'),
-            DB::raw('MAX(c.nama_cabang) as nama_cabang'),  // ✅ Gunakan MAX() untuk aman
-            DB::raw('MAX(c.alamat) as alamat'),             // ✅ Gunakan MAX() untuk aman
-            DB::raw('IF(COUNT(DISTINCT u.ulasan_id) > 0, 1, 0) as sudah_ulasan'),
-            DB::raw('IF(COUNT(DISTINCT br.reschedule_id) > 0, 1, 0) as is_rescheduled')
-        );
-
-    if ($request->filled('status')) {
-        $query->where('b.status', $request->status);
-    }
-
-    $bookings = $query->orderBy('b.created_at', 'desc')->paginate(10);
-
-    return view('user.booking.history', compact('bookings', 'user'));
-}
 
     // =====================================================================
     // SHOW — Detail booking

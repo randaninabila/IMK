@@ -33,11 +33,6 @@
                     $firstLayanan = $layananList->first();
                 @endphp
 
-                @if($firstLayanan?->durasi)
-                <p class="mt-3 text-sm opacity-75">
-                    ⏱ {{ $firstLayanan->durasi }} menit
-                </p>
-                @endif
             </div>
         </div>
     </section>

@@ -82,46 +82,53 @@
     </section>
 
     {{-- HASIL PERAWATAN --}}
-    @if($resultFotos->isNotEmpty())
-    <section class="px-6 pb-15">
-        <div class="max-w-4xl mx-auto">
-            <p class="text-center text-[11px] text-[#c47878] uppercase tracking-widest mb-7 font-semibold">Hasil Perawatan</p>
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
-                @foreach($resultFotos as $foto)
-                <div class="group relative rounded-xl overflow-hidden border border-[#fce7e7] bg-[#faf7f5] shadow-sm hover:shadow-md transition-shadow aspect-[4/5]">
-                    <img src="{{ $foto->url_foto ? asset($foto->url_foto) : asset('album/default.jpg') }}"
-                         alt="Hasil perawatan {{ $layanan->nama_layanan }}"
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                         onerror="this.onerror=null;this.src='{{ asset('album/default.jpg') }}';">
+@if($resultFotos && $resultFotos->isNotEmpty())
+<section class="px-6 pb-15">
+    <div class="max-w-4xl mx-auto">
+        <p class="text-center text-[11px] text-[#c47878] uppercase tracking-widest mb-7 font-semibold">
+            Hasil Perawatan
+        </p>
+        
+        {{-- Grid Otomatis: Menyesuaikan jumlah foto. Jika 1-2 foto akan rapi, jika banyak otomatis membuat baris baru --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 justify-center">
+            @foreach($resultFotos as $foto)
+            <div class="group relative rounded-xl overflow-hidden border border-[#fce7e7] bg-[#faf7f5] shadow-sm hover:shadow-md transition-shadow aspect-[4/5]">
+                <img src="{{ asset($foto->url_foto) }}"
+                     alt="Hasil perawatan {{ $layanan->nama_layanan }}"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     onerror="this.onerror=null;this.src='{{ asset('album/default.jpg') }}';">
+                
+                {{-- Label tag opsional jika ada deskripsi --}}
+                @if(!empty($foto->deskripsi_foto))
+                <div class="absolute bottom-0 inset-x-0 bg-black/50 p-2 text-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <p class="text-[10px] text-white truncate">{{ $foto->deskripsi_foto }}</p>
                 </div>
-                @endforeach
+                @endif
             </div>
+            @endforeach
         </div>
-    </section>
-    @else
-    {{-- Fallback: cover_foto layanan jika tidak ada result photos --}}
-    @if($layanan->cover_foto)
+    </div>
+</section>
+@else
+    {{-- FALLBACK: Jika resultFotos kosong, tampilkan 1 cover_foto bawaan layanan saja sebagai pajangan (BUKAN di-loop 4 kali) --}}
+    @if(!empty($layanan->cover_foto))
     <section class="px-6 pb-15">
-        <div class="max-w-4xl mx-auto">
-            <p class="text-center text-[11px] text-[#c47878] uppercase tracking-widest mb-7 font-semibold">Hasil Perawatan</p>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                @for($i = 0; $i < 4; $i++)
-                <div class="rounded-xl overflow-hidden border border-[#fce7e7] bg-[#faf7f5] shadow-sm">
-                    <img src="{{ asset($layanan->cover_foto) }}"
-                         alt="{{ $layanan->nama_layanan }}"
-                         class="w-full object-cover"
-                         onerror="this.onerror=null;this.src='{{ asset('album/default.jpg') }}';">
-                </div>
-                @endfor
+        <div class="max-w-sm mx-auto">
+            <p class="text-center text-[11px] text-[#c47878] uppercase tracking-widest mb-7 font-semibold">Foto Layanan</p>
+            <div class="rounded-xl overflow-hidden border border-[#fce7e7] bg-[#faf7f5] shadow-sm aspect-[4/5]">
+                <img src="{{ asset($layanan->cover_foto) }}"
+                     alt="{{ $layanan->nama_layanan }}"
+                     class="w-full h-full object-cover"
+                     onerror="this.onerror=null;this.src='{{ asset('album/default.jpg') }}';">
             </div>
         </div>
     </section>
     @else
     <section class="px-6 pb-15 text-center">
-        <p class="text-gray-400 text-sm">Foto hasil perawatan belum tersedia</p>
+        <p class="text-gray-400 text-xs uppercase tracking-widest">Foto hasil perawatan belum tersedia</p>
     </section>
     @endif
-    @endif
+@endif
 
     {{-- HARGA --}}
     @if($layananCabang->isNotEmpty())
