@@ -198,7 +198,7 @@
 
                 <div class="relative w-80 h-80 lg:w-[450px] lg:h-[450px] bg-white rounded-[10px] shadow-2xl border border-rose-100 overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-white flex flex-col items-center justify-center p-8">
-                        <div class="relative">
+                        <div class="relative flex h-[190px] w-[190px] items-center justify-center rounded-[30px] bg-white/70 border border-[#F1D6DE] shadow-[0_15px_35px_rgba(232,168,200,0.18)]">
                             @php
                                 $salonLogo = $salon->logo ?? null;
                                 $logoUrl = $salonLogo
@@ -206,19 +206,21 @@
                                     : null;
                             @endphp
 
-                            @if($logoUrl)
-                                <img src="{{ $logoUrl }}"
-                                     alt="{{ $salon->nama ?? 'Logo Salon' }}"
-                                     class="w-32 h-32 object-contain p-2"
-                                     onerror="this.parentElement.innerHTML='<svg class=\'w-32 h-32 text-rose-300\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'0.5\' d=\'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z\'/><circle cx=\'12\' cy=\'10\' r=\'2.5\' fill=\'currentColor\' class=\'text-rose-200\'/></svg>'">
-                            @else
-                                <svg class="w-32 h-32 text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    <circle cx="12" cy="10" r="2.5" fill="currentColor" class="text-rose-200"/>
-                                </svg>
-                            @endif
+                            <div class="flex h-[150px] w-[150px] items-center justify-center overflow-hidden rounded-[22px] bg-[#F3A7D4] border border-white/80 shadow-[0_10px_25px_rgba(232,168,200,0.28)]">
+                                @if($logoUrl)
+                                    <img src="{{ $logoUrl }}"
+                                         alt="{{ $salon->nama ?? 'Logo Salon' }}"
+                                         class="h-[142px] w-[142px] object-contain p-1"
+                                         onerror="this.parentElement.innerHTML='<svg class=\'w-[118px] h-[118px] text-rose-300\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'0.5\' d=\'M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z\'/><circle cx=\'12\' cy=\'10\' r=\'2.5\' fill=\'currentColor\' class=\'text-rose-200\'/></svg>'">
+                                @else
+                                    <svg class="w-[118px] h-[118px] text-rose-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="0.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        <circle cx="12" cy="10" r="2.5" fill="currentColor" class="text-rose-200"/>
+                                    </svg>
+                                @endif
+                            </div>
 
-                            <div class="absolute -top-2 -right-2 bg-gradient-to-r from-rose-400 to-pink-400 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg animate-bounce" style="animation-duration: 3s;">
+                            <div class="absolute -top-3 -right-5 bg-gradient-to-r from-rose-400 to-pink-400 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg animate-bounce" style="animation-duration: 3s;">
                                 ✨ Unggulan
                             </div>
                         </div>
