@@ -114,7 +114,7 @@ class UlasanController extends Controller
                 DB::table('ulasan_foto')->insert([
                     'ulasan_id'  => $ulasanId,
                     'url_foto'   => $filename,
-                    'status'     => 'pending',
+                    'status'     => 'approved',
                     'created_at' => now(),
                 ]);
             }

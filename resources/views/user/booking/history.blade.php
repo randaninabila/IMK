@@ -73,7 +73,7 @@
         'cancelled' => 'bg-red-100 text-red-700',
     ];
     $statusLabels = [
-        'pending'   => 'Pending',
+        'pending'   => 'Menunggu',
         'confirmed' => 'Dikonfirmasi',
         'in_progress'   => 'Berlangsung',
         'completed' => 'Selesai',

@@ -199,8 +199,7 @@
              </div>
 
              <p class="mt-[22px] text-[14px] leading-[1.4] font-semibold text-[#6B5A55]">
-                Ulasan akan tersimpan ke database setelah dikirim.
-                Foto akan ditinjau oleh admin sebelum ditampilkan.
+                Ulasan akan tersimpan dan akan ditampilkan pada halaman Testimoni Pengguna.
              </p>
          </div>
 

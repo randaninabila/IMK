@@ -46,7 +46,7 @@ class TestimoniController extends Controller
             ->leftJoinSub($fotoSub, 'uf', fn($j) => $j->on('uf.ulasan_id', '=', 'u.ulasan_id'))
             ->select([
                 'u.ulasan_id',
-                DB::raw("COALESCE(us.nama, 'Pelanggan Dina') as name"),
+                DB::raw("CASE WHEN u.nama_samar = 1 THEN 'Pelanggan' ELSE COALESCE(us.nama, 'Pelanggan Dina') END as name"),
                 DB::raw("COALESCE(u.komentar, 'Ulasan pelanggan belum tersedia.') as comment"),
                 DB::raw("COALESCE(u.rating, 5) as rating"),
                 DB::raw("COALESCE(
@@ -57,7 +57,7 @@ class TestimoniController extends Controller
                 DB::raw("MAX(uf.foto) as photo"),
                 'u.created_at as date',
             ])
-            ->groupBy('u.ulasan_id', 'us.nama', 'u.komentar', 'u.rating', 'u.created_at')
+            ->groupBy('u.ulasan_id', 'us.nama', 'u.komentar', 'u.nama_samar', 'u.rating', 'u.created_at')
             ->orderByDesc('u.created_at');
 
         // Filter by jenis layanan (jika dipilih)
@@ -100,6 +100,9 @@ class TestimoniController extends Controller
         }
         if (str_starts_with($photo, 'storage/')) {
             return asset($photo);
+        }
+        if (str_starts_with($photo, 'ulasan/')) {
+            return asset($photo);  // file ada di public/ulasan/, bukan storage
         }
         return asset('storage/' . $photo);
     }
