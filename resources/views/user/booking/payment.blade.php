@@ -90,8 +90,7 @@
                             {{-- QR Code --}}
                             <div class="text-center">
                                 <div class="bg-gray-50 border-2 border-dashed border-pink-200 rounded-2xl p-6 inline-block">
-                                    {{-- Ganti src dengan path QRIS statis salon kamu --}}
-                                    <img src="{{ asset('images/qris-salon.png') }}" alt="QRIS Salon" class="w-48 h-48 object-contain mx-auto rounded-xl bg-white shadow-sm" 
+                                    <img src="{{ asset('qris/QRIS.jpeg') . '?v=' . time() }}" alt="QRIS Salon" class="w-48 h-48 object-contain mx-auto rounded-xl bg-white shadow-sm" 
                                          onerror="this.src='https://via.placeholder.com/192x192?text=QR+Salon'">
                                     <p class="text-xs text-gray-400 mt-2">Scan dengan m-banking / e-wallet</p>
                                 </div>
