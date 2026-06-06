@@ -83,7 +83,7 @@ class PelangganAdminController extends Controller
                     ->from('booking as b')
                     ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
                     ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-                    ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'bd.pegawai_id')
+                    ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
                     ->whereColumn('b.pelanggan_id', 'pl.pelanggan_id')
                     ->where(function ($branchQuery) use ($selectedCabangId) {
                         $branchQuery->where('lc.cabang_id', $selectedCabangId)
