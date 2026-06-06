@@ -73,7 +73,7 @@
         'cancelled' => 'bg-red-100 text-red-700',
     ];
     $statusLabels = [
-        'pending'   => 'Pending',
+        'pending'   => 'Menunggu',
         'confirmed' => 'Dikonfirmasi',
         'in_progress'   => 'Berlangsung',
         'completed' => 'Selesai',
@@ -83,7 +83,7 @@
 <div class="flex flex-col items-end gap-1">
     @if($booking->is_rescheduled)
         <span class="px-3 py-1 rounded-full text-xs font-semibold bg-white/90 text-orange-500">
-            Reschedule
+            Jadwal Ulang
         </span>
     @endif
     @if(!$booking->is_rescheduled || $booking->booking_status !== 'pending')
@@ -176,19 +176,23 @@
                             </a>
 
                             
-                            @if(in_array($booking->booking_status, ['pending', 'confirmed']) && !$booking->is_rescheduled)
+                            @if($booking->booking_status === 'pending' && !$booking->is_rescheduled)
     <a href="{{ route('pelanggan.booking.reschedule', $booking->booking_id) }}" 
        class="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-blue-200">
-        Reschedule
+        Jadwal Ulang
     </a>
 @endif
 
-                            {{-- Ulasan (jika completed) --}}
-                            @if($booking->booking_status === 'completed')
-                                <a href="#" 
-                                   class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-green-200">
+                            @if($booking->booking_status === 'completed' && !$booking->sudah_ulasan)
+                                <a href="{{ route('pelanggan.booking.ulasan', $booking->booking_id) }}" 
+                                class="flex-1 bg-green-50 hover:bg-green-100 text-green-600 font-semibold py-2.5 rounded-xl text-center text-sm transition border border-green-200">
                                     Beri Ulasan ⭐
                                 </a>
+                            @elseif($booking->booking_status === 'completed' && $booking->sudah_ulasan)
+                                {{-- Tampilkan badge "Sudah Diulas" jika sudah review --}}
+                                <span class="flex-1 bg-gray-100 text-gray-400 font-semibold py-2.5 rounded-xl text-center text-sm cursor-not-allowed">
+                                    ✓ Sudah Diulas
+                                </span>
                             @endif
                         </div>
 

@@ -90,8 +90,7 @@
                             {{-- QR Code --}}
                             <div class="text-center">
                                 <div class="bg-gray-50 border-2 border-dashed border-pink-200 rounded-2xl p-6 inline-block">
-                                    {{-- Ganti src dengan path QRIS statis salon kamu --}}
-                                    <img src="{{ asset('images/qris-salon.png') }}" alt="QRIS Salon" class="w-48 h-48 object-contain mx-auto rounded-xl bg-white shadow-sm" 
+                                    <img src="{{ asset('qris/QRIS.jpeg') . '?v=' . time() }}" alt="QRIS Salon" class="w-48 h-48 object-contain mx-auto rounded-xl bg-white shadow-sm" 
                                          onerror="this.src='https://via.placeholder.com/192x192?text=QR+Salon'">
                                     <p class="text-xs text-gray-400 mt-2">Scan dengan m-banking / e-wallet</p>
                                 </div>
@@ -100,7 +99,7 @@
                             {{-- Langkah --}}
                             <div class="space-y-3">
                                 <p class="font-semibold text-[#3E382D] text-sm mb-3">Cara bayar QRIS:</p>
-                                @foreach(['Buka aplikasi m-banking atau e-wallet', 'Pilih menu Scan QR / QRIS', 'Scan QR Code di samping', 'Masukkan nominal: Rp ' . number_format($total, 0, ',', '.'), 'Konfirmasi pembayaran', 'Screenshot bukti transfer', 'Upload bukti di bawah'] as $i => $step)
+                                @foreach(['Buka aplikasi m-banking atau e-wallet', 'Pilih menu Scan QR / QRIS', 'Scan Kode QR di samping', 'Masukkan nominal: Rp ' . number_format($total, 0, ',', '.'), 'Konfirmasi pembayaran', 'Screenshot bukti transfer', 'Upload bukti di bawah'] as $i => $step)
                                     <div class="flex items-start gap-3">
                                         <div class="w-6 h-6 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center text-xs font-bold shrink-0">{{ $i + 1 }}</div>
                                         <p class="text-sm text-gray-600">{{ $step }}</p>
@@ -168,7 +167,7 @@
                         <p class="text-white text-lg font-bold mt-0.5">#{{ str_pad($booking->booking_id, 5, '0', STR_PAD_LEFT) }}</p>
                     </div>
                     <div class="p-6 space-y-4 text-sm">
-                        
+
                         {{-- List Layanan --}}
                         @forelse($layananList as $item)
                             <div class="flex items-start justify-between gap-3">

@@ -28,6 +28,8 @@ use App\Http\Controllers\User\PaymentController;
 use App\Http\Controllers\User\HomeController;
 use App\Http\Controllers\User\GalleryController;
 use App\Http\Controllers\User\TestimoniController;
+use App\Http\Controllers\User\UlasanController;
+use App\Http\Controllers\User\PromoController;
 
 use App\Http\Controllers\Pegawai\PegawaiDashboardController;
 use App\Http\Controllers\Pegawai\JadwalPegawaiController;
@@ -89,70 +91,13 @@ Route::get('/ulasan/inputulasan', function () {
 // =====================
 // GALLERY
 // =====================
-
-Route::get('/gallery', function () {
-    if (class_exists(GalleryController::class)) {
-        return app(GalleryController::class)->index();
-    }
-
-    $albums = Album::with(['layanan', 'fotos'])->get();
-
-    return view('user.gallery.gallery', compact('albums'));
-})->name('gallery');
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
 
 Route::get('/gallery-index', function () {
     return redirect()->route('gallery');
 })->name('gallery.index');
 
-Route::get('/gallery/detail/{identifier?}', function ($identifier = null) {
-    if (!$identifier) {
-        return redirect()->route('gallery');
-    }
-
-    $album = new Album();
-    $table = $album->getTable();
-
-    if (is_numeric($identifier)) {
-        $gallery = Album::with(['layanan', 'fotos'])->findOrFail($identifier);
-
-        return view('user.gallery.gdetail', compact('gallery'));
-    }
-
-    if (Schema::hasColumn($table, 'slug')) {
-        $gallery = Album::with(['layanan', 'fotos'])
-            ->where('slug', $identifier)
-            ->firstOrFail();
-
-        return view('user.gallery.gdetail', compact('gallery'));
-    }
-
-    abort(404);
-})->name('gallery.detail');
-
-Route::get('/gallery/{identifier}', function ($identifier) {
-    if (class_exists(GalleryController::class) && !is_numeric($identifier)) {
-        return app(GalleryController::class)->show($identifier);
-    }
-
-    $album = new Album();
-    $table = $album->getTable();
-
-    if (is_numeric($identifier)) {
-        $gallery = Album::with(['layanan', 'fotos'])->findOrFail($identifier);
-
-        return view('user.gallery.gdetail', compact('gallery'));
-    }
-
-    if (Schema::hasColumn($table, 'slug')) {
-        $gallery = Album::with(['layanan', 'fotos'])
-            ->where('slug', $identifier)
-            ->firstOrFail();
-
-        return view('user.gallery.gdetail', compact('gallery'));
-    }
-
-    abort(404);
-})->name('gallery.show');
+Route::get('/gallery/detail/{slug}', [GalleryController::class, 'show'])->name('gallery.detail');
 
 
 // =====================
@@ -601,6 +546,12 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
+
+        Route::get('/booking/{booking_id}/ulasan', [UlasanController::class, 'create'])->name('booking.ulasan');
+        Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])->name('booking.ulasan.store');
+
+        Route::get('/promo/data', [PromoController::class, 'index'])
+        ->name('pelanggan.promo.data');
 
         Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
             ->name('booking.paket')

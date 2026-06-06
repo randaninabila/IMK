@@ -156,7 +156,7 @@
 
         {{-- Left Content --}}
         <div class="space-y-8 animate-fade-in-up">
-            <h1 class="text-5xl lg:text-7xl font-bold leading-tight">
+            <h1 class="text-5xl lg:text-5xl font-bold leading-tight">
                 <span class="text-[#3E382D]">Cantik dari</span><br>
                 <span class="text-gradient">Dalam & Luar</span>
             </h1>
@@ -198,7 +198,7 @@
 
                 <div class="relative w-80 h-80 lg:w-[450px] lg:h-[450px] bg-white rounded-[10px] shadow-2xl border border-rose-100 overflow-hidden">
                     <div class="absolute inset-0 bg-gradient-to-br from-rose-50 via-pink-50 to-white flex flex-col items-center justify-center p-8">
-                        <div class="relative flex h-[190px] w-[190px] items-center justify-center rounded-[30px] bg-white/70 border border-[#F1D6DE] shadow-[0_15px_35px_rgba(232,168,200,0.18)]">
+                        <div class="relative flex h-[150px] w-[150px] items-center justify-center rounded-[30px] bg-white/70 border border-[#F1D6DE] shadow-[0_15px_35px_rgba(232,168,200,0.18)]">
                             @php
                                 $salonLogo = $salon->logo ?? null;
                                 $logoUrl = $salonLogo
@@ -271,17 +271,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {{-- Indikator Gulir --}}
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-        <a href="#layanan" class="flex flex-col items-center gap-2 text-gray-400 hover:text-rose-400 transition-colors">
-            <span class="text-xs">Gulir</span>
-
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
-            </svg>
-        </a>
     </div>
 </section>
 
@@ -416,11 +405,17 @@
                                     <h3 class="font-bold text-xl text-[#3E382D]">
                                         {{ $cabang->nama_cabang }}
                                     </h3>
-
-                                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full mt-2">
-                                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                                        Buka Sekarang
-                                    </span>
+                                    @if($cabang->is_buka_realtime)
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-600 text-xs font-semibold rounded-full mt-2">
+                                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                                            Buka Sekarang
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-xs font-semibold rounded-full mt-2">
+                                            <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                            Tutup
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -508,20 +503,32 @@
 </section>
 
 {{-- 🎁 BADGE PROMO MENGAMBANG --}}
-<div class="fixed bottom-[96px] right-6 z-50 animate-fade-in-up delay-300">
+@php
+    // ✅ Fallback jika variabel tidak dikirim dari controller
+    $promos = $promos ?? collect();
+    $totalPromo = $totalPromo ?? $promos->count();
+    $maxDiskon = $promos->max('diskon') ?? 0;
+@endphp
+
+<div class="fixed bottom-[96px] right-6 z-50 animate-fade-in-up delay-300 {{ $totalPromo === 0 ? 'hidden' : '' }}">
     <button type="button"
             onclick="openPromoModal()"
             class="group flex items-center gap-3 px-5 py-4 bg-white text-[#3E382D] font-bold rounded-2xl shadow-2xl border border-rose-100 hover:-translate-y-1 hover:shadow-rose-300/40 transition-all duration-300">
-        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-pink-400 text-white text-xl font-black">
+        <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-pink-400 text-white text-xl font-black relative">
             %
+            @if($totalPromo > 0)
+                <span class="absolute -top-2 -right-2 w-5 h-5 bg-white text-rose-500 text-xs font-bold rounded-full flex items-center justify-center border-2 border-rose-400">
+                    {{ $totalPromo }}
+                </span>
+            @endif
         </span>
 
         <span class="text-left leading-tight">
             <span class="block text-sm">
-                Promo
+                {{ $totalPromo }} Promo Aktif
             </span>
             <span class="block text-xs font-semibold text-rose-500">
-                Klik untuk lihat
+                Hemat hingga {{ $maxDiskon }}%
             </span>
         </span>
     </button>
@@ -539,118 +546,99 @@
     </a>
 </div>
 
-{{-- MODAL PROMO --}}
+    {{-- MODAL PROMO --}}
 <div id="promoModal"
      onclick="closePromoModalByOverlay(event)"
-     class="hidden fixed inset-0 z-[9999] items-center justify-center bg-black/40 px-6">
+     class="hidden fixed inset-0 z-[9999] items-center justify-center bg-black/40 px-4 sm:px-6 overflow-y-auto">
 
-    <div class="relative w-full max-w-[560px] rounded-[28px] bg-white shadow-2xl overflow-hidden">
+    <div class="relative w-full max-w-[560px] rounded-[28px] bg-white shadow-2xl overflow-hidden mt-[150px] mb-10">
+        {{-- Close Button --}}
         <button type="button"
                 onclick="closePromoModal()"
-                class="absolute right-5 top-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-[#3E382D] text-white text-2xl leading-none hover:scale-110 transition">
-            ×
+                class="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
 
-        <div class="bg-gradient-to-br from-[#FFF1F2] via-white to-[#FFE4E6] px-8 py-9">
-            <div class="flex items-start gap-5">
-                <div class="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 to-pink-400 text-white text-3xl font-black shadow-lg">
+        <div class="bg-gradient-to-br from-[#FFF1F2] via-white to-[#FFE4E6] px-6 py-8 sm:px-8 sm:py-9">
+            {{-- Header --}}
+            <div class="flex items-start gap-4 mb-6">
+                <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-400 to-pink-400 text-white text-2xl font-black shadow-lg">
                     %
                 </div>
-
-                <div class="pr-10">
-                    <p class="text-xs font-bold uppercase tracking-[0.18em] text-rose-500">
-                        Promo Salon Dina
-                    </p>
-
-                    <h2 class="mt-2 text-3xl font-black leading-tight text-[#3E382D]">
-                        @if($hasActivePromo)
-                            {{ $promoTitle }}
-                        @else
-                            Belum Ada Promo Tersedia
-                        @endif
+                <div>
+                    <p class="text-xs font-bold uppercase tracking-wider text-rose-500">Promo Salon Dina</p>
+                    <h2 class="text-2xl sm:text-3xl font-black text-[#3E382D] leading-tight">
+                        @if($promos->isNotEmpty()) Promo Spesial! @else Belum Ada Promo @endif
                     </h2>
-
-                    <p class="mt-3 text-sm font-medium leading-relaxed text-gray-500">
-                        @if($hasActivePromo)
-                            {{ $promoDescription }}
-                        @else
-                            Promo belum ditampilkan oleh admin. Silakan cek kembali nanti.
-                        @endif
-                    </p>
                 </div>
             </div>
 
-            <div class="mt-8 rounded-3xl bg-white p-6 shadow-xl border border-rose-100">
-                @if($hasActivePromo)
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <p class="text-xs font-bold text-rose-500 uppercase tracking-wide">Layanan</p>
-                            <p class="mt-1 text-base font-extrabold text-[#3E382D]">
-                                {{ $promoService }}
-                            </p>
-                        </div>
+            {{--  FILTER CABANG (PILL BUTTONS) --}}
+            @if($cabangList->isNotEmpty())
+            <div class="mb-5">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Pilih Cabang</p>
+                <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="branchFilterBtns">
+                    <button class="branch-pill active px-4 py-2 rounded-full text-xs font-bold bg-rose-500 text-white shadow-sm transition whitespace-nowrap" data-value="all">
+                        Semua
+                    </button>
+                    @foreach($cabangList as $cabang)
+                        <button class="branch-pill px-4 py-2 rounded-full text-xs font-bold bg-white border border-rose-200 text-rose-500 hover:bg-rose-50 transition whitespace-nowrap" data-value="{{ $cabang->nama_cabang }}">
+                            {{ $cabang->nama_cabang }}
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+            @endif
 
-                        <div>
-                            <p class="text-xs font-bold text-rose-500 uppercase tracking-wide">Kategori</p>
-                            <p class="mt-1 text-base font-extrabold text-[#3E382D]">
-                                {{ $promoCategory }}
-                            </p>
-                        </div>
+            {{-- List Promo (Scrollable) --}}
+            <div class="max-h-[350px] overflow-y-auto pr-2 custom-scrollbar" id="promoListContainer">
+                @if($promos->isNotEmpty())
+                    <div class="space-y-3">
+@foreach($promos as $promo)
+    <a href="{{ route('pelanggan.booking.create', $promo->layanan_cabang_id) }}"
+   class="promo-item flex items-center justify-between gap-3 p-4 rounded-2xl bg-white border border-gray-100 hover:border-rose-200 hover:shadow-md hover:scale-[1.01] transition-all cursor-pointer block text-left" 
+   data-cabang="{{ $promo->cabang }}">
+        
+        <div class="flex-1 min-w-0">
+            <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold mb-1.5 bg-blue-100 text-blue-600">
+                {{ $promo->kategori }}
+            </span>
+            <p class="text-sm font-bold text-[#3E382D] truncate">{{ $promo->nama }}</p>
+            <p class="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                📍 {{ $promo->cabang }}
+            </p>
+        </div>
 
-                        <div>
-                            <p class="text-xs font-bold text-rose-500 uppercase tracking-wide">Cabang</p>
-                            <p class="mt-1 text-base font-extrabold text-[#3E382D]">
-                                {{ $promoBranch }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p class="text-xs font-bold text-rose-500 uppercase tracking-wide">Harga Promo</p>
-                            <p class="mt-1 text-2xl font-black text-rose-500">
-                                {{ $promoPrice }}
-                            </p>
-                        </div>
+        <div class="text-right shrink-0 pl-2">
+            <p class="text-xs text-gray-400 line-through">Rp {{ number_format($promo->harga_normal, 0, ',', '.') }}</p>
+            <p class="text-base font-black text-rose-500">Rp {{ number_format($promo->harga_promo, 0, ',', '.') }}</p>
+            <span class="inline-block mt-1 px-1.5 py-0.5 rounded bg-rose-100 text-[10px] font-bold text-rose-600">
+                -{{ $promo->diskon }}%
+            </span>
+        </div>
+    </a>
+@endforeach
+                    </div>
+                    
+                    {{-- Empty State (Hidden by default) --}}
+                    <div id="noPromoMsg" class="hidden text-center py-8">
+                        <p class="text-gray-400 text-sm">Tidak ada promo di cabang ini saat ini.</p>
                     </div>
 
-                    <div class="mt-6 border-t border-rose-100 pt-5 flex items-center justify-between gap-4">
-                        <div>
-                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wide">Harga Normal</p>
-                            <p class="mt-1 text-base font-extrabold text-gray-500 line-through">
-                                {{ $promoNormal }}
-                            </p>
-                        </div>
-
-                        @if($discountPercent)
-                            <div class="rounded-full bg-rose-100 px-4 py-2 text-sm font-black text-rose-500">
-                                Hemat {{ $discountPercent }}%
-                            </div>
-                        @endif
-                    </div>
                 @else
                     <div class="py-8 text-center">
-                        <p class="text-[46px]">🎁</p>
-                        <p class="mt-3 text-base font-bold text-[#3E382D]">
-                            Belum ada promo yang sedang aktif.
-                        </p>
-                        <p class="mt-2 text-sm text-gray-500">
-                            Promo akan tampil di sini setelah admin mengaktifkannya.
-                        </p>
+                        <p class="text-4xl mb-2">🎁</p>
+                        <p class="text-gray-500 font-medium">Belum ada promo aktif.</p>
                     </div>
                 @endif
             </div>
+        </div>
 
-            <div class="mt-7 flex flex-col sm:flex-row items-center justify-end gap-3">
-                <button type="button"
-                        onclick="closePromoModal()"
-                        class="w-full sm:w-auto px-6 py-3 rounded-2xl bg-rose-50 text-[#3E382D] font-bold hover:bg-rose-100 transition">
-                    Tutup
-                </button>
-
-                <a href="{{ url('/service') }}"
-                   class="w-full sm:w-auto text-center px-6 py-3 rounded-2xl bg-gradient-to-r from-rose-400 to-pink-400 text-white font-bold shadow-lg hover:-translate-y-0.5 transition">
-                    Booking Sekarang
-                </a>
-            </div>
+        {{-- Footer --}}
+        <div class="bg-gray-50 px-6 py-4 flex justify-end">
+            <button onclick="closePromoModal()" class="px-6 py-2 rounded-xl bg-rose-100 text-rose-600 font-bold hover:bg-rose-200 transition">
+                Tutup
+            </button>
         </div>
     </div>
 </div>
@@ -661,12 +649,12 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. SMOOTH SCROLL FOR ANCHOR LINKS
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-
             const target = document.querySelector(this.getAttribute('href'));
-
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -676,6 +664,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // 2. FILTER CABANG PROMO LOGIC (SUDAH DIPERBAIKI)
+    const pills = document.querySelectorAll('.branch-pill');
+    const items = document.querySelectorAll('.promo-item');
+    const emptyMsg = document.getElementById('noPromoMsg');
+
+    pills.forEach(button => {
+        button.addEventListener("click", function (e) {
+            e.preventDefault();
+
+            // Atur style tombol aktif
+            pills.forEach(btn => {
+                btn.classList.remove("bg-rose-500", "text-white", "shadow-sm", "active");
+                btn.classList.add("bg-white", "border", "border-rose-200", "text-rose-500");
+            });
+            this.classList.remove("bg-white", "border", "border-rose-200", "text-rose-500");
+            this.classList.add("bg-rose-500", "text-white", "shadow-sm", "active");
+
+            // Ambil value filter
+            const selectedBranch = this.getAttribute("data-value").trim(); 
+            let visibleCount = 0;
+            
+            items.forEach(item => {
+                const itemBranch = item.getAttribute("data-cabang").trim();
+
+                if (selectedBranch === "all" || itemBranch === selectedBranch) {
+                    item.style.setProperty('display', 'flex', 'important'); 
+                    visibleCount++;
+                } else {
+                    item.style.setProperty('display', 'none', 'important');
+                }
+            });
+
+            // Tampilkan pesan jika tidak ada promo di cabang terpilih
+            if (visibleCount === 0) {
+                if (emptyMsg) emptyMsg.style.setProperty('display', 'block', 'important');
+            } else {
+                if (emptyMsg) emptyMsg.style.setProperty('display', 'none', 'important');
+            }
+        });
+    });
+
+    // 3. INTERSECTION OBSERVER FOR ANIMATIONS
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -697,6 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(el);
     });
 
+    // 4. ESCAPE KEY TO CLOSE MODAL
     document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
             closePromoModal();
@@ -704,26 +735,27 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+// 5. MODAL CONTROL FUNCTIONS (SINKRON & RAPI)
 function openPromoModal() {
     const modal = document.getElementById('promoModal');
-
     if (modal) {
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
     }
 }
 
 function closePromoModal() {
     const modal = document.getElementById('promoModal');
-
     if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
     }
 }
 
 function closePromoModalByOverlay(event) {
-    if (event.target.id === 'promoModal') {
+    if (event.target === event.currentTarget) {
         closePromoModal();
     }
 }

@@ -335,7 +335,7 @@
         ================================ --}}
         <div id="tab-content-password" class="hidden">
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-                <h2 class="text-lg font-bold text-[#3E382D] mb-6">Ganti Password</h2>
+                <h2 class="text-lg font-bold text-[#3E382D] mb-6">Ganti Kata Sandi</h2>
 
                 <form action="{{ route('profile.password') }}" method="POST">
                     @csrf
@@ -344,7 +344,7 @@
                     <div class="space-y-5 max-w-md">
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Password Lama</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi Lama</label>
                             <input type="password" name="password_lama"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
                                 required>
@@ -354,7 +354,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Password Baru</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi Baru</label>
                             <input type="password" name="password_baru"
                                 class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200"
                                 required>

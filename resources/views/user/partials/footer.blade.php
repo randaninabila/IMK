@@ -57,13 +57,33 @@
                 </div>
                 @endif
 
-                {{-- Status --}}
-                <div class="flex gap-2 items-center">
-                    <span class="w-2 h-2 rounded-full {{ $cabang->status === 'BUKA' ? 'bg-green-400' : 'bg-red-400' }} flex-shrink-0"></span>
-                    <span class="text-xs font-semibold {{ $cabang->status === 'BUKA' ? 'text-green-300' : 'text-red-300' }}">
-                        {{ $cabang->status }}
-                    </span>
-                </div>
+                {{-- Status Realtime Berdasarkan Jam Operasional --}}
+                @if($cabang->jam_buka && $cabang->jam_tutup)
+                    @php
+                        // Ambil waktu sekarang dengan timezone WIB (Asia/Jakarta)
+                        $sekarang = \Carbon\Carbon::now('Asia/Jakarta');
+                        
+                        // Parse jam buka dan tutup ke object Carbon di hari yang sama
+                        $jamBuka = \Carbon\Carbon::parse($cabang->jam_buka, 'Asia/Jakarta');
+                        $jamTutup = \Carbon\Carbon::parse($cabang->jam_tutup, 'Asia/Jakarta');
+                        
+                        // Cek apakah waktu saat ini berada di antara jam buka dan jam tutup
+                        $isBuka = $sekarang->between($jamBuka, $jamTutup);
+                    @endphp
+
+                    <div class="flex gap-2 items-center">
+                        <span class="w-2 h-2 rounded-full {{ $isBuka ? 'bg-green-400' : 'bg-red-400' }} flex-shrink-0"></span>
+                        <span class="text-xs font-semibold {{ $isBuka ? 'text-green-300' : 'text-red-300' }}">
+                            {{ $isBuka ? 'BUKA' : 'TUTUP' }}
+                        </span>
+                    </div>
+                @else
+                    {{-- Fallback jika data jam operasional di database kosong --}}
+                    <div class="flex gap-2 items-center">
+                        <span class="w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>
+                        <span class="text-xs font-semibold text-gray-300">TUTUP</span>
+                    </div>
+                @endif
             </div>
         </div>
         @endforeach
