@@ -193,7 +193,7 @@ $navItems = [
                             transition
                         "
                     >
-                        Logout
+                        Keluar
                     </button>
 
                 </form>

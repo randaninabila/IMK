@@ -6,8 +6,34 @@
         ← Kembali ke Daftar Karyawan
     </a>
 
-    <div class="bg-white rounded-[35px] px-10 py-12 max-w-2xl mx-auto">
-        <h1 class="text-4xl font-bold text-[#2d2a26] text-center mb-8">Kelola Pegawai</h1>
+    <div
+        class="
+            bg-[#f6eeee]
+            w-full max-w-2xl
+            rounded-[32px]
+            px-8 py-8
+            shadow-xl
+            mx-auto
+        "
+    >
+    <div class="text-center mb-7">
+
+        <h1
+            class="
+                text-5xl
+                font-bold
+                text-[#3e382d]
+                tracking-tight
+            "
+        >
+            Kelola Pegawai
+        </h1>
+
+        <p class="text-gray-500 mt-2 text-sm">
+            Perbarui data pegawai yang dipilih.
+        </p>
+
+    </div>
 
         @if ($errors->any())
         <div class="mb-6 bg-red-100 border border-red-200 text-red-600 px-5 py-4 rounded-2xl">
@@ -40,7 +66,6 @@
                     class="w-full bg-[#e8d2d2] border border-transparent focus:border-[#f45b69] focus:ring-2 focus:ring-[#ffd5d8] outline-none px-5 py-3 rounded-2xl transition">
             </div>
 
-            <div class="grid grid-cols-2 gap-6">
                 <div>
                     <label class="block text-base font-semibold text-[#2d2a26] mb-2">Peran</label>
                     <select name="role" required class="w-full bg-[#e8d2d2] border border-transparent focus:border-[#f45b69] focus:ring-2 focus:ring-[#ffd5d8] outline-none px-5 py-3 rounded-2xl transition">
@@ -56,7 +81,6 @@
                     <input type="password" name="password_confirmation" placeholder="Konfirmasi kata sandi"
                         class="w-full mt-2 bg-[#e8d2d2] border border-transparent focus:border-[#f45b69] focus:ring-2 focus:ring-[#ffd5d8] outline-none px-5 py-3 rounded-2xl transition">
                 </div>
-            </div>
 
             <div class="flex justify-end gap-3 pt-6">
                 <a href="{{ route('owner.employee.edit') }}" class="px-8 py-3 rounded-full bg-gray-200 text-[#3e382d] text-sm font-medium hover:bg-gray-300 transition">

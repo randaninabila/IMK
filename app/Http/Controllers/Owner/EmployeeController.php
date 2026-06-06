@@ -380,7 +380,7 @@ class EmployeeController extends Controller
                 ->update(['status_kerja' => $statusKerja]);
 
             DB::commit();
-            return redirect()->back()->with('success', 'Status hari ini berhasil diupdate.');
+            return redirect()->back()->with('success', 'Status hari ini berhasil diperbarui.');
         } catch (\Throwable $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal memperbarui status hari ini.');
