@@ -289,6 +289,15 @@ $totalPaket = $bookings
         }
 
         $booking->save();
+        // ─── KEMBALIKAN JADWAL PEGAWAI SAAT BOOKING DIBATALKAN ──────
+if ($newStatus === 'cancelled' && $booking->pegawai_id) {
+    JadwalPegawai::where('pegawai_id', $booking->pegawai_id)
+        ->where('tanggal', $booking->tanggal_booking)
+        ->where('jam_mulai', $booking->jam_booking)
+        ->where('status_ketersediaan', 'tidak_tersedia')
+        ->update(['status_ketersediaan' => 'tersedia']);
+}
+// ────────────────────────────────────────────────────────────
 
         return back();
     }

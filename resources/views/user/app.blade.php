@@ -17,6 +17,11 @@
         }
     </style>
 
+  {{-- FAVICON --}}
+    <link rel="icon" href="{{ asset('storage/salon/salon_logo.png') }}">
+<link rel="shortcut icon" href="{{ asset('storage/salon/salon_logo.png') }}">
+
+
     @stack('styles')
 </head>
 

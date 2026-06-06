@@ -77,7 +77,7 @@ class PenjadwalanAdminController extends Controller
 
         $alreadyBooked = DB::table('booking as b')
             ->join('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
-            ->where('bd.pegawai_id', $request->pegawai_id)
+            ->where('b.pegawai_id', $request->pegawai_id)
             ->whereDate('b.tanggal_booking', $request->tanggal_booking)
             ->whereTime('b.jam_booking', $request->jam_booking)
             ->whereNotIn('b.status', ['batal'])
@@ -386,7 +386,7 @@ class PenjadwalanAdminController extends Controller
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
             ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'bd.pegawai_id')
+            ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
             ->leftJoin('users as pegawai_user', 'pegawai_user.user_id', '=', 'pg.user_id')
             ->leftJoin('pembayaran as py', 'py.booking_id', '=', 'b.booking_id')
             ->whereDate('b.tanggal_booking', $selectedDate)

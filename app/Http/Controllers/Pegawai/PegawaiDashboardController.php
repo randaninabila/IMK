@@ -124,49 +124,41 @@ class PegawaiDashboardController extends Controller
         $totalMenunggu  = Booking::where('pegawai_id', $pegawaiId)
                             ->whereDate('tanggal_booking', $today)
                             ->where('status', 'confirmed')->count();
-        $jadwalBerikutnya = JadwalPegawai::where('pegawai_id', $pegawaiId)
-    ->where('status_ketersediaan', 'tersedia')
-    ->where(function ($q) {
-        $q->where('tanggal', '>', now()->toDateString())
-          ->orWhere(function ($q2) {
-              $q2->where('tanggal', now()->toDateString())
-                 ->where('jam_mulai', '>=', now()->format('H:i:s'));
+        
+// ── JADWAL BERIKUTNYA (booking confirmed terdekat) ────────────
+$bookingBerikutnya = Booking::where('pegawai_id', $pegawaiId)
+    ->where('status', 'confirmed')
+    ->where(function ($q) use ($today) {
+        $q->where('tanggal_booking', '>', $today)
+          ->orWhere(function ($q2) use ($today) {
+              $q2->where('tanggal_booking', $today)
+                 ->where('jam_booking', '>=', now()->format('H:i:s'));
           });
     })
-    ->orderBy('tanggal')
-    ->orderBy('jam_mulai')
+    ->orderBy('tanggal_booking')
+    ->orderBy('jam_booking')
     ->first();
 
-$jadwalText = $jadwalBerikutnya
-    ? Carbon::parse($jadwalBerikutnya->jam_mulai)->format('H:i')
-        . ' - ' .
-      Carbon::parse($jadwalBerikutnya->jam_selesai)->format('H:i')
-    : 'Tidak ada jadwal';
+if ($bookingBerikutnya) {
+    $tanggalJadwal = Carbon::parse($bookingBerikutnya->tanggal_booking);
+    $jam = Carbon::parse($bookingBerikutnya->jam_booking)->format('H:i');
 
-    if ($jadwalBerikutnya) {
-
-    $tanggalJadwal = Carbon::parse($jadwalBerikutnya->tanggal);
-
-    $jam = Carbon::parse($jadwalBerikutnya->jam_mulai)->format('H:i')
-        . ' - ' .
-        Carbon::parse($jadwalBerikutnya->jam_selesai)->format('H:i');
-
-    if ($tanggalJadwal->isToday()) {
-
-        $jadwalText = $jam;
-
-    } else {
-
-        $jadwalText =
-            $tanggalJadwal->translatedFormat('l, d M')
-            . ' • ' .
-            $jam;
-    }
-
+    $jadwalText = $tanggalJadwal->isToday()
+        ? 'Hari ini • ' . $jam
+        : $tanggalJadwal->translatedFormat('l, d M') . ' • ' . $jam;
 } else {
-
     $jadwalText = 'Tidak ada jadwal';
 }
+if ($upcoming->isNotEmpty()) {
+    $pertama = $upcoming->first();
+    $tanggalJadwal = Carbon::parse($pertama->tanggal_booking);
+    $jam = Carbon::parse($pertama->jam_booking)->format('H:i');
+
+    $jadwalText = $tanggalJadwal->isToday()
+        ? 'Hari ini • ' . $jam
+        : $tanggalJadwal->translatedFormat('l, d M') . ' • ' . $jam;
+}
+// ────────────────────────────────────────────────────────────
 
     // ── NOTIFIKASI ──────────────────────────────────────                      
     $notifikasi = Notifikasi::where('user_id', auth()->id())

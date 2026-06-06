@@ -89,7 +89,7 @@ class UlasanAdminController extends Controller
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
             ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'bd.pegawai_id')
+            ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
             ->leftJoin('users as pegawai_user', 'pegawai_user.user_id', '=', 'pg.user_id')
             ->leftJoinSub($photoStatus, 'fs', function ($join) {
                 $join->on('fs.ulasan_id', '=', 'ul.ulasan_id');
