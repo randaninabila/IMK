@@ -36,9 +36,12 @@ public function update(Request $request)
 
     $validated = $request->validate([
         'nama'  => ['required', 'string', 'max:255'],
-        'no_hp' => ['nullable', 'string', 'max:20'],
+        'no_hp' => ['nullable', 'regex:/^[0-9]+$/', 'min:8', 'max:20'],
     ], [
         'nama.required' => 'Nama lengkap wajib diisi.',
+        'no_hp.regex'   => 'No. HP hanya boleh berisi angka, tanpa spasi atau simbol.',
+        'no_hp.min'     => 'No. HP minimal 8 digit.',
+        'no_hp.max'     => 'No. HP maksimal 20 digit.',
     ]);
 
     $user->nama  = $validated['nama'];
