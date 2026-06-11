@@ -419,6 +419,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/penjadwalan/booking/store', [PenjadwalanAdminController::class, 'storeBooking'])
             ->name('penjadwalan.booking.store');
 
+        Route::put('/penjadwalan/booking/{booking_id}', [PenjadwalanAdminController::class, 'updateBooking'])
+            ->name('penjadwalan.booking.update');
+
         Route::put('/penjadwalan/booking/{booking_id}/status', [PenjadwalanAdminController::class, 'updateBookingStatus'])
             ->name('penjadwalan.booking.status');
 
@@ -551,7 +554,7 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
         Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])->name('booking.ulasan.store');
 
         Route::get('/promo/data', [PromoController::class, 'index'])
-        ->name('pelanggan.promo.data');
+            ->name('pelanggan.promo.data');
 
         Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
             ->name('booking.paket')
