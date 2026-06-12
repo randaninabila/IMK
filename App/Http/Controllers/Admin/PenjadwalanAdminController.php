@@ -425,18 +425,6 @@ class PenjadwalanAdminController extends Controller
 
     private function getStaffList()
     {
-        $selectColumns = [
-            'p.pegawai_id',
-            'p.user_id',
-            'p.cabang_id',
-            DB::raw(Schema::hasColumn('pegawai', 'jabatan') ? 'p.jabatan as jabatan' : 'NULL as jabatan'),
-            'p.status_kerja',
-            'u.nama',
-            'u.email',
-            'u.no_hp',
-            'u.foto_profile',
-        ];
-
         return DB::table('pegawai as p')
             ->join('users as u', 'u.user_id', '=', 'p.user_id')
             ->where('u.role', 'pegawai')
@@ -448,7 +436,17 @@ class PenjadwalanAdminController extends Controller
                 $query->whereNull('p.status_kerja')
                     ->orWhere('p.status_kerja', '!=', 'resign');
             })
-            ->select($selectColumns)
+            ->select(
+                'p.pegawai_id',
+                'p.user_id',
+                'p.cabang_id',
+                DB::raw(Schema::hasColumn('pegawai', 'jabatan') ? 'p.jabatan as jabatan' : 'NULL as jabatan'),
+                'p.status_kerja',
+                'u.nama',
+                'u.email',
+                'u.no_hp',
+                'u.foto_profile'
+            )
             ->orderBy('u.nama', 'asc')
             ->get();
     }
@@ -575,14 +573,21 @@ class PenjadwalanAdminController extends Controller
             ->leftJoin('pelanggan as pl', 'pl.pelanggan_id', '=', 'b.pelanggan_id')
             ->leftJoin('users as pelanggan_user', 'pelanggan_user.user_id', '=', 'pl.user_id')
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
             ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+
+            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pkt', 'pkt.paket_id', '=', 'pc.paket_id')
+
             ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
             ->leftJoin('users as pegawai_user', 'pegawai_user.user_id', '=', 'pg.user_id')
+
             ->leftJoin('pembayaran as py', 'py.booking_id', '=', 'b.booking_id')
             ->whereDate('b.tanggal_booking', $selectedDate)
             ->where(function ($query) use ($selectedCabangId) {
                 $query->where('lc.cabang_id', $selectedCabangId)
+                    ->orWhere('pc.cabang_id', $selectedCabangId)
                     ->orWhere('pg.cabang_id', $selectedCabangId);
             })
             ->select(
@@ -594,8 +599,10 @@ class PenjadwalanAdminController extends Controller
                 DB::raw($this->getBookingNoteSelect()),
                 'pelanggan_user.nama as pelanggan_nama',
                 'pelanggan_user.no_hp as pelanggan_no_hp',
-                DB::raw('GROUP_CONCAT(DISTINCT l.nama_layanan ORDER BY l.nama_layanan SEPARATOR ", ") as layanan_nama'),
+                DB::raw('GROUP_CONCAT(DISTINCT COALESCE(l.nama_layanan, pkt.nama_paket) ORDER BY COALESCE(l.nama_layanan, pkt.nama_paket) SEPARATOR ", ") as layanan_nama'),
                 DB::raw('MAX(lc.layanan_cabang_id) as layanan_cabang_id'),
+                DB::raw('MAX(pc.paket_cabang_id) as paket_cabang_id'),
+                DB::raw('MAX(COALESCE(lc.cabang_id, pc.cabang_id, pg.cabang_id)) as cabang_id'),
                 DB::raw('MAX(pg.pegawai_id) as pegawai_id'),
                 DB::raw('MAX(pegawai_user.nama) as pegawai_nama'),
                 DB::raw($this->getPaymentMethodSelect()),
@@ -646,16 +653,27 @@ class PenjadwalanAdminController extends Controller
 
     private function buildScheduleGrid($times, $staffList, $bookings, $jadwalPegawai)
     {
-        $bookingsByStaffTime = $bookings->keyBy(function ($booking) {
-            return ($booking->pegawai_id ?? '-') . '|' . substr((string) $booking->jam_booking, 0, 5);
+        $firstStaffId = $staffList->first()->pegawai_id ?? null;
+
+        $bookingsByTime = $bookings->groupBy(function ($booking) {
+            return substr((string) $booking->jam_booking, 0, 5);
         });
 
         $scheduleGrid = [];
 
         foreach ($times as $time) {
             foreach ($staffList as $staff) {
-                $key = $staff->pegawai_id . '|' . $time;
-                $booking = $bookingsByStaffTime->get($key);
+                $bookingsAtTime = $bookingsByTime->get($time, collect());
+
+                $booking = $bookingsAtTime->first(function ($item) use ($staff) {
+                    return (int) $item->pegawai_id === (int) $staff->pegawai_id;
+                });
+
+                if (!$booking && (int) $staff->pegawai_id === (int) $firstStaffId) {
+                    $booking = $bookingsAtTime->first(function ($item) {
+                        return empty($item->pegawai_id);
+                    });
+                }
 
                 if ($booking) {
                     $isPending = ($booking->payment_status === 'pending')
@@ -687,7 +705,7 @@ class PenjadwalanAdminController extends Controller
                         'client' => $booking->pelanggan_nama ?? 'Pelanggan',
                         'customer' => $booking->pelanggan_nama ?? 'Pelanggan',
                         'phone' => $booking->pelanggan_no_hp ?? '-',
-                        'staff' => $booking->pegawai_nama ?? ($staff->nama ?? 'Specialist'),
+                        'staff' => $booking->pegawai_nama ?? 'Belum assign',
                         'time' => $time . '-' . sprintf('%02d:00', ((int) substr($time, 0, 2)) + 1),
                         'payment' => $booking->metode_pembayaran ? strtoupper($booking->metode_pembayaran) : '-',
                         'status' => $this->denormalizeBookingStatus($booking->status ?? 'confirmed'),
@@ -782,7 +800,7 @@ class PenjadwalanAdminController extends Controller
                 'customer' => $booking->pelanggan_nama ?? 'Pelanggan',
                 'phone' => $booking->pelanggan_no_hp ?? '-',
                 'service' => $booking->layanan_nama ?? '-',
-                'staff' => $booking->pegawai_nama ?? '-',
+                'staff' => $booking->pegawai_nama ?? 'Belum assign',
                 'payment' => $booking->metode_pembayaran ? strtoupper($booking->metode_pembayaran) : '-',
                 'status' => $statusLabel,
                 'type' => $statusLabel === 'Menunggu Pembayaran' ? 'pending' : 'booked',

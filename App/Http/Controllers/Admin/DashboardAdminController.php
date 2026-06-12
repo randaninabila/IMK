@@ -20,17 +20,20 @@ class DashboardAdminController extends Controller
         }
 
         $selectedBranch = $branches->firstWhere('cabang_id', $selectedCabangId);
-        $today = Carbon::now()->toDateString();
+        $selectedDate = $this->getSelectedDate($request);
+        $dateOptions = $this->getDateOptions();
 
-        $summary = $this->getSummary($selectedCabangId, $today);
-        $latestBookings = $this->getLatestBookings($selectedCabangId);
-        $todaySchedules = $this->getTodaySchedules($selectedCabangId, $today);
+        $summary = $this->getSummary($selectedCabangId, $selectedDate);
+        $latestBookings = $this->getLatestBookings($selectedCabangId, $selectedDate);
+        $todaySchedules = $this->getTodaySchedules($selectedCabangId, $selectedDate);
         $allSchedules = $this->getAllSchedules($selectedCabangId);
 
         return view('admin.dashboard.dashboardadmin', compact(
             'branches',
             'selectedBranch',
             'selectedCabangId',
+            'selectedDate',
+            'dateOptions',
             'summary',
             'latestBookings',
             'todaySchedules',
@@ -83,14 +86,59 @@ class DashboardAdminController extends Controller
         return $branches;
     }
 
+    private function getSelectedDate(Request $request)
+    {
+        $tanggal = $request->query('tanggal');
+
+        if (!$tanggal || $tanggal === 'semua' || $tanggal === 'all') {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($tanggal)->toDateString();
+        } catch (\Exception $exception) {
+            return null;
+        }
+    }
+
+    private function getDateOptions()
+    {
+        return collect(range(0, 6))->map(function ($day) {
+            $date = now()->addDays($day);
+
+            return (object) [
+                'date' => $date->toDateString(),
+                'label' => $date->locale('id')->translatedFormat('d F Y'),
+                'day' => $date->locale('id')->translatedFormat('l'),
+            ];
+        });
+    }
+
+    private function applyDateFilter($query, ?string $selectedDate)
+    {
+        if ($selectedDate) {
+            $query->whereDate('b.tanggal_booking', $selectedDate);
+        }
+
+        return $query;
+    }
+
     private function bookingBaseQuery(int $selectedCabangId)
     {
         return DB::table('booking as b')
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+
+            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pkt', 'pkt.paket_id', '=', 'pc.paket_id')
+
             ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
+
             ->where(function ($query) use ($selectedCabangId) {
                 $query->where('lc.cabang_id', $selectedCabangId)
+                    ->orWhere('pc.cabang_id', $selectedCabangId)
                     ->orWhere('pg.cabang_id', $selectedCabangId);
             })
             ->select(
@@ -101,54 +149,61 @@ class DashboardAdminController extends Controller
             ->distinct();
     }
 
-    private function getSummary(int $selectedCabangId, string $today)
+    private function getSummary(int $selectedCabangId, ?string $selectedDate)
     {
-        $totalBookingToday = DB::query()
-            ->fromSub(
-                $this->bookingBaseQuery($selectedCabangId)
-                    ->whereDate('b.tanggal_booking', $today),
-                'booking_today'
-            )
+        $totalBookingQuery = $this->applyDateFilter(
+            $this->bookingBaseQuery($selectedCabangId),
+            $selectedDate
+        );
+
+        $completedBookingQuery = $this->applyDateFilter(
+            $this->bookingBaseQuery($selectedCabangId)
+                ->whereIn('b.status', ['completed', 'selesai']),
+            $selectedDate
+        );
+
+        $runningBookingQuery = $this->applyDateFilter(
+            $this->bookingBaseQuery($selectedCabangId)
+                ->whereIn('b.status', ['confirmed', 'assigned', 'in_progress', 'proses']),
+            $selectedDate
+        );
+
+        $pendingPaymentQuery = $this->paymentBaseQuery($selectedCabangId, $selectedDate)
+            ->where(function ($query) {
+                $query->where('py.status', 'pending')
+                    ->orWhere('b.status', 'pending');
+            });
+
+        $verifiedPaymentQuery = $this->paymentBaseQuery($selectedCabangId, $selectedDate)
+            ->where(function ($query) {
+                $query->where('py.status', 'verified')
+                    ->orWhereIn('b.status', ['completed', 'selesai']);
+            });
+
+        $totalBooking = DB::query()
+            ->fromSub($totalBookingQuery, 'booking_total')
             ->count();
 
-        $completedBookingToday = DB::query()
-            ->fromSub(
-                $this->bookingBaseQuery($selectedCabangId)
-                    ->whereDate('b.tanggal_booking', $today)
-                    ->where('b.status', 'selesai'),
-                'booking_completed'
-            )
+        $completedBooking = DB::query()
+            ->fromSub($completedBookingQuery, 'booking_completed')
             ->count();
 
-        $runningBookingToday = DB::query()
-            ->fromSub(
-                $this->bookingBaseQuery($selectedCabangId)
-                    ->whereDate('b.tanggal_booking', $today)
-                    ->whereIn('b.status', ['confirmed', 'assigned', 'proses']),
-                'booking_running'
-            )
+        $runningBooking = DB::query()
+            ->fromSub($runningBookingQuery, 'booking_running')
             ->count();
 
         $pendingPayments = DB::query()
-            ->fromSub(
-                $this->paymentBaseQuery($selectedCabangId, $today)
-                    ->where('py.status', 'pending'),
-                'pending_payment'
-            )
+            ->fromSub($pendingPaymentQuery, 'pending_payment')
             ->get();
 
         $verifiedPayments = DB::query()
-            ->fromSub(
-                $this->paymentBaseQuery($selectedCabangId, $today)
-                    ->where('py.status', 'verified'),
-                'verified_payment'
-            )
+            ->fromSub($verifiedPaymentQuery, 'verified_payment')
             ->get();
 
         return [
-            'total_booking' => $totalBookingToday,
-            'completed_booking' => $completedBookingToday,
-            'running_booking' => $runningBookingToday,
+            'total_booking' => $totalBooking,
+            'completed_booking' => $completedBooking,
+            'running_booking' => $runningBooking,
 
             'pending_payment' => $pendingPayments->count(),
             'pending_qris' => $pendingPayments->where('metode_pembayaran', 'qris')->count(),
@@ -160,48 +215,83 @@ class DashboardAdminController extends Controller
         ];
     }
 
-    private function paymentBaseQuery(int $selectedCabangId, string $today)
+    private function paymentBaseQuery(int $selectedCabangId, ?string $selectedDate)
     {
-        return DB::table('pembayaran as py')
-            ->join('booking as b', 'b.booking_id', '=', 'py.booking_id')
+        $query = DB::table('booking as b')
+            ->leftJoin('pembayaran as py', 'py.booking_id', '=', 'b.booking_id')
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+
+            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pkt', 'pkt.paket_id', '=', 'pc.paket_id')
+
             ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
-            ->whereDate('b.tanggal_booking', $today)
+
             ->where(function ($query) use ($selectedCabangId) {
                 $query->where('lc.cabang_id', $selectedCabangId)
+                    ->orWhere('pc.cabang_id', $selectedCabangId)
                     ->orWhere('pg.cabang_id', $selectedCabangId);
-            })
+            });
+
+        if ($selectedDate) {
+            $query->whereDate('b.tanggal_booking', $selectedDate);
+        }
+
+        return $query
             ->select(
-                'py.pembayaran_id',
-                'py.metode_pembayaran',
-                'py.jumlah'
+                DB::raw('COALESCE(py.pembayaran_id, b.booking_id) as pembayaran_id'),
+                DB::raw('COALESCE(py.metode_pembayaran, "cash") as metode_pembayaran'),
+                DB::raw('COALESCE(py.status, b.status) as payment_status'),
+                DB::raw('COALESCE(py.jumlah, MAX(COALESCE(lc.harga_promo, lc.harga, pc.harga_promo, pc.harga_normal, bd.harga_snapshot, 0))) as jumlah'),
+                'b.status'
             )
-            ->distinct();
+            ->groupBy(
+                'py.pembayaran_id',
+                'b.booking_id',
+                'py.metode_pembayaran',
+                'py.status',
+                'py.jumlah',
+                'b.status'
+            );
     }
 
-    private function getLatestBookings(int $selectedCabangId)
+    private function getLatestBookings(int $selectedCabangId, ?string $selectedDate)
     {
-        return DB::table('booking as b')
+        $query = DB::table('booking as b')
             ->leftJoin('pelanggan as pl', 'pl.pelanggan_id', '=', 'b.pelanggan_id')
             ->leftJoin('users as pelanggan_user', 'pelanggan_user.user_id', '=', 'pl.user_id')
             ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+
             ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
             ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+
+            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pkt', 'pkt.paket_id', '=', 'pc.paket_id')
+
             ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
             ->leftJoin('users as pegawai_user', 'pegawai_user.user_id', '=', 'pg.user_id')
+
             ->where(function ($query) use ($selectedCabangId) {
                 $query->where('lc.cabang_id', $selectedCabangId)
+                    ->orWhere('pc.cabang_id', $selectedCabangId)
                     ->orWhere('pg.cabang_id', $selectedCabangId);
-            })
+            });
+
+        if ($selectedDate) {
+            $query->whereDate('b.tanggal_booking', $selectedDate);
+        }
+
+        return $query
             ->select(
                 'b.booking_id',
                 'b.tanggal_booking',
                 'b.jam_booking',
                 'b.status',
                 'pelanggan_user.nama as pelanggan_nama',
-                DB::raw('GROUP_CONCAT(DISTINCT l.nama_layanan ORDER BY l.nama_layanan SEPARATOR ", ") as layanan_nama'),
-                DB::raw('COALESCE(MAX(pegawai_user.nama), "-") as pegawai_nama')
+                DB::raw('GROUP_CONCAT(DISTINCT COALESCE(l.nama_layanan, pkt.nama_paket) ORDER BY COALESCE(l.nama_layanan, pkt.nama_paket) SEPARATOR ", ") as layanan_nama'),
+                DB::raw('COALESCE(MAX(pegawai_user.nama), "Belum assign") as pegawai_nama')
             )
             ->groupBy(
                 'b.booking_id',
@@ -212,7 +302,6 @@ class DashboardAdminController extends Controller
             )
             ->orderByDesc('b.tanggal_booking')
             ->orderByDesc('b.jam_booking')
-            ->limit(5)
             ->get();
     }
 
@@ -245,20 +334,22 @@ class DashboardAdminController extends Controller
             );
     }
 
-    private function getTodaySchedules(int $selectedCabangId, string $today)
+    private function getTodaySchedules(int $selectedCabangId, ?string $selectedDate)
     {
-        $todaySchedules = $this->scheduleBaseQuery($selectedCabangId)
-            ->whereDate('jp.tanggal', $today)
-            ->orderBy('jp.jam_mulai', 'asc')
-            ->limit(8)
-            ->get();
+        if ($selectedDate) {
+            $selectedSchedules = $this->scheduleBaseQuery($selectedCabangId)
+                ->whereDate('jp.tanggal', $selectedDate)
+                ->orderBy('jp.jam_mulai', 'asc')
+                ->limit(8)
+                ->get();
 
-        if ($todaySchedules->isNotEmpty()) {
-            return $todaySchedules;
+            if ($selectedSchedules->isNotEmpty()) {
+                return $selectedSchedules;
+            }
         }
 
         $upcomingSchedules = $this->scheduleBaseQuery($selectedCabangId)
-            ->whereDate('jp.tanggal', '>=', $today)
+            ->whereDate('jp.tanggal', '>=', now()->toDateString())
             ->orderBy('jp.tanggal', 'asc')
             ->orderBy('jp.jam_mulai', 'asc')
             ->limit(8)
