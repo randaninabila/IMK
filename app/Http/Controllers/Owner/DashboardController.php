@@ -234,7 +234,7 @@ class DashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i)->month;
             $chartData[] = $revenues[$month] ?? 0;
-            $chartLabels[] = now()->subMonths($i)->format('M');
+            $chartLabels[] = now()->subMonths($i)->locale('id')->isoFormat('MMM');
         }
 
         return ['data' => $chartData, 'labels' => $chartLabels];
@@ -376,22 +376,22 @@ class DashboardController extends Controller
             'today' => [
                 'start' => today()->format('Y-m-d'),
                 'end' => today()->format('Y-m-d'),
-                'label' => 'Today'
+                'label' => 'Hari Ini'
             ],
             'week' => [
                 'start' => now()->startOfWeek()->format('Y-m-d'),
                 'end' => now()->endOfWeek()->format('Y-m-d'),
-                'label' => 'This Week'
+                'label' => 'Minggu Ini'
             ],
             'month' => [
                 'start' => now()->startOfMonth()->format('Y-m-d'),
                 'end' => now()->endOfMonth()->format('Y-m-d'),
-                'label' => 'This Month'
+                'label' => 'Bulan Ini'
             ],
             'year' => [
                 'start' => now()->startOfYear()->format('Y-m-d'),
                 'end' => now()->endOfYear()->format('Y-m-d'),
-                'label' => 'This Year'
+                'label' => 'Tahun Ini'
             ],
             'custom' => [
                 'start' => $startDate,
@@ -401,14 +401,14 @@ class DashboardController extends Controller
             default => [
                 'start' => today()->format('Y-m-d'),
                 'end' => today()->format('Y-m-d'),
-                'label' => 'Today'
+                'label' => 'Hari Ini'
             ]
         };
     }
 
     private function getBranchName($branch)
     {
-        if ($branch === 'Semua') return 'All Branches';
+        if ($branch === 'Semua') return 'Semua Cabang';
         
         $cabang = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first();
         return $cabang?->nama_cabang ?? $branch;
