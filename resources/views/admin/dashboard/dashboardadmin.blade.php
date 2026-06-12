@@ -44,40 +44,6 @@
     $branches = $branches ?? collect();
     $selectedBranch = $selectedBranch ?? null;
     $selectedCabangId = $selectedCabangId ?? 1;
-    $selectedDate = $selectedDate ?? null;
-
-    $isAllDate = empty($selectedDate);
-
-    $dateOptions = $dateOptions ?? collect(range(0, 6))->map(function ($day) {
-        $date = now()->addDays($day);
-
-        return (object) [
-            'date' => $date->toDateString(),
-            'label' => $date->locale('id')->translatedFormat('d F Y'),
-            'day' => $date->locale('id')->translatedFormat('l'),
-        ];
-    });
-
-    if ($isAllDate) {
-        $selectedDateLabel = 'Semua Tanggal';
-        $selectedDayLabel = 'Semua Booking';
-        $summaryDateLabel = 'Semua tanggal';
-    } else {
-        $selectedDateCarbon = \Carbon\Carbon::parse($selectedDate);
-        $selectedDateLabel = $selectedDateCarbon->locale('id')->translatedFormat('d F Y');
-        $selectedDayLabel = $selectedDateCarbon->locale('id')->translatedFormat('l');
-        $summaryDateLabel = $selectedDateLabel;
-    }
-
-    $dashboardParams = function ($cabangId, $tanggal = null) {
-        $params = ['cabang_id' => $cabangId];
-
-        if (!empty($tanggal)) {
-            $params['tanggal'] = $tanggal;
-        }
-
-        return $params;
-    };
 
     $summary = $summary ?? [
         'total_booking' => 0,
@@ -111,38 +77,23 @@
         return $value ? \Carbon\Carbon::parse($value)->locale('id')->translatedFormat('l, d F Y') : '-';
     };
 
-    $normalizeStatus = function ($status) {
-        return match ($status) {
-            'proses' => 'in_progress',
-            'selesai' => 'completed',
-            'batal' => 'cancelled',
-            'assigned' => 'confirmed',
-            default => $status,
-        };
-    };
-
-    $statusLabel = function ($status) use ($normalizeStatus) {
-        $status = $normalizeStatus($status);
-
+    $statusLabel = function ($status) {
         return match ($status) {
             'pending' => 'Pending',
-            'confirmed' => 'Dipesan',
-            'in_progress' => 'Sedang Berjalan',
-            'completed' => 'Selesai',
-            'cancelled' => 'Batal',
+            'confirmed' => 'Terkonfirmasi',
+            'assigned' => 'Ditugaskan',
+            'proses' => 'Sedang Berjalan',
+            'selesai' => 'Selesai',
+            'batal' => 'Batal',
             default => $status ? ucfirst($status) : '-',
         };
     };
 
-    $statusClass = function ($status) use ($normalizeStatus) {
-        $status = $normalizeStatus($status);
-
+    $statusClass = function ($status) {
         return match ($status) {
-            'completed' => 'bg-[#A8BD8C] text-white text-[18px]',
-            'in_progress' => 'bg-[#F6E4A5] text-[#C77A45] text-[15px] font-bold',
-            'confirmed' => 'bg-[#FDE3E8] text-[#B85C6A] text-[15px] font-bold',
-            'pending' => 'bg-[#FFF4D5] text-[#7A6335] text-[14px] font-bold',
-            'cancelled' => 'bg-[#F8C2CA] text-[#B85C6A] text-[15px] font-bold',
+            'selesai' => 'bg-[#A8BD8C] text-white text-[18px]',
+            'proses', 'assigned', 'confirmed' => 'bg-[#F4E4B2] text-[#C77A45] text-[15px] font-bold',
+            'batal' => 'bg-[#F8C2CA] text-[#B85C6A] text-[15px] font-bold',
             default => 'bg-[#F8C2CA] text-[#B85C6A] text-[14px] font-bold',
         };
     };
@@ -197,7 +148,7 @@
                     <div id="branchDropdown"
                          class="hidden absolute top-[58px] left-0 w-full bg-white rounded-[12px] shadow-xl border border-[#F1D9DD] overflow-hidden z-50">
                         @foreach($branches as $branch)
-                            <a href="{{ route('admin.dashboard', $dashboardParams($branch->cabang_id, $selectedDate)) }}"
+                            <a href="{{ route('admin.dashboard', ['cabang_id' => $branch->cabang_id]) }}"
                                class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36] {{ (int) $selectedCabangId === (int) $branch->cabang_id ? 'bg-[#FFF0F2]' : '' }}">
                                 {{ $branch->label }}
                             </a>
@@ -216,8 +167,8 @@
                             </svg>
 
                             <span id="dateText" class="text-[13px] leading-tight text-left">
-                                {{ $selectedDateLabel }}<br>
-                                {{ $selectedDayLabel }}
+                                {{ now()->locale('id')->translatedFormat('d F Y') }}<br>
+                                {{ now()->locale('id')->translatedFormat('l') }}
                             </span>
                         </span>
 
@@ -228,21 +179,15 @@
 
                     <div id="dateDropdown"
                          class="hidden absolute top-[58px] left-0 w-full bg-white rounded-[12px] shadow-xl border border-[#F1D9DD] overflow-hidden z-50">
-
-                        <a href="{{ route('admin.dashboard', ['cabang_id' => $selectedCabangId]) }}"
-                           class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36] {{ $isAllDate ? 'bg-[#FFF0F2]' : '' }}">
-                            Semua Tanggal - Semua Booking
-                        </a>
-
-                        @foreach($dateOptions as $dateOption)
-                            <a href="{{ route('admin.dashboard', ['cabang_id' => $selectedCabangId, 'tanggal' => $dateOption->date]) }}"
-                               class="block w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36] {{ $selectedDate === $dateOption->date ? 'bg-[#FFF0F2]' : '' }}">
-                                {{ $dateOption->label }} - {{ $dateOption->day }}
-                            </a>
-                        @endforeach
+                        <button type="button"
+                                onclick="selectDate('{{ now()->locale('id')->translatedFormat('d F Y') }}', '{{ now()->locale('id')->translatedFormat('l') }}')"
+                                class="w-full text-left px-4 py-3 hover:bg-[#FFF0F2] text-sm font-bold text-[#4B3A36]">
+                            {{ now()->locale('id')->translatedFormat('d F Y') }} - {{ now()->locale('id')->translatedFormat('l') }}
+                        </button>
                     </div>
                 </div>
 
+                {{-- PROFILE DROPDOWN PARTIAL --}}
                 <div class="relative flex items-center">
                     @include('admin.partial.dropdownadmin')
                 </div>
@@ -254,88 +199,51 @@
         <section class="px-[44px] mt-[-12px] grid grid-cols-4 gap-[24px]">
 
             <button type="button"
-                    onclick="showToast(@js('Total booking: ' . $summary['total_booking']))"
+                    onclick="showToast('Total booking hari ini: {{ $summary['total_booking'] }}')"
                     class="h-[100px] bg-white rounded-[12px] border border-[#E3D2D2] admin-shadow flex items-center px-[12px] gap-[10px] text-left hover:-translate-y-1 transition">
                 <div class="w-[60px] h-[60px] rounded-full bg-[#F4A1AC] shrink-0"></div>
-
                 <div>
-                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">
-                        Total Booking
-                    </p>
-
-                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">
-                        {{ $summary['total_booking'] }}
-                    </h3>
-
-                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">
-                        {{ $summaryDateLabel }}
-                    </p>
+                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">Total Booking</p>
+                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">{{ $summary['total_booking'] }}</h3>
+                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">Hari Ini</p>
                 </div>
             </button>
 
             <button type="button"
-                    onclick="showToast(@js('Booking selesai: ' . $summary['completed_booking']))"
+                    onclick="showToast('Booking selesai: {{ $summary['completed_booking'] }}')"
                     class="h-[100px] bg-white rounded-[12px] border border-[#E3D2D2] admin-shadow flex items-center px-[12px] gap-[16px] text-left hover:-translate-y-1 transition">
                 <div class="w-[60px] h-[60px] rounded-full bg-[#A8BD8C] shrink-0"></div>
-
                 <div>
-                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">
-                        Selesai
-                    </p>
-
-                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">
-                        {{ $summary['completed_booking'] }}
-                    </h3>
-
-                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">
-                        {{ $summaryDateLabel }}
-                    </p>
+                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">Selesai</p>
+                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">{{ $summary['completed_booking'] }}</h3>
+                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">Hari Ini</p>
                 </div>
             </button>
 
             <button type="button"
-                    onclick="showToast(@js('Booking berjalan: ' . $summary['running_booking']))"
+                    onclick="showToast('Booking berjalan: {{ $summary['running_booking'] }}')"
                     class="h-[100px] bg-white rounded-[12px] border border-[#E3D2D2] admin-shadow flex items-center px-[12px] gap-[16px] text-left hover:-translate-y-1 transition">
                 <div class="w-[60px] h-[60px] rounded-full bg-[#D98973] shrink-0"></div>
-
                 <div>
-                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">
-                        Sedang Berjalan
-                    </p>
-
-                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">
-                        {{ $summary['running_booking'] }}
-                    </h3>
-
-                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">
-                        {{ $summaryDateLabel }}
-                    </p>
+                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">Sedang Berjalan</p>
+                    <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">{{ $summary['running_booking'] }}</h3>
+                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">Hari Ini</p>
                 </div>
             </button>
 
             <button type="button"
-                    onclick="showToast(@js('Menunggu pembayaran: ' . $summary['pending_payment']))"
+                    onclick="showToast('Menunggu pembayaran: {{ $summary['pending_payment'] }}')"
                     class="h-[100px] bg-white rounded-[12px] border border-[#E3D2D2] admin-shadow flex items-center px-[10px] gap-[12px] text-left hover:-translate-y-1 transition">
                 <div class="w-[60px] h-[60px] rounded-full bg-[#9A6272] shrink-0"></div>
-
                 <div>
-                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">
-                        Menunggu Pembayaran
-                    </p>
-
+                    <p class="text-[13px] font-extrabold leading-none mb-[4px] text-[#4B3A36]">Menunggu Pembayaran</p>
                     <div class="flex items-center gap-[8px]">
-                        <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">
-                            {{ $summary['pending_payment'] }}
-                        </h3>
-
+                        <h3 class="text-[36px] font-extrabold leading-[0.85] text-[#4B3A36]">{{ $summary['pending_payment'] }}</h3>
                         <span class="bg-[#8E4358] text-white text-[13px] font-extrabold rounded-[6px] px-[8px] py-[2px] whitespace-nowrap">
                             {{ $summary['pending_qris'] }} Qris, {{ $summary['pending_cash'] }} Cash
                         </span>
                     </div>
-
-                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">
-                        {{ $summaryDateLabel }}
-                    </p>
+                    <p class="text-[11px] font-serif mt-[4px] text-[#7B6A62]">Hari Ini</p>
                 </div>
             </button>
 
@@ -348,67 +256,49 @@
                 <div class="bg-white rounded-[14px] border border-[#E3D2D2] min-h-[700px] px-[30px] pt-[26px] pb-[20px] soft-shadow">
 
                     <h2 class="text-[25px] font-extrabold mb-[34px] text-[#4B3A36]">
-                        {{ $isAllDate ? 'Ringkasan Semua Tanggal' : 'Ringkasan Hari Ini' }}
+                        Ringkasan Hari Ini
                     </h2>
 
                     <div class="flex items-center justify-between border-b border-[#D7C6C6] pb-[18px]">
 
                         <button type="button"
-                                onclick="showToast(@js('Total Pendapatan: ' . $formatMoney($summary['total_income'])))"
+                                onclick="showToast('Total Pendapatan: {{ $formatMoney($summary['total_income']) }}')"
                                 class="flex items-center gap-[12px] text-left">
                             <div class="w-[60px] h-[60px] rounded-[16px] bg-[#F4A1AC] shrink-0"></div>
-
                             <div>
-                                <p class="text-[13px] font-extrabold text-[#4B3A36]">
-                                    Total Pendapatan
-                                </p>
-
-                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">
-                                    {{ $formatMoney($summary['total_income']) }}
-                                </p>
+                                <p class="text-[13px] font-extrabold text-[#4B3A36]">Total Pendapatan</p>
+                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">{{ $formatMoney($summary['total_income']) }}</p>
                             </div>
                         </button>
 
                         <div class="h-[53px] w-[1px] bg-[#D7C6C6]"></div>
 
                         <button type="button"
-                                onclick="showToast(@js('Pembayaran Cash: ' . $formatMoney($summary['cash_income'])))"
+                                onclick="showToast('Pembayaran Cash: {{ $formatMoney($summary['cash_income']) }}')"
                                 class="flex items-center gap-[16px] text-left">
                             <div class="w-[60px] h-[60px] rounded-[18px] bg-[#DDF6C3] shrink-0"></div>
-
                             <div>
-                                <p class="text-[13px] font-extrabold text-[#4B3A36]">
-                                    Pembayaran Cash
-                                </p>
-
-                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">
-                                    {{ $formatMoney($summary['cash_income']) }}
-                                </p>
+                                <p class="text-[13px] font-extrabold text-[#4B3A36]">Pembayaran Cash</p>
+                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">{{ $formatMoney($summary['cash_income']) }}</p>
                             </div>
                         </button>
 
                         <div class="h-[53px] w-[1px] bg-[#D7C6C6]"></div>
 
                         <button type="button"
-                                onclick="showToast(@js('Pembayaran QRIS: ' . $formatMoney($summary['qris_income'])))"
+                                onclick="showToast('Pembayaran QRIS: {{ $formatMoney($summary['qris_income']) }}')"
                                 class="flex items-center gap-[16px] text-left">
                             <div class="w-[60px] h-[60px] rounded-[18px] bg-[#F1C7EF] shrink-0"></div>
-
                             <div>
-                                <p class="text-[13px] font-extrabold text-[#4B3A36]">
-                                    Pembayaran QRIS
-                                </p>
-
-                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">
-                                    {{ $formatMoney($summary['qris_income']) }}
-                                </p>
+                                <p class="text-[13px] font-extrabold text-[#4B3A36]">Pembayaran QRIS</p>
+                                <p class="text-[19px] font-extrabold mt-[12px] text-[#4B3A36]">{{ $formatMoney($summary['qris_income']) }}</p>
                             </div>
                         </button>
 
                     </div>
 
                     <h3 class="text-[19px] font-extrabold mt-[22px] pb-[14px] border-b border-[#D7C6C6] text-[#4B3A36]">
-                        {{ $isAllDate ? 'Semua Booking' : 'Booking Tanggal Ini' }}
+                        Booking Terbaru
                     </h3>
 
                     <div class="divide-y divide-[#E3D2D2]">
@@ -422,10 +312,6 @@
 
                                 <span class="font-semibold">
                                     {{ $booking->pelanggan_nama ?? 'Pelanggan' }}
-
-                                    <span class="block text-[11px] font-serif text-[#7B6A62] mt-[3px]">
-                                        {{ $formatDate($booking->tanggal_booking) }}
-                                    </span>
                                 </span>
 
                                 <span class="text-[14px] leading-tight">
@@ -433,11 +319,11 @@
                                 </span>
 
                                 <span class="text-[14px] font-semibold">
-                                    {{ $booking->pegawai_nama ?? 'Belum assign' }}
+                                    {{ $booking->pegawai_nama ?? '-' }}
                                 </span>
 
                                 <button type="button"
-                                        onclick="showToast(@js('Status booking: ' . $statusLabel($booking->status)))"
+                                        onclick="showToast('Status booking: {{ $statusLabel($booking->status) }}')"
                                         class="status-btn {{ $statusClass($booking->status) }} rounded-[8px] py-[4px] px-[8px]">
                                     {{ $statusLabel($booking->status) }}
                                 </button>
@@ -445,17 +331,18 @@
                             </div>
                         @empty
                             <div class="py-[35px] text-center text-[14px] font-semibold text-[#8B7777]">
-                                {{ $isAllDate ? 'Belum ada booking untuk cabang ini.' : 'Belum ada booking pada tanggal ini.' }}
+                                Belum ada booking untuk cabang ini.
                             </div>
                         @endforelse
 
                     </div>
 
                     <div class="text-center mt-[28px]">
-                        <a href="{{ route('admin.penjadwalan', ['cabang_id' => $selectedCabangId, 'tanggal' => $selectedDate ?: now()->toDateString()]) }}"
-                           class="text-[#D88998] text-[18px] font-extrabold hover:text-[#B85C6A] transition">
-                            Lihat Penjadwalan →
-                        </a>
+                        <button type="button"
+                                onclick="openAllSchedulesModal()"
+                                class="text-[#D88998] text-[18px] font-extrabold hover:text-[#B85C6A] transition">
+                            Lihat Semua Jadwal →
+                        </button>
                     </div>
 
                 </div>
@@ -476,23 +363,21 @@
                                 </span>
 
                                 <button type="button"
-                                        onclick="showToast(@js(($schedule->pegawai_nama ?? 'Pegawai') . ' - ' . $formatDate($schedule->tanggal)))"
+                                        onclick="showToast('{{ $schedule->pegawai_nama ?? 'Pegawai' }} - {{ $formatDate($schedule->tanggal) }}')"
                                         class="text-left">
                                     <p class="text-[13px] font-extrabold leading-none">
                                         {{ $schedule->pegawai_nama ?? 'Pegawai' }}
                                     </p>
-
                                     <p class="text-[10px] font-serif leading-none mt-[4px] text-[#7B6A62]">
                                         {{ $formatDate($schedule->tanggal) }}
                                     </p>
-
                                     <p class="text-[10px] font-serif leading-none mt-[4px] text-[#7B6A62]">
                                         {{ $formatTime($schedule->jam_mulai) }} - {{ $formatTime($schedule->jam_selesai) }}
                                     </p>
                                 </button>
 
                                 <button type="button"
-                                        onclick="showToast(@js('Status jadwal: ' . $scheduleStatusLabel($schedule->status_ketersediaan)))"
+                                        onclick="showToast('Status jadwal: {{ $scheduleStatusLabel($schedule->status_ketersediaan) }}')"
                                         class="mini-status text-[12px] font-extrabold {{ $scheduleStatusClass($schedule->status_ketersediaan) }}">
                                     {{ $scheduleStatusLabel($schedule->status_ketersediaan) }}
                                 </button>
@@ -504,14 +389,6 @@
                             </div>
                         @endforelse
 
-                    </div>
-
-                    <div class="text-center mt-[34px]">
-                        <button type="button"
-                                onclick="openAllSchedulesModal()"
-                                class="text-[#D88998] text-[16px] font-extrabold hover:text-[#B85C6A] transition">
-                            Lihat Semua Jadwal →
-                        </button>
                     </div>
 
                 </div>
@@ -535,7 +412,6 @@
                 <h2 class="text-[24px] font-extrabold text-[#4B3A36]">
                     Semua Jadwal
                 </h2>
-
                 <p class="text-[13px] font-semibold text-[#7B6A62] mt-[4px]">
                     {{ $selectedBranch->label ?? 'Cabang Salon' }} - semua hari yang sudah terjadwalkan
                 </p>
@@ -617,6 +493,12 @@
         if (target) {
             target.classList.toggle('hidden');
         }
+    }
+
+    function selectDate(date, day) {
+        document.getElementById('dateText').innerHTML = date + '<br>' + day;
+        document.getElementById('dateDropdown').classList.add('hidden');
+        showToast('Tanggal dipilih: ' + date);
     }
 
     function openAllSchedulesModal() {
