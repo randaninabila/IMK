@@ -14,8 +14,9 @@ class RoleMiddleware
             return redirect('/login');
         }
 
-        if (!in_array(Auth::user()->role, $roles)) {
-            return $this->redirectByRole(Auth::user()->role);
+        // Blokir akses jika email belum diverifikasi
+        if (!Auth::user()->email_verified_at) {
+            return redirect()->route('verification.notice');
         }
 
         // Cek status akun — nonaktif tidak boleh masuk
@@ -24,6 +25,10 @@ class RoleMiddleware
             return redirect('/login')->withErrors([
                 'email' => 'Akun Anda telah dinonaktifkan.'
             ]);
+        }
+
+        if (!in_array(Auth::user()->role, $roles)) {
+            return $this->redirectByRole(Auth::user()->role);
         }
 
         return $next($request);

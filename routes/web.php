@@ -16,6 +16,7 @@ use App\Http\Controllers\ForgotPasswordController;
 
 use App\Http\Controllers\Owner\DashboardController;
 use App\Http\Controllers\Owner\ServiceController;
+use App\Http\Controllers\Owner\ManageServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
 use App\Http\Controllers\Owner\CustomerController;
 
@@ -113,6 +114,12 @@ Route::middleware('guest')->group(function () {
         return view('auth.register');
     })->name('register');
 });
+
+// Verifikasi email via OTP
+Route::get('/email/verify',              [AuthController::class, 'verifyEmailNotice'])->name('verification.notice');
+Route::post('/email/verify/otp',         [AuthController::class, 'verifyEmailOtp'])->name('verification.verify-otp');
+Route::post('/email/verify/resend',      [AuthController::class, 'resendVerification'])->middleware('auth')->name('verification.resend');
+Route::post('/email/verify/resend-guest',[AuthController::class, 'resendVerificationGuest'])->name('verification.resend-guest');
 
 
 // =====================
@@ -323,40 +330,6 @@ Route::get('/logout-test', function () {
 
 
 // =====================
-// EMAIL VERIFICATION
-// =====================
-
-Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', [AuthController::class, 'verifyEmailNotice'])
-        ->name('verification.notice');
-
-    Route::get('/email/verify/{token}', [AuthController::class, 'verifyEmail'])
-        ->name('verification.verify');
-
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill();
-
-        return redirect('/');
-    })->middleware('signed')->name('verification.signed');
-
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-
-        return back();
-    })->middleware('throttle:6,1')->name('verification.send');
-
-    Route::get('/verify-email-notice', [AuthController::class, 'verifyEmailNotice'])
-        ->name('verification.custom.notice');
-
-    Route::get('/verify-email/{token}', [AuthController::class, 'verifyEmail'])
-        ->name('verification.custom.verify');
-
-    Route::post('/resend-verification', [AuthController::class, 'resendVerification'])
-        ->name('verification.resend');
-});
-
-
-// =====================
 // OWNER
 // =====================
 
@@ -372,6 +345,30 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
 
     Route::get('/serviceo/edit', [ServiceController::class, 'edit'])
         ->name('owner.service.edit');
+
+    Route::get('/service/manage', [ManageServiceController::class, 'index'])
+        ->name('owner.service.manage');
+
+    Route::post('/service/manage/store', [ManageServiceController::class, 'store'])
+        ->name('owner.service.store');
+
+    Route::put('/service/manage/{id}', [ManageServiceController::class, 'update']
+    )->name('owner.service.update');
+
+    Route::patch('/service/manage/{id}/deactivate', [ManageServiceController::class, 'deactivate']
+    )->name('owner.service.deactivate');
+
+    Route::patch('/service/manage/{id}/activate', [ManageServiceController::class, 'activate'])
+        ->name('owner.service.activate');
+
+    Route::post('/service/manage/jenis', [ManageServiceController::class, 'storeJenis']
+    )->name('owner.service.jenis.store');
+
+    Route::post('/service/manage/paket', [ManageServiceController::class, 'storePaket']
+    )->name('owner.service.paket.store');
+
+    Route::put('/service/manage/paket/{id}', [ManageServiceController::class, 'updatePaket'])
+        ->name('owner.service.paket.update');
 
     Route::get('/employee', [EmployeeController::class, 'index'])
         ->name('owner.employee');

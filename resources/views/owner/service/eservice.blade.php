@@ -234,6 +234,22 @@
                     </div>
                 </div>
 
+                {{-- CRUD LAYANAN --}}
+                <a
+                    href="{{ route('owner.service.manage') }}"
+                    class="
+                        bg-[#f8cdd0]
+                        text-[#b04a4a]
+                        px-5 py-2.5
+                        rounded-full
+                        text-sm
+                        font-medium
+                        hover:opacity-90
+                        transition
+                    "
+                >
+                    Kelola Layanan
+                </a>
             </div>
         </div>
 

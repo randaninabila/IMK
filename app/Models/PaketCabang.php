@@ -5,8 +5,12 @@ use Illuminate\Database\Eloquent\Model;
 class PaketCabang extends Model
 {
     protected $table = 'paket_cabang';
-    protected $primaryKey = 'paket_id';
+    protected $primaryKey = 'paket_cabang_id';
     public $timestamps = false;
+
+    protected $fillable = [
+        'paket_id', 'cabang_id', 'harga_normal', 'harga_promo', 'status'
+    ];
 
     public function paketLayanan()
     {

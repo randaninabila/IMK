@@ -13,11 +13,14 @@ class VerifyEmailMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public User $user) {}
+    public function __construct(
+        public User $user,
+        public string $otp
+    ) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Verifikasi Email - Dina Salon Muslimah');
+        return new Envelope(subject: 'Verifikasi Email — Dina Salon Muslimah');
     }
 
     public function content(): Content

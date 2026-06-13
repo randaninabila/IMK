@@ -3,7 +3,7 @@
 @section('content')
 <div class="relative">
     <a href="{{ route('owner.employee.edit') }}" class="inline-flex items-center gap-2 bg-white border border-[#f1dede] px-5 py-2.5 rounded-full text-sm font-medium text-[#b04a4a] shadow-sm hover:bg-pink-50 transition mb-8">
-        ← Kembali ke Daftar Karyawan
+        ← Kembali ke Daftar Pegawai
     </a>
 
     <div
