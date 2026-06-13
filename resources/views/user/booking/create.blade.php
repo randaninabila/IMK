@@ -24,6 +24,28 @@
         </div>
     @endif
 
+    {{-- WARNING: Nomor HP belum diisi --}}
+    @if (!$user->no_hp)
+    <div class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+        <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+            <p class="text-amber-800 font-semibold text-sm">Nomor HP belum diisi</p>
+            <p class="text-amber-700 text-sm mt-0.5">
+                Kamu perlu mengisi nomor WhatsApp terlebih dahulu agar salon bisa menghubungi kamu untuk konfirmasi booking.
+            </p>
+            <a href="{{ route('profile') }}"
+            class="inline-flex items-center gap-1.5 mt-2 text-sm font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-900 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Isi nomor HP di profil
+            </a>
+        </div>
+    </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
         {{-- FORM KIRI --}}
@@ -128,7 +150,9 @@
 
                 <button type="submit"
                         id="submitBtn"
-                        class="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-2">
+                        @if(!$user->no_hp) disabled @endif
+                        class="w-full bg-rose-400 hover:bg-rose-500 text-white font-bold py-4 rounded-2xl transition flex items-center justify-center gap-2
+                            {{ !$user->no_hp ? 'opacity-50 cursor-not-allowed' : '' }}">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>

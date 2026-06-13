@@ -122,6 +122,11 @@ Route::post('/email/verify/resend',      [AuthController::class, 'resendVerifica
 Route::post('/email/verify/resend-guest',[AuthController::class, 'resendVerificationGuest'])->name('verification.resend-guest');
 
 
+// GOOGLE OAUTH
+Route::get('/auth/google',          [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+
+
 // =====================
 // FORGOT PASSWORD
 // =====================
@@ -560,25 +565,11 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
     ->prefix('pelanggan')
     ->name('pelanggan.')
     ->group(function () {
+
+        // Bebas diakses tanpa verifikasi HP
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
-
-        Route::get('/booking/{booking_id}/ulasan', [UlasanController::class, 'create'])->name('booking.ulasan');
-        Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])->name('booking.ulasan.store');
-
-        Route::get('/promo/data', [PromoController::class, 'index'])
-        ->name('pelanggan.promo.data');
-
-        Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
-            ->name('booking.paket')
-            ->whereNumber(['paket_id', 'cabang_id']);
-
-        Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
-            ->name('booking.create');
-
-        Route::post('/booking/store', [BookingController::class, 'store'])
-            ->name('booking.store');
 
         Route::get('/bookings', [BookingController::class, 'history'])
             ->name('bookings');
@@ -586,20 +577,46 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
         Route::get('/booking/{booking_id}', [BookingController::class, 'show'])
             ->name('booking.show');
 
-        Route::get('/booking/{booking_id}/reschedule', [BookingController::class, 'showReschedule'])
-            ->name('booking.reschedule');
+        Route::get('/booking/{booking_id}/ulasan', [UlasanController::class, 'create'])
+            ->name('booking.ulasan');
+        Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])
+            ->name('booking.ulasan.store');
 
-        Route::post('/booking/{booking_id}/reschedule', [BookingController::class, 'processReschedule'])
-            ->name('booking.reschedule.process');
+        Route::get('/promo/data', [PromoController::class, 'index'])
+            ->name('pelanggan.promo.data');
 
-        Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
-            ->name('payment.show');
+        // Wajib verifikasi HP
+        Route::middleware(['phone.verified'])->group(function () {
 
-        Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
-            ->name('payment.process');
+            // HAPUS booking.create dan booking.paket dari sini
+            // biarkan user masuk ke halaman booking dulu
 
-        Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
-            ->name('payment.success');
+            Route::post('/booking/store', [BookingController::class, 'store'])
+                ->name('booking.store');
+
+            Route::get('/booking/{booking_id}/reschedule', [BookingController::class, 'showReschedule'])
+                ->name('booking.reschedule');
+
+            Route::post('/booking/{booking_id}/reschedule', [BookingController::class, 'processReschedule'])
+                ->name('booking.reschedule.process');
+
+            Route::get('/payment/{booking_id}', [PaymentController::class, 'show'])
+                ->name('payment.show');
+
+            Route::post('/payment/{booking_id}/process', [PaymentController::class, 'process'])
+                ->name('payment.process');
+
+            Route::get('/payment/{booking_id}/success', [PaymentController::class, 'success'])
+                ->name('payment.success');
+        });
+
+        // Bisa diakses tanpa nomor HP — tapi ada banner warning di blade
+        Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
+            ->name('booking.paket')
+            ->whereNumber(['paket_id', 'cabang_id']);
+
+        Route::get('/booking/create/{layanan_cabang_id}', [BookingController::class, 'create'])
+            ->name('booking.create');
     });
 
 

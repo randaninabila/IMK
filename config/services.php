@@ -41,5 +41,18 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
         'base_url' => env('MIDTRANS_BASE_URL', 'https://app.sandbox.midtrans.com'),
     ],
+ 
+    // GOOGLE OAUTH
+    'google' => [
+        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+    ],
+ 
+    // ZENZIVA
+    'zenziva' => [
+        'userkey' => env('ZENZIVA_USERKEY'),
+        'passkey' => env('ZENZIVA_PASSKEY'),
+    ],
 
 ];

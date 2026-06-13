@@ -76,100 +76,66 @@ class ProfileController extends Controller
 
         // Hapus foto
         if ($request->hapus_foto) {
-
-            if (
-                $user->foto_profile &&
-                Storage::disk('public')->exists($user->foto_profile)
-            ) {
-
-                Storage::disk('public')
-                    ->delete($user->foto_profile);
+            if ($user->foto_profile && Storage::disk('public')->exists($user->foto_profile)) {
+                Storage::disk('public')->delete($user->foto_profile);
             }
-
             $path = null;
         }
-
         // Upload foto baru
-        elseif (
-            $request->hasFile('foto_profile') ||
-            $request->hasFile('camera_profile')
-        ) {
-
-            $file = $request->file('foto_profile')
-                ?? $request->file('camera_profile');
-
+        elseif ($request->hasFile('foto_profile') || $request->hasFile('camera_profile')) {
+            $file = $request->file('foto_profile') ?? $request->file('camera_profile');
             $path = $file->store('profile', 'public');
 
-            if (
-                $user->foto_profile &&
-                Storage::disk('public')->exists($user->foto_profile)
-            ) {
-                Storage::disk('public')
-                    ->delete($user->foto_profile);
+            if ($user->foto_profile && Storage::disk('public')->exists($user->foto_profile)) {
+                Storage::disk('public')->delete($user->foto_profile);
             }
         }
 
-        // Update users
+        // Cek apakah no_hp berubah — SEBELUM update
+        $noHpBaru  = $request->no_hp;
+        $noHpLama  = $user->no_hp;
+        $hpBerubah = $noHpBaru !== $noHpLama;
+
+        // Update users (satu kali saja)
         $userUpdated = DB::table('users')
             ->where('user_id', $user->user_id)
             ->update([
-                'nama'         => $request->nama,
-                'no_hp'        => $request->no_hp,
-                'foto_profile' => $path,
-                'updated_at'   => now(),
+                'nama'                => $request->nama,
+                'no_hp'               => $noHpBaru,
+                'foto_profile'        => $path,
+                'updated_at'          => now(),
+                'hp_verified_at'      => $hpBerubah ? null : $user->hp_verified_at,
+                'hp_verify_token'     => $hpBerubah ? null : $user->hp_verify_token,
+                'hp_token_expires_at' => $hpBerubah ? null : $user->hp_token_expires_at,
             ]);
 
-        Auth::setUser(
-            \App\Models\User::find($user->user_id)
-        );
+        Auth::setUser(\App\Models\User::find($user->user_id));
 
-        // cek pelanggan
-        $pelanggan = DB::table('pelanggan')
-            ->where('user_id', $user->user_id)
-            ->first();
-
+        // Update pelanggan
+        $pelanggan = DB::table('pelanggan')->where('user_id', $user->user_id)->first();
         $pelangganUpdated = 0;
 
         if ($pelanggan) {
-
             $pelangganUpdated = DB::table('pelanggan')
                 ->where('user_id', $user->user_id)
                 ->update([
                     'alamat'        => $request->alamat,
                     'tanggal_lahir' => $request->tanggal_lahir,
                 ]);
-
         } else {
-
-            DB::table('pelanggan')
-                ->insert([
-                    'user_id'       => $user->user_id,
-                    'alamat'        => $request->alamat,
-                    'tanggal_lahir' => $request->tanggal_lahir,
-                    // 'created_at'    => now(),
-                    // 'updated_at'    => now(),
-                    
-                ]);
-
+            DB::table('pelanggan')->insert([
+                'user_id'       => $user->user_id,
+                'alamat'        => $request->alamat,
+                'tanggal_lahir' => $request->tanggal_lahir,
+            ]);
             $pelangganUpdated = 1;
         }
 
-        if (
-            $userUpdated ||
-            $pelangganUpdated ||
-            $request->hasFile('foto_profile')
-        ) {
-
-            return back()->with(
-                'success',
-                'Profile berhasil diperbarui.'
-            );
+        if ($userUpdated || $pelangganUpdated || $request->hasFile('foto_profile')) {
+            return back()->with('success', 'Profile berhasil diperbarui.');
         }
 
-        return back()->with(
-            'error',
-            'Tidak ada data yang diubah.'
-        );
+        return back()->with('error', 'Tidak ada data yang diubah.');
     }
 
     // ========================
