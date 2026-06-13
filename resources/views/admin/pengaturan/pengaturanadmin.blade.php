@@ -298,5 +298,17 @@
     });
 </script>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.bg-green-100, .bg-red-100').forEach(function (el) {
+            setTimeout(function () {
+                el.style.transition = 'opacity 0.5s';
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 500);
+            }, 3000);
+        });
+    });
+</script>
+
 </body>
 </html>

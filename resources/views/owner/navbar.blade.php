@@ -15,6 +15,11 @@ $navItems = [
     [
         'href'  => '/serviceo/edit',
         'label' => 'Daftar Layanan',
+        'icon'  => 'M4 6h16M4 10h16M4 14h16M4 18h16',
+    ],
+    [
+        'href'  => '/service/manage',
+        'label' => 'Kelola Layanan',
         'icon'  => 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
     ],
     [
@@ -44,14 +49,14 @@ $navItems = [
 
         {{-- LINK KE HALAMAN PUBLIK --}}
         <a href="{{ route('home') }}"
-        class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] transition
-                text-[#7A6262] hover:bg-[#FFF4F4] hover:text-[#3E382D] mb-2">
+           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px] transition
+                  text-[#7A6262] hover:bg-[#FFF4F4] hover:text-[#3E382D] mb-2">
             <svg xmlns="http://www.w3.org/2000/svg"
-                class="w-[18px] h-[18px] shrink-0"
-                fill="none" viewBox="0 0 24 24"
-                stroke="currentColor" stroke-width="1.8">
+                 class="w-[18px] h-[18px] shrink-0"
+                 fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="1.8">
                 <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M15 12H9m0 0l3-3m-3 3l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/>
+                      d="M15 12H9m0 0l3-3m-3 3l3 3M3 12a9 9 0 1118 0 9 9 0 01-18 0z"/>
             </svg>
             <span class="truncate">Lihat Halaman Publik</span>
         </a>
@@ -60,7 +65,7 @@ $navItems = [
 
         @foreach ($navItems as $item)
             @php
-                $slug    = ltrim($item['href'], '/');
+                $slug     = ltrim($item['href'], '/');
                 $isActive = ($current === $slug);
             @endphp
 
@@ -84,52 +89,29 @@ $navItems = [
                 @endif
             </a>
         @endforeach
+
     </nav>
 
     {{-- LOGOUT --}}
-    <div
-        x-data="{ logoutOpen:false }"
-        class="px-3 pb-5 relative"
-    >
+    <div x-data="{ logoutOpen:false }" class="px-3 pb-5 relative">
 
         <div class="h-px bg-[#F1DFDF] mb-3"></div>
 
-        {{-- BUTTON --}}
         <button
             type="button"
             @click="logoutOpen = !logoutOpen"
-
-            class="
-                w-full flex items-center gap-3
-                px-4 py-2.5
-                rounded-xl
-                text-[14px]
-                text-red-400
-                hover:bg-red-50
-                hover:text-red-600
-                transition
-            "
+            class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-[14px]
+                   text-red-400 hover:bg-red-50 hover:text-red-600 transition"
         >
-
             <svg xmlns="http://www.w3.org/2000/svg"
-                class="w-[18px] h-[18px] shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="1.8">
-
-                <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
-                />
-
+                 class="w-[18px] h-[18px] shrink-0"
+                 fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="1.8">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"/>
             </svg>
-
             Keluar Akun
-
         </button>
-
 
         {{-- MINI CONFIRM --}}
         <div
@@ -137,69 +119,30 @@ $navItems = [
             x-transition
             x-cloak
             @click.outside="logoutOpen = false"
-
-            class="
-                absolute bottom-20 left-3 right-3
-                bg-white
-                border border-[#F1DFDF]
-                rounded-2xl
-                shadow-xl
-                p-4
-                z-50
-            "
+            class="absolute bottom-20 left-3 right-3 bg-white border border-[#F1DFDF]
+                   rounded-2xl shadow-xl p-4 z-50"
         >
-
-            <p class="
-                text-sm
-                text-[#3E382D]
-                mb-4
-            ">
-                Yakin ingin keluar?
-            </p>
+            <p class="text-sm text-[#3E382D] mb-4">Yakin ingin keluar?</p>
 
             <div class="flex justify-end gap-2">
-
-                {{-- CANCEL --}}
                 <button
                     type="button"
                     @click="logoutOpen = false"
-
-                    class="
-                        px-3 py-2
-                        rounded-xl
-                        text-xs
-                        bg-gray-100
-                        hover:bg-gray-200
-                        transition
-                    "
+                    class="px-3 py-2 rounded-xl text-xs bg-gray-100 hover:bg-gray-200 transition"
                 >
                     Batal
                 </button>
 
-                {{-- CONFIRM --}}
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-
                     <button
                         type="submit"
-
-                        class="
-                            px-3 py-2
-                            rounded-xl
-                            text-xs
-                            bg-red-500
-                            hover:bg-red-600
-                            text-white
-                            transition
-                        "
+                        class="px-3 py-2 rounded-xl text-xs bg-red-500 hover:bg-red-600 text-white transition"
                     >
                         Keluar
                     </button>
-
                 </form>
-
             </div>
-
         </div>
 
     </div>

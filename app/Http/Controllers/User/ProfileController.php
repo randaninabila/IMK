@@ -104,9 +104,6 @@ class ProfileController extends Controller
                 'no_hp'               => $noHpBaru,
                 'foto_profile'        => $path,
                 'updated_at'          => now(),
-                'hp_verified_at'      => $hpBerubah ? null : $user->hp_verified_at,
-                'hp_verify_token'     => $hpBerubah ? null : $user->hp_verify_token,
-                'hp_token_expires_at' => $hpBerubah ? null : $user->hp_token_expires_at,
             ]);
 
         Auth::setUser(\App\Models\User::find($user->user_id));

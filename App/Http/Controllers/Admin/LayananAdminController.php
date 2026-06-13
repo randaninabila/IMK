@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Owner;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Layanan;
@@ -13,7 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class ManageServiceController extends Controller
+class LayananAdminController extends Controller
 {
     public function index()
     {
@@ -43,8 +43,6 @@ class ManageServiceController extends Controller
 
         $jenisLayanan = JenisLayanan::orderBy('nama_jenis')->get();
 
-        // Ambil harga dari paket_cabang — pakai harga cabang pertama sebagai representasi
-        // (asumsi harga sama di semua cabang; kalau beda bisa di-group lebih lanjut)
         $paketLayanan = DB::table('paket_layanan as pl')
             ->leftJoin('paket_detail as pd', 'pl.paket_id', '=', 'pd.paket_id')
             ->leftJoin('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
@@ -72,7 +70,7 @@ class ManageServiceController extends Controller
             ->orderBy('l.nama_layanan')
             ->get();
 
-        return view('owner.service.manage', compact(
+        return view('admin.layanan.manage', compact(
             'layanan',
             'jenisLayanan',
             'cabang',
@@ -122,7 +120,7 @@ class ManageServiceController extends Controller
             }
         });
 
-        session(['active_tab' => $request->input('active_tab', 'layanan')]);
+        session(['active_tab' => 'layanan']);
         return back()->with('success', 'Layanan berhasil ditambahkan.');
     }
 
@@ -138,7 +136,6 @@ class ManageServiceController extends Controller
             'durasi'             => 'required|integer|min:1',
             'kategori_pelanggan' => 'required|in:umum,anak',
             'harga'              => 'required|numeric|min:0',
-            'cabang_id'          => 'nullable|exists:cabang,cabang_id',
         ]);
 
         DB::transaction(function () use ($request, $layanan, $id) {
@@ -158,16 +155,11 @@ class ManageServiceController extends Controller
                 $layanan->update(['cover_foto' => $path]);
             }
 
-            $query = LayananCabang::where('layanan_id', $id);
-
-            if ($request->filled('cabang_id')) {
-                $query->where('cabang_id', $request->cabang_id);
-            }
-
-            $query->update(['harga' => $request->harga]);
+            LayananCabang::where('layanan_id', $id)
+                ->update(['harga' => $request->harga]);
         });
 
-        session(['active_tab' => $request->input('active_tab', 'layanan')]);
+        session(['active_tab' => 'layanan']);
         return back()->with('success', 'Layanan berhasil diperbarui.');
     }
 
@@ -184,7 +176,7 @@ class ManageServiceController extends Controller
             ->whereIn('cabang_id', $request->cabang_id)
             ->update(['status' => 'tidak_tersedia']);
 
-        session(['active_tab' => $request->input('active_tab', 'layanan')]);
+        session(['active_tab' => 'layanan']);
         return back()->with('success', 'Layanan berhasil dinonaktifkan.');
     }
 
@@ -201,7 +193,7 @@ class ManageServiceController extends Controller
             ->whereIn('cabang_id', $request->cabang_id)
             ->update(['status' => 'tersedia']);
 
-        session(['active_tab' => $request->input('active_tab', 'layanan')]);
+        session(['active_tab' => 'layanan']);
         return back()->with('success', 'Layanan berhasil diaktifkan.');
     }
 
@@ -219,7 +211,7 @@ class ManageServiceController extends Controller
             'deskripsi'  => $request->deskripsi,
         ]);
 
-        session(['active_tab' => $request->input('active_tab', 'jenis')]);
+        session(['active_tab' => 'jenis']);
         return back()->with('success', 'Jenis layanan berhasil diperbarui.');
     }
 
@@ -235,7 +227,7 @@ class ManageServiceController extends Controller
             'deskripsi'  => $request->deskripsi,
         ]);
 
-        session(['active_tab' => $request->input('active_tab', 'jenis')]);
+        session(['active_tab' => 'jenis']);
         return back()->with('success', 'Jenis layanan berhasil ditambahkan.');
     }
 
@@ -277,7 +269,7 @@ class ManageServiceController extends Controller
             }
         });
 
-        session(['active_tab' => $request->input('active_tab', 'paket')]);
+        session(['active_tab' => 'paket']);
         return back()->with('success', 'Paket berhasil ditambahkan.');
     }
 

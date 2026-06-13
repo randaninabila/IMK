@@ -45,6 +45,8 @@ use App\Http\Controllers\Admin\PelangganAdminController;
 use App\Http\Controllers\Admin\UlasanAdminController;
 use App\Http\Controllers\Admin\PengaturanAdminController;
 use App\Http\Controllers\Admin\InputPromoAdminController;
+use App\Http\Controllers\Admin\LayananAdminController;
+use App\Http\Controllers\Admin\AlbumAdminController;
 
 
 // =====================
@@ -170,14 +172,8 @@ if (class_exists(ForgotPasswordController::class)) {
     })->name('password.request');
 
     Route::post('/forgot-password', function (Request $request) {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
+        $request->validate(['email' => 'required|email']);
+        $status = Password::sendResetLink($request->only('email'));
         return $status === Password::RESET_LINK_SENT
             ? back()->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
@@ -189,26 +185,18 @@ if (class_exists(ForgotPasswordController::class)) {
 
     Route::post('/reset-password', function (Request $request) {
         $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
+            'token'    => 'required',
+            'email'    => 'required|email',
             'password' => 'required|min:8|confirmed',
         ]);
-
         $status = Password::reset(
-            $request->only(
-                'email',
-                'password',
-                'password_confirmation',
-                'token'
-            ),
+            $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->password = Hash::make($password);
                 $user->save();
-
                 event(new PasswordReset($user));
             }
         );
-
         return $status === Password::PASSWORD_RESET
             ? redirect('/login')->with('status', __($status))
             : back()->withErrors(['email' => [__($status)]]);
@@ -216,14 +204,8 @@ if (class_exists(ForgotPasswordController::class)) {
 }
 
 Route::post('/forgot-password-link', function (Request $request) {
-    $request->validate([
-        'email' => 'required|email',
-    ]);
-
-    $status = Password::sendResetLink(
-        $request->only('email')
-    );
-
+    $request->validate(['email' => 'required|email']);
+    $status = Password::sendResetLink($request->only('email'));
     return $status === Password::RESET_LINK_SENT
         ? back()->with('status', __($status))
         : back()->withErrors(['email' => __($status)]);
@@ -268,31 +250,21 @@ Route::get('/specialist/{pegawai_id}', [SpecialistController::class, 'show'])
 Route::get('/specialist/detail/{slug}', function ($slug) {
     $specialists = [
         'aisyah-rahmawati' => [
-            'name' => 'Dr. Aisyah Rahmawati',
-            'role' => 'Senior Beautician',
-            'desc' => 'Specializing in facial treatments...',
-            'img' => 'https://via.placeholder.com/400x300',
-            'services' => [
-                'Facial Treatment',
-                'Skin Brightening',
-                'Acne Care',
-            ],
+            'name'     => 'Dr. Aisyah Rahmawati',
+            'role'     => 'Senior Beautician',
+            'desc'     => 'Specializing in facial treatments...',
+            'img'      => 'https://via.placeholder.com/400x300',
+            'services' => ['Facial Treatment', 'Skin Brightening', 'Acne Care'],
         ],
         'kevin-pratama' => [
-            'name' => 'Dr. Kevin Pratama',
-            'role' => 'Skin Specialist',
-            'desc' => 'Expert in advanced dermatology...',
-            'img' => 'https://via.placeholder.com/400x300',
-            'services' => [
-                'Anti Aging',
-                'Dermatology',
-                'Laser Therapy',
-            ],
+            'name'     => 'Dr. Kevin Pratama',
+            'role'     => 'Skin Specialist',
+            'desc'     => 'Expert in advanced dermatology...',
+            'img'      => 'https://via.placeholder.com/400x300',
+            'services' => ['Anti Aging', 'Dermatology', 'Laser Therapy'],
         ],
     ];
-
     $specialist = $specialists[$slug] ?? abort(404);
-
     return view('user.specialist.spdetail', compact('specialist'));
 })->name('specialist.detail');
 
@@ -306,7 +278,6 @@ Route::get('/specialist/slug/{slug}', function ($slug) {
 // =====================
 
 Route::post('/login', [AuthController::class, 'login']);
-
 Route::post('/register', [AuthController::class, 'register']);
 
 Route::post('/logout', [AuthController::class, 'logout'])
@@ -315,21 +286,17 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 Route::post('/fake-verify-email', function () {
     $user = auth()->user();
-
     if ($user) {
         $user->email_verified_at = now();
         $user->save();
     }
-
     return redirect()->intended('/');
 })->middleware('auth');
 
 Route::get('/logout-test', function () {
     Auth::logout();
-
     request()->session()->invalidate();
     request()->session()->regenerateToken();
-
     return redirect('/login');
 });
 
@@ -339,6 +306,7 @@ Route::get('/logout-test', function () {
 // =====================
 
 Route::middleware(['auth', 'role:owner'])->group(function () {
+
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('owner.dashboard');
 
@@ -357,23 +325,27 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
     Route::post('/service/manage/store', [ManageServiceController::class, 'store'])
         ->name('owner.service.store');
 
-    Route::put('/service/manage/{id}', [ManageServiceController::class, 'update']
-    )->name('owner.service.update');
+    // Urutan penting: spesifik dulu sebelum {id} generik
+    Route::post('/service/manage/jenis', [ManageServiceController::class, 'storeJenis'])
+        ->name('owner.service.jenis.store');
 
-    Route::patch('/service/manage/{id}/deactivate', [ManageServiceController::class, 'deactivate']
-    )->name('owner.service.deactivate');
+    Route::put('/service/manage/jenis/{id}', [ManageServiceController::class, 'updateJenis'])
+        ->name('owner.service.jenis.update');
+
+    Route::post('/service/manage/paket', [ManageServiceController::class, 'storePaket'])
+        ->name('owner.service.paket.store');
+
+    Route::put('/service/manage/paket/{id}', [ManageServiceController::class, 'updatePaket'])
+        ->name('owner.service.paket.update');
+
+    Route::patch('/service/manage/{id}/deactivate', [ManageServiceController::class, 'deactivate'])
+        ->name('owner.service.deactivate');
 
     Route::patch('/service/manage/{id}/activate', [ManageServiceController::class, 'activate'])
         ->name('owner.service.activate');
 
-    Route::post('/service/manage/jenis', [ManageServiceController::class, 'storeJenis']
-    )->name('owner.service.jenis.store');
-
-    Route::post('/service/manage/paket', [ManageServiceController::class, 'storePaket']
-    )->name('owner.service.paket.store');
-
-    Route::put('/service/manage/paket/{id}', [ManageServiceController::class, 'updatePaket'])
-        ->name('owner.service.paket.update');
+    Route::put('/service/manage/{id}', [ManageServiceController::class, 'update'])
+        ->name('owner.service.update');
 
     Route::get('/employee', [EmployeeController::class, 'index'])
         ->name('owner.employee');
@@ -405,19 +377,24 @@ Route::middleware(['auth', 'role:owner'])->group(function () {
 
 
 // =====================
-// ADMIN
+// ADMIN — satu group, tidak duplikat
 // =====================
 
 Route::middleware(['auth', 'role:admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        // ... route lain tetap ...
+
+        Route::get('/dashboard', [DashboardAdminController::class, 'index'])
+            ->name('dashboard');
+
+        // PENJADWALAN
+        Route::get('/penjadwalan', [PenjadwalanAdminController::class, 'index'])
+            ->name('penjadwalan');
 
         Route::post('/penjadwalan/booking/store', [PenjadwalanAdminController::class, 'storeBooking'])
             ->name('penjadwalan.booking.store');
 
-        // TAMBAHAN — route update booking (edit)
         Route::put('/penjadwalan/booking/{booking_id}', [PenjadwalanAdminController::class, 'updateBooking'])
             ->name('penjadwalan.booking.update');
 
@@ -426,27 +403,8 @@ Route::middleware(['auth', 'role:admin'])
 
         Route::delete('/penjadwalan/booking/{booking_id}', [PenjadwalanAdminController::class, 'cancelBooking'])
             ->name('penjadwalan.booking.cancel');
-    });
 
-Route::middleware(['auth', 'role:admin'])
-    ->prefix('admin')
-    ->name('admin.')
-    ->group(function () {
-        Route::get('/dashboard', [DashboardAdminController::class, 'index'])
-            ->name('dashboard');
-
-        Route::get('/penjadwalan', [PenjadwalanAdminController::class, 'index'])
-            ->name('penjadwalan');
-
-        Route::post('/penjadwalan/booking/store', [PenjadwalanAdminController::class, 'storeBooking'])
-            ->name('penjadwalan.booking.store');
-
-        Route::put('/penjadwalan/booking/{booking_id}/status', [PenjadwalanAdminController::class, 'updateBookingStatus'])
-            ->name('penjadwalan.booking.status');
-
-        Route::delete('/penjadwalan/booking/{booking_id}', [PenjadwalanAdminController::class, 'cancelBooking'])
-            ->name('penjadwalan.booking.cancel');
-
+        // PEGAWAI
         Route::get('/pegawai', [PegawaiAdminController::class, 'index'])
             ->name('pegawai');
 
@@ -463,6 +421,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/pegawai/{pegawai_id}', [PegawaiAdminController::class, 'destroy'])
             ->name('pegawai.destroy');
 
+        // PELANGGAN
         Route::get('/pelanggan', [PelangganAdminController::class, 'index'])
             ->name('pelanggan');
 
@@ -475,6 +434,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/pelanggan/{pelanggan_id}', [PelangganAdminController::class, 'destroy'])
             ->name('pelanggan.destroy');
 
+        // PENGATURAN
         Route::get('/pengaturan', [PengaturanAdminController::class, 'index'])
             ->name('pengaturan');
 
@@ -484,6 +444,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::put('/pengaturan/password', [PengaturanAdminController::class, 'updatePassword'])
             ->name('pengaturan.password.update');
 
+        // PROMO
         Route::get('/input-promo', [InputPromoAdminController::class, 'index'])
             ->name('inputpromo');
 
@@ -493,6 +454,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/input-promo/aktif', [InputPromoAdminController::class, 'deactivate'])
             ->name('inputpromo.deactivate');
 
+        // ULASAN
         Route::get('/ulasan-saran', [UlasanAdminController::class, 'index'])
             ->name('ulasan-saran');
 
@@ -502,6 +464,44 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/ulasanadmin', function () {
             return redirect()->route('admin.ulasan-saran');
         })->name('ulasanadmin');
+
+        // LAYANAN — urutan spesifik dulu sebelum {id} generik
+        Route::get('/layanan', [LayananAdminController::class, 'index'])
+            ->name('layanan');
+
+        Route::post('/layanan/store', [LayananAdminController::class, 'store'])
+            ->name('layanan.store');
+
+        Route::post('/layanan/jenis', [LayananAdminController::class, 'storeJenis'])
+            ->name('layanan.jenis.store');
+
+        Route::put('/layanan/jenis/{id}', [LayananAdminController::class, 'updateJenis'])
+            ->name('layanan.jenis.update');
+
+        Route::post('/layanan/paket', [LayananAdminController::class, 'storePaket'])
+            ->name('layanan.paket.store');
+
+        Route::put('/layanan/paket/{id}', [LayananAdminController::class, 'updatePaket'])
+            ->name('layanan.paket.update');
+
+        Route::patch('/layanan/{id}/deactivate', [LayananAdminController::class, 'deactivate'])
+            ->name('layanan.deactivate');
+
+        Route::patch('/layanan/{id}/activate', [LayananAdminController::class, 'activate'])
+            ->name('layanan.activate');
+
+        Route::put('/layanan/{id}', [LayananAdminController::class, 'update'])
+            ->name('layanan.update');
+
+        // ALBUM
+        Route::get('/layanan/{layanan_id}/album', [AlbumAdminController::class, 'index'])
+            ->name('album');
+
+        Route::post('/layanan/{layanan_id}/album', [AlbumAdminController::class, 'store'])
+            ->name('album.store');
+
+        Route::delete('/album/foto/{foto_id}', [AlbumAdminController::class, 'destroyFoto'])
+            ->name('album.foto.destroy');
     });
 
 
@@ -513,6 +513,7 @@ Route::middleware(['auth', 'role:pegawai'])
     ->prefix('pegawai')
     ->name('pegawai.')
     ->group(function () {
+
         Route::get('/dashboard', [PegawaiDashboardController::class, 'index'])
             ->name('dashboard');
 
@@ -523,8 +524,7 @@ Route::middleware(['auth', 'role:pegawai'])
             ->name('booking');
 
         Route::match(['post', 'patch'], '/booking/{booking}/update-status', [
-            PBookingController::class,
-            'updateStatus',
+            PBookingController::class, 'updateStatus',
         ])->name('booking.updateStatus');
 
         Route::get('/notifikasi', [NotifikasiController::class, 'index'])
@@ -566,7 +566,6 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
     ->name('pelanggan.')
     ->group(function () {
 
-        // Bebas diakses tanpa verifikasi HP
         Route::get('/profile', function () {
             return view('pelanggan.profile');
         })->name('profile');
@@ -579,17 +578,14 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
 
         Route::get('/booking/{booking_id}/ulasan', [UlasanController::class, 'create'])
             ->name('booking.ulasan');
+
         Route::post('/booking/{booking_id}/ulasan', [UlasanController::class, 'store'])
             ->name('booking.ulasan.store');
 
         Route::get('/promo/data', [PromoController::class, 'index'])
             ->name('pelanggan.promo.data');
 
-        // Wajib verifikasi HP
         Route::middleware(['phone.verified'])->group(function () {
-
-            // HAPUS booking.create dan booking.paket dari sini
-            // biarkan user masuk ke halaman booking dulu
 
             Route::post('/booking/store', [BookingController::class, 'store'])
                 ->name('booking.store');
@@ -610,7 +606,6 @@ Route::middleware(['auth', 'role:pelanggan,owner,pegawai,admin'])
                 ->name('payment.success');
         });
 
-        // Bisa diakses tanpa nomor HP — tapi ada banner warning di blade
         Route::get('/booking/paket/{paket_id}/{cabang_id}', [BookingController::class, 'createFromPaket'])
             ->name('booking.paket')
             ->whereNumber(['paket_id', 'cabang_id']);

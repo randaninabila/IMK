@@ -2,33 +2,21 @@
 
 @section('content')
 
-{{-- Simpan tab aktif dari session (untuk redirect balik ke tab yang benar) --}}
 @php $activeTab = session('active_tab', 'layanan'); @endphp
 
-<div class="max-w-7xl mx-auto px-4 py-6">
+<div class="py-6">
 
-    {{-- HEADER --}}
+    {{-- KEMBALI + HEADER --}}
     <div class="mb-8">
+        <a
+            href="{{ route('owner.service.edit') }}"
+            class="inline-flex items-center gap-2 bg-white border border-[#f1dede] px-5 py-2.5 rounded-full text-sm font-medium text-[#b04a4a] shadow-sm hover:bg-pink-50 transition mb-6"
+        >
+            ← Kembali ke Daftar Layanan
+        </a>
         <h1 class="text-4xl font-bold text-[#2d2a26]">Kelola Layanan</h1>
         <p class="text-gray-500 mt-2">Tambah, ubah, dan kelola layanan salon.</p>
     </div>
-
-    {{-- ALERT --}}
-    @if(session('success'))
-        <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    @if($errors->any())
-        <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl">
-            <ul class="list-disc ml-5 space-y-1">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
 
     {{-- TAB NAVIGATION --}}
     <div class="flex gap-2 mb-6 border-b border-[#ecd9d9]">
@@ -36,8 +24,11 @@
             <button
                 onclick="switchTab('{{ $tabKey }}')"
                 id="tab-{{ $tabKey }}"
-                class="tab-btn px-5 py-2.5 text-sm font-medium rounded-t-xl border-b-2
-                    {{ $activeTab === $tabKey ? 'border-[#f45b69] text-[#f45b69]' : 'border-transparent text-gray-500 hover:text-[#b04a4a]' }}"
+                @class([
+                    'tab-btn px-5 py-2.5 text-sm font-medium rounded-t-xl border-b-2 transition',
+                    'border-[#f45b69] text-[#f45b69]'           => $activeTab === $tabKey,
+                    'border-transparent text-gray-500 hover:text-[#b04a4a]' => $activeTab !== $tabKey,
+                ])
             >
                 {{ $tabLabel }}
             </button>
@@ -47,7 +38,7 @@
     {{-- ============================================================ --}}
     {{-- TAB: LAYANAN --}}
     {{-- ============================================================ --}}
-    <div id="panel-layanan" {{ $activeTab !== 'layanan' ? 'class=hidden' : '' }}>
+    <div id="panel-layanan" @class(['hidden' => $activeTab !== 'layanan'])>
         <div class="grid lg:grid-cols-12 gap-6">
 
             {{-- FORM TAMBAH LAYANAN --}}
@@ -83,7 +74,10 @@
                                 required
                             >
                                 @foreach($jenisLayanan as $jenis)
-                                    <option value="{{ $jenis->jenis_layanan_id }}" {{ old('jenis_layanan_id') == $jenis->jenis_layanan_id ? 'selected' : '' }}>
+                                    <option
+                                        value="{{ $jenis->jenis_layanan_id }}"
+                                        {{ old('jenis_layanan_id') == $jenis->jenis_layanan_id ? 'selected' : '' }}
+                                    >
                                         {{ $jenis->nama_jenis }}
                                     </option>
                                 @endforeach
@@ -138,24 +132,6 @@
                         </div>
 
                         <div>
-                            <label class="block mb-2 text-sm font-medium text-[#2d2a26]">Cabang</label>
-                            <div class="space-y-2">
-                                @foreach($cabang as $c)
-                                    <label class="flex items-center gap-3 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            name="cabang_id[]"
-                                            value="{{ $c->cabang_id }}"
-                                            checked
-                                            class="w-4 h-4 accent-[#f45b69]"
-                                        >
-                                        <span class="text-sm text-[#2d2a26]">{{ $c->nama_cabang }}</span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        <div>
                             <label class="block mb-1.5 text-sm font-medium text-[#2d2a26]">
                                 Foto Cover
                                 <span class="text-gray-400 font-normal">(opsional)</span>
@@ -165,10 +141,8 @@
                                 name="cover_foto"
                                 accept="image/jpeg,image/png,image/webp"
                                 class="w-full text-sm text-gray-500
-                                       file:mr-3 file:py-2 file:px-4
-                                       file:rounded-full file:border-0
-                                       file:text-sm file:font-medium
-                                       file:bg-pink-50 file:text-[#b04a4a]
+                                       file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
+                                       file:text-sm file:font-medium file:bg-pink-50 file:text-[#b04a4a]
                                        hover:file:bg-pink-100 transition"
                             >
                             <p class="text-xs text-gray-400 mt-1">JPG, PNG, WebP. Maks 2MB.</p>
@@ -201,7 +175,7 @@
 
                     {{-- SEARCH LAYANAN --}}
                     <div class="relative mb-4">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
                         <input
                             type="text"
                             id="search-layanan"
@@ -230,7 +204,6 @@
                                         class="layanan-row border-b border-[#f3e6e6] hover:bg-[#fff8f8] transition"
                                         data-search="{{ strtolower($first->nama_layanan . ' ' . $first->nama_jenis . ' ' . $first->kategori_pelanggan) }}"
                                     >
-
                                         <td class="py-3 px-3">
                                             <div class="flex items-center gap-3">
                                                 @if($first->cover_foto)
@@ -315,7 +288,6 @@
 
                                             </div>
                                         </td>
-
                                     </tr>
                                 @empty
                                     <tr>
@@ -335,7 +307,7 @@
     {{-- ============================================================ --}}
     {{-- TAB: PAKET --}}
     {{-- ============================================================ --}}
-    <div id="panel-paket" {{ $activeTab !== 'paket' ? 'class=hidden' : '' }}>
+    <div id="panel-paket" @class(['hidden' => $activeTab !== 'paket'])>
         <div class="grid lg:grid-cols-12 gap-6">
 
             {{-- FORM TAMBAH PAKET --}}
@@ -394,13 +366,14 @@
                             </div>
                         </div>
 
+                        {{-- PILIH LAYANAN dengan search + counter --}}
                         <div>
                             <div class="flex items-center justify-between mb-2">
                                 <label class="text-sm font-medium text-[#2d2a26]">Pilih Layanan</label>
                                 <span class="text-xs text-gray-400" id="paket-layanan-count">0 dipilih</span>
                             </div>
                             <div class="relative mb-2">
-                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span>
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">🔍</span>
                                 <input
                                     type="text"
                                     id="search-pilih-layanan"
@@ -410,7 +383,7 @@
                                 >
                             </div>
                             <div class="space-y-2 max-h-52 overflow-y-auto pr-1" id="pilih-layanan-list">
-                                @foreach($layananAktif as $lAktif)
+                                @forelse($layananAktif as $lAktif)
                                     <label
                                         class="pilih-layanan-item flex items-center gap-3 cursor-pointer"
                                         data-search="{{ strtolower($lAktif->nama_layanan . ' ' . $lAktif->kategori_pelanggan) }}"
@@ -428,7 +401,9 @@
                                             <span class="text-xs text-gray-400">({{ $lAktif->kategori_pelanggan }})</span>
                                         </span>
                                     </label>
-                                @endforeach
+                                @empty
+                                    <p class="text-xs text-gray-400 text-center py-4">Belum ada layanan aktif.</p>
+                                @endforelse
                             </div>
                             <p id="pilih-layanan-empty" class="hidden text-xs text-gray-400 mt-2 text-center">Tidak ada layanan yang cocok.</p>
                         </div>
@@ -457,7 +432,7 @@
 
                     {{-- SEARCH PAKET --}}
                     <div class="relative mb-4">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">🔍</span>
                         <input
                             type="text"
                             id="search-paket"
@@ -530,7 +505,7 @@
     {{-- ============================================================ --}}
     {{-- TAB: JENIS LAYANAN --}}
     {{-- ============================================================ --}}
-    <div id="panel-jenis" {{ $activeTab !== 'jenis' ? 'class=hidden' : '' }}>
+    <div id="panel-jenis" @class(['hidden' => $activeTab !== 'jenis'])>
         <div class="grid lg:grid-cols-12 gap-6">
 
             <div class="lg:col-span-4">
@@ -583,11 +558,24 @@
 
                     <div class="space-y-2">
                         @forelse($jenisLayanan as $jenis)
-                            <div class="border border-[#ecd9d9] rounded-2xl px-4 py-3 hover:bg-[#fff8f8] transition">
-                                <div class="font-medium text-[#2d2a26] text-sm">{{ $jenis->nama_jenis }}</div>
-                                @if($jenis->deskripsi)
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ $jenis->deskripsi }}</div>
-                                @endif
+                            <div class="border border-[#ecd9d9] rounded-2xl px-4 py-3 hover:bg-[#fff8f8] transition flex items-center justify-between gap-3">
+                                <div class="flex-1 min-w-0">
+                                    <div class="font-medium text-[#2d2a26] text-sm">{{ $jenis->nama_jenis }}</div>
+                                    @if($jenis->deskripsi)
+                                        <div class="text-xs text-gray-400 mt-0.5">{{ $jenis->deskripsi }}</div>
+                                    @endif
+                                </div>
+                                <button
+                                    type="button"
+                                    onclick="openEditJenisModal({{ json_encode([
+                                        'jenis_layanan_id' => $jenis->jenis_layanan_id,
+                                        'nama_jenis'       => $jenis->nama_jenis,
+                                        'deskripsi'        => $jenis->deskripsi,
+                                    ]) }})"
+                                    class="shrink-0 px-3 py-1.5 rounded-full text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                                >
+                                    Edit
+                                </button>
                             </div>
                         @empty
                             <div class="py-12 text-center text-gray-400">Belum ada jenis layanan.</div>
@@ -699,10 +687,8 @@
                     name="cover_foto"
                     accept="image/jpeg,image/png,image/webp"
                     class="w-full text-sm text-gray-500
-                           file:mr-3 file:py-2 file:px-4
-                           file:rounded-full file:border-0
-                           file:text-sm file:font-medium
-                           file:bg-pink-50 file:text-[#b04a4a]
+                           file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0
+                           file:text-sm file:font-medium file:bg-pink-50 file:text-[#b04a4a]
                            hover:file:bg-pink-100 transition"
                 >
                 <p class="text-xs text-gray-400 mt-1">JPG, PNG, WebP. Maks 2MB.</p>
@@ -718,7 +704,6 @@
             </button>
 
         </form>
-
     </div>
 </div>
 
@@ -794,6 +779,51 @@
             </button>
 
         </form>
+    </div>
+</div>
+
+
+{{-- ============================================================ --}}
+{{-- MODAL EDIT JENIS LAYANAN --}}
+{{-- ============================================================ --}}
+<div id="modal-edit-jenis" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 px-4">
+    <div class="bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 relative">
+
+        <button
+            onclick="closeEditJenisModal()"
+            class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl leading-none"
+        >&times;</button>
+
+        <h2 class="text-lg font-semibold text-[#2d2a26] mb-5">Edit Jenis Layanan</h2>
+
+        <form id="form-edit-jenis" method="POST" class="space-y-4">
+            @csrf @method('PUT')
+            <input type="hidden" name="active_tab" value="jenis">
+
+            <div>
+                <label class="block mb-1.5 text-sm font-medium text-[#2d2a26]">Nama Jenis</label>
+                <input
+                    type="text" name="nama_jenis" id="edit-jenis-nama-owner"
+                    class="w-full border border-[#ecd9d9] rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-[#f4b6bc] focus:ring-2 focus:ring-pink-100 transition"
+                    required
+                >
+            </div>
+
+            <div>
+                <label class="block mb-1.5 text-sm font-medium text-[#2d2a26]">Deskripsi</label>
+                <textarea
+                    name="deskripsi" id="edit-jenis-deskripsi-owner" rows="3"
+                    class="w-full border border-[#ecd9d9] rounded-2xl px-4 py-2.5 text-sm outline-none focus:border-[#f4b6bc] focus:ring-2 focus:ring-pink-100 transition"
+                ></textarea>
+            </div>
+
+            <button
+                type="submit"
+                class="w-full bg-[#f45b69] text-white py-2.5 rounded-full text-sm font-medium shadow-sm hover:opacity-90 transition"
+            >
+                Simpan Perubahan
+            </button>
+        </form>
 
     </div>
 </div>
@@ -849,15 +879,15 @@
 
 
 <script>
-    // FORMAT HARGA
+    // ── FORMAT HARGA ──────────────────────────────────────────────────────────
     function formatHarga(displayInput, hiddenId) {
-        const raw = displayInput.value.replace(/\D/g, '');
+        var raw = displayInput.value.replace(/\D/g, '');
         displayInput.value = raw === '' ? '' : parseInt(raw, 10).toLocaleString('id-ID');
         document.getElementById(hiddenId).value = raw === '' ? '' : raw;
     }
 
     function setHargaDisplay(displayId, hiddenId, value) {
-        const num = parseFloat(value);
+        var num = parseFloat(value);
         document.getElementById(hiddenId).value  = isNaN(num) ? '' : Math.round(num);
         document.getElementById(displayId).value = isNaN(num) ? '' : Math.round(num).toLocaleString('id-ID');
     }
@@ -865,13 +895,14 @@
     document.addEventListener('DOMContentLoaded', function () {
         setHargaDisplay('display-harga-tambah', 'harga-tambah', document.getElementById('harga-tambah').value);
         setHargaDisplay('display-harga-paket',  'harga-paket',  document.getElementById('harga-paket').value);
+        updatePaketLayananCount();
     });
 
-    // TAB SWITCH
+    // ── TAB ───────────────────────────────────────────────────────────────────
     function switchTab(tab) {
-        ['layanan', 'paket', 'jenis'].forEach(t => {
+        ['layanan', 'paket', 'jenis'].forEach(function (t) {
             document.getElementById('panel-' + t).classList.toggle('hidden', t !== tab);
-            const btn = document.getElementById('tab-' + t);
+            var btn = document.getElementById('tab-' + t);
             if (t === tab) {
                 btn.classList.add('border-[#f45b69]', 'text-[#f45b69]');
                 btn.classList.remove('border-transparent', 'text-gray-500');
@@ -882,11 +913,9 @@
         });
     }
 
-    // MODAL EDIT LAYANAN
+    // ── MODAL EDIT LAYANAN ────────────────────────────────────────────────────
     function openEditLayananModal(data) {
-        const form = document.getElementById('form-edit-layanan');
-        form.action = `/service/manage/${data.layanan_id}`;
-
+        document.getElementById('form-edit-layanan').action = '/service/manage/' + data.layanan_id;
         document.getElementById('edit-nama').value      = data.nama_layanan       ?? '';
         document.getElementById('edit-deskripsi').value = data.deskripsi          ?? '';
         document.getElementById('edit-durasi').value    = data.durasi             ?? '';
@@ -894,17 +923,12 @@
         document.getElementById('edit-kategori').value  = data.kategori_pelanggan ?? 'umum';
         setHargaDisplay('display-edit-harga', 'edit-harga', data.harga ?? '');
 
-        // Preview foto lama
-        const preview = document.getElementById('edit-foto-preview');
-        if (data.cover_foto) {
-            preview.innerHTML = `
-                <div class="flex items-center gap-3 p-2 bg-pink-50 rounded-2xl">
-                    <img src="/storage/${data.cover_foto}" class="w-12 h-12 object-cover rounded-xl border border-[#ecd9d9]">
-                    <span class="text-xs text-gray-500">Foto saat ini</span>
-                </div>`;
-        } else {
-            preview.innerHTML = '<p class="text-xs text-gray-400 mb-1">Belum ada foto.</p>';
-        }
+        var preview = document.getElementById('edit-foto-preview');
+        preview.innerHTML = data.cover_foto
+            ? '<div class="flex items-center gap-3 p-2 bg-pink-50 rounded-2xl">'
+                + '<img src="/storage/' + data.cover_foto + '" class="w-12 h-12 object-cover rounded-xl border border-[#ecd9d9]">'
+                + '<span class="text-xs text-gray-500">Foto saat ini</span></div>'
+            : '<p class="text-xs text-gray-400 mb-1">Belum ada foto.</p>';
 
         document.getElementById('modal-edit-layanan').classList.remove('hidden');
         document.getElementById('modal-edit-layanan').classList.add('flex');
@@ -915,18 +939,16 @@
         document.getElementById('modal-edit-layanan').classList.remove('flex');
     }
 
-    document.getElementById('modal-edit-layanan').addEventListener('click', function(e) {
+    document.getElementById('modal-edit-layanan').addEventListener('click', function (e) {
         if (e.target === this) closeEditLayananModal();
     });
 
-    // MODAL EDIT PAKET
+    // ── MODAL EDIT PAKET ──────────────────────────────────────────────────────
     function openEditPaketModal(data) {
-        const form = document.getElementById('form-edit-paket');
-        form.action = `/service/manage/paket/${data.paket_id}`;
-
+        document.getElementById('form-edit-paket').action = '/service/manage/paket/' + data.paket_id;
         document.getElementById('edit-paket-nama').value      = data.nama_paket         ?? '';
-        document.getElementById('edit-paket-deskripsi').value = data.deskripsi           ?? '';
-        document.getElementById('edit-paket-kategori').value  = data.kategori_pelanggan  ?? 'umum';
+        document.getElementById('edit-paket-deskripsi').value = data.deskripsi          ?? '';
+        document.getElementById('edit-paket-kategori').value  = data.kategori_pelanggan ?? 'umum';
         setHargaDisplay('display-edit-harga-paket', 'edit-harga-paket', data.harga_normal ?? '');
 
         document.getElementById('modal-edit-paket').classList.remove('hidden');
@@ -938,29 +960,28 @@
         document.getElementById('modal-edit-paket').classList.remove('flex');
     }
 
-    document.getElementById('modal-edit-paket').addEventListener('click', function(e) {
+    document.getElementById('modal-edit-paket').addEventListener('click', function (e) {
         if (e.target === this) closeEditPaketModal();
     });
 
-    // MODAL STATUS CABANG
+    // ── MODAL STATUS CABANG ───────────────────────────────────────────────────
     function openStatusModal(data) {
         document.getElementById('modal-status-nama').textContent = data.nama;
 
-        const container = document.getElementById('modal-status-cabang');
-        container.innerHTML = data.cabang.map(c => `
-            <label class="flex items-center justify-between cursor-pointer">
-                <span class="flex items-center gap-3">
-                    <input type="checkbox" class="status-cb w-4 h-4 accent-[#f45b69]" value="${c.cabang_id}" checked>
-                    <span class="text-sm text-[#2d2a26]">${c.nama_cabang.replace('Salon Muslimah Dina - ', '')}</span>
-                </span>
-                <span class="text-xs px-2 py-0.5 rounded-full ${c.status === 'tersedia' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-400'}">
-                    ${c.status === 'tersedia' ? 'Aktif' : 'Nonaktif'}
-                </span>
-            </label>
-        `).join('');
+        document.getElementById('modal-status-cabang').innerHTML = data.cabang.map(function (c) {
+            var shortName = c.nama_cabang.replace('Salon Muslimah Dina - ', '');
+            var badge = c.status === 'tersedia'
+                ? '<span class="text-xs px-2 py-0.5 rounded-full bg-green-50 text-green-600">Aktif</span>'
+                : '<span class="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-400">Nonaktif</span>';
+            return '<label class="flex items-center justify-between cursor-pointer">'
+                + '<span class="flex items-center gap-3">'
+                + '<input type="checkbox" class="status-cb w-4 h-4 accent-[#f45b69]" value="' + c.cabang_id + '" checked>'
+                + '<span class="text-sm text-[#2d2a26]">' + shortName + '</span>'
+                + '</span>' + badge + '</label>';
+        }).join('');
 
-        document.getElementById('form-nonaktif').action = `/service/manage/${data.layanan_id}/deactivate`;
-        document.getElementById('form-aktif').action    = `/service/manage/${data.layanan_id}/activate`;
+        document.getElementById('form-nonaktif').action = '/service/manage/' + data.layanan_id + '/deactivate';
+        document.getElementById('form-aktif').action    = '/service/manage/' + data.layanan_id + '/activate';
 
         document.getElementById('modal-status').classList.remove('hidden');
         document.getElementById('modal-status').classList.add('flex');
@@ -971,15 +992,15 @@
         document.getElementById('modal-status').classList.remove('flex');
     }
 
-    document.getElementById('modal-status').addEventListener('click', function(e) {
+    document.getElementById('modal-status').addEventListener('click', function (e) {
         if (e.target === this) closeStatusModal();
     });
 
     function syncHidden(containerId) {
-        const container = document.getElementById(containerId);
+        var container = document.getElementById(containerId);
         container.innerHTML = '';
-        document.querySelectorAll('.status-cb:checked').forEach(cb => {
-            const input = document.createElement('input');
+        document.querySelectorAll('.status-cb:checked').forEach(function (cb) {
+            var input = document.createElement('input');
             input.type  = 'hidden';
             input.name  = 'cabang_id[]';
             input.value = cb.value;
@@ -987,24 +1008,22 @@
         });
     }
 
-    // SEARCH: TABEL LAYANAN
+    // ── SEARCH: TABEL LAYANAN ─────────────────────────────────────────────────
     function filterLayanan(q) {
-        const rows  = document.querySelectorAll('.layanan-row');
-        const term  = q.trim().toLowerCase();
-        let visible = 0;
+        var rows    = document.querySelectorAll('.layanan-row');
+        var term    = q.trim().toLowerCase();
+        var visible = 0;
 
-        rows.forEach(row => {
-            const match = !term || row.dataset.search.includes(term);
+        rows.forEach(function (row) {
+            var match = !term || row.dataset.search.includes(term);
             row.style.display = match ? '' : 'none';
             if (match) visible++;
         });
 
-        // Update counter
-        const counter = document.getElementById('layanan-count');
+        var counter = document.getElementById('layanan-count');
         if (counter) counter.textContent = visible + ' layanan';
 
-        // Tampilkan pesan kosong kalau tidak ada hasil
-        let empty = document.getElementById('layanan-empty-row');
+        var empty = document.getElementById('layanan-empty-row');
         if (!empty) {
             empty = document.createElement('tr');
             empty.id = 'layanan-empty-row';
@@ -1014,22 +1033,22 @@
         empty.style.display = visible === 0 ? '' : 'none';
     }
 
-    // SEARCH: DAFTAR PAKET
+    // ── SEARCH: DAFTAR PAKET ──────────────────────────────────────────────────
     function filterPaket(q) {
-        const cards = document.querySelectorAll('.paket-row');
-        const term  = q.trim().toLowerCase();
-        let visible = 0;
+        var cards   = document.querySelectorAll('.paket-row');
+        var term    = q.trim().toLowerCase();
+        var visible = 0;
 
-        cards.forEach(card => {
-            const match = !term || card.dataset.search.includes(term);
+        cards.forEach(function (card) {
+            var match = !term || card.dataset.search.includes(term);
             card.style.display = match ? '' : 'none';
             if (match) visible++;
         });
 
-        const counter = document.getElementById('paket-count');
+        var counter = document.getElementById('paket-count');
         if (counter) counter.textContent = visible + ' paket';
 
-        let empty = document.getElementById('paket-empty-msg');
+        var empty = document.getElementById('paket-empty-msg');
         if (!empty) {
             empty = document.createElement('p');
             empty.id = 'paket-empty-msg';
@@ -1040,31 +1059,45 @@
         empty.style.display = visible === 0 ? '' : 'none';
     }
 
-    // SEARCH + COUNTER: PILIH LAYANAN DI FORM PAKET
+    // ── SEARCH + COUNTER: PILIH LAYANAN DI FORM PAKET ────────────────────────
     function filterPilihLayanan(q) {
-        const items = document.querySelectorAll('.pilih-layanan-item');
-        const term  = q.trim().toLowerCase();
-        let visible = 0;
+        var items   = document.querySelectorAll('.pilih-layanan-item');
+        var term    = q.trim().toLowerCase();
+        var visible = 0;
 
-        items.forEach(item => {
-            const match = !term || item.dataset.search.includes(term);
+        items.forEach(function (item) {
+            var match = !term || item.dataset.search.includes(term);
             item.style.display = match ? '' : 'none';
             if (match) visible++;
         });
 
-        const empty = document.getElementById('pilih-layanan-empty');
+        var empty = document.getElementById('pilih-layanan-empty');
         if (empty) empty.classList.toggle('hidden', visible > 0);
     }
 
     function updatePaketLayananCount() {
-        const checked = document.querySelectorAll('.pilih-layanan-cb:checked').length;
-        const el = document.getElementById('paket-layanan-count');
+        var checked = document.querySelectorAll('.pilih-layanan-cb:checked').length;
+        var el = document.getElementById('paket-layanan-count');
         if (el) el.textContent = checked + ' dipilih';
     }
 
-    // Init counter saat halaman load
-    document.addEventListener('DOMContentLoaded', function () {
-        updatePaketLayananCount();
+    // ── MODAL EDIT JENIS ──────────────────────────────────────────
+    function openEditJenisModal(data) {
+        var form = document.getElementById('form-edit-jenis');
+        form.action = '/service/manage/jenis/' + data.jenis_layanan_id;
+        document.getElementById('edit-jenis-nama-owner').value      = data.nama_jenis ?? '';
+        document.getElementById('edit-jenis-deskripsi-owner').value = data.deskripsi  ?? '';
+        document.getElementById('modal-edit-jenis').classList.remove('hidden');
+        document.getElementById('modal-edit-jenis').classList.add('flex');
+    }
+
+    function closeEditJenisModal() {
+        document.getElementById('modal-edit-jenis').classList.add('hidden');
+        document.getElementById('modal-edit-jenis').classList.remove('flex');
+    }
+
+    document.getElementById('modal-edit-jenis').addEventListener('click', function(e) {
+        if (e.target === this) closeEditJenisModal();
     });
 </script>
 
