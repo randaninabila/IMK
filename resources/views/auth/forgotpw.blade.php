@@ -138,21 +138,21 @@
 
                 <!-- Alerts -->
                 @if (session('success'))
-                <div class="mb-5 flex items-start gap-3 bg-green-50/70 border border-green-200 text-green-700 px-4 py-3 rounded-2xl text-sm">
+                <div data-alert class="mb-5 flex items-start gap-3 bg-green-50/70 border border-green-200 text-green-700 px-4 py-3 rounded-2xl text-sm">
                     <i data-feather="check-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                     <span>{{ session('success') }}</span>
                 </div>
                 @endif
 
                 @if (session('info'))
-                <div class="mb-5 flex items-start gap-3 bg-blue-50/70 border border-blue-200 text-blue-700 px-4 py-3 rounded-2xl text-sm">
+                <div data-alert class="mb-5 flex items-start gap-3 bg-blue-50/70 border border-blue-200 text-blue-700 px-4 py-3 rounded-2xl text-sm">
                     <i data-feather="info" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                     <span>{{ session('info') }}</span>
                 </div>
                 @endif
 
                 @if ($errors->any())
-                <div class="mb-5 flex items-start gap-3 bg-red-50/70 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-sm">
+                <div data-alert class="mb-5 flex items-start gap-3 bg-red-50/70 border border-red-200 text-red-600 px-4 py-3 rounded-2xl text-sm">
                     <i data-feather="alert-circle" class="w-4 h-4 flex-shrink-0 mt-0.5"></i>
                     <span>{{ $errors->first() }}</span>
                 </div>
@@ -231,6 +231,15 @@
 
     <script>
         feather.replace();
+
+        document.querySelectorAll('[data-alert]').forEach(el => {
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-8px)';
+                setTimeout(() => el.remove(), 500);
+            }, 4000);
+        });
 
         document.getElementById('forgotForm').addEventListener('submit', function () {
             const btn = document.getElementById('submitBtn');

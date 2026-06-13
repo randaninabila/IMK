@@ -300,7 +300,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">No. HP</label>
                             <input type="text" name="no_hp" value="{{ old('no_hp', $user->no_hp) }}"
-                                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200">
+                                class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pink-200
+                                    @error('no_hp') border-red-400 @enderror">
+                            @error('no_hp')
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                            @enderror
+                            <p class="text-xs text-gray-400 mt-1">Format: 08xxx, 628xxx, atau +628xxx</p>
                         </div>
 
                         {{-- Tanggal Lahir --}}

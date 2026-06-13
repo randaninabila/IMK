@@ -63,10 +63,12 @@ class ProfileController extends Controller
     {
         $request->validate([
             'nama'          => 'required|string|max:100',
-            'no_hp'         => 'nullable|string|max:20',
+            'no_hp'         => ['nullable', 'regex:/^(\+?628|08)\d{8,11}$/'],
             'alamat'        => 'nullable|string',
             'tanggal_lahir' => 'nullable|date',
             'foto_profile'  => 'nullable|image|max:2048',
+        ], [
+            'no_hp.regex' => 'Format nomor HP tidak valid. Gunakan format 08xxx, 628xxx, atau +628xxx.',
         ]);
 
         $user = Auth::user();

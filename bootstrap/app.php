@@ -12,8 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role'           => \App\Http\Middleware\RoleMiddleware::class,
             'phone.verified' => \App\Http\Middleware\EnsurePhoneVerified::class,
+            'reg.complete'   => \App\Http\Middleware\EnsureRegistrationComplete::class, // tambah ini
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

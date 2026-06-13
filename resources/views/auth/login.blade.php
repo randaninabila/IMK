@@ -29,18 +29,18 @@
         <!-- LOGIN CARD -->
         <div class="bg-white/30 backdrop-blur-2xl border border-[#3D352F]/40 rounded-[40px] p-10 shadow-[0_8px_32px_rgba(61,53,47,0.25)]">
 
-            <h2 class="text-5xl font-bold text-center text-[#3d352f] mb-8">Log In</h2>
+            <h2 class="text-5xl font-bold text-center text-[#3d352f] mb-8">Masuk</h2>
 
             {{-- ERROR MESSAGE --}}
             @if ($errors->any())
-            <div class="mb-4 bg-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
+            <div data-alert class="mb-4 bg-red-100 text-red-600 text-sm px-4 py-3 rounded-xl">
                 {{ $errors->first() }}
             </div>
             @endif
 
             {{-- SUCCESS MESSAGE --}}
             @if (session('success'))
-            <div class="mb-4 bg-green-50 text-green-700 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
+            <div data-alert class="mb-4 bg-green-50 text-green-700 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
                 <i data-feather="check-circle" class="w-4 h-4 flex-shrink-0"></i>
                 {{ session('success') }}
             </div>
@@ -83,7 +83,7 @@
                 <!-- LOGIN BUTTON -->
                 <button type="submit"
                     class="w-full py-4 rounded-2xl text-white text-lg font-semibold bg-gradient-to-r from-[#3d352f] to-[#6b5b4d] hover:scale-105 transition">
-                    Log In
+                    Masuk
                 </button>
             </form>
 
@@ -113,9 +113,9 @@
 
             <!-- SIGNUP -->
             <p class="text-center mt-5 text-[#3d352f]">
-                Dont have an Account ?
+                Belum memiliki akun ?
                 <a href="{{ route('register') }}" class="font-semibold underline cursor-pointer">
-                    Sign Up Here
+                    Buat Akun
                 </a>
             </p>
 
@@ -124,6 +124,15 @@
 
     <script>
     feather.replace();
+
+    document.querySelectorAll('[data-alert]').forEach(el => {
+        setTimeout(() => {
+            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-8px)';
+            setTimeout(() => el.remove(), 500);
+        }, 4000);
+    });
 
     function togglePassword() {
         const password = document.getElementById("password");

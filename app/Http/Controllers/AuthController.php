@@ -67,20 +67,29 @@ class AuthController extends Controller
                 ->with('success', 'Kode OTP baru telah dikirim ke email kamu.');
         }
 
+        // Belum set password (daftar tapi tidak selesai)
+        if (!$user->password) {
+            Auth::login($user);
+            $request->session()->regenerate();
+            return redirect()->route('register.set-password')
+                ->with('info', 'Silakan buat password untuk melanjutkan.');
+        }
+
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
 
         return $this->redirectByRole($user->role);
     }
 
-    // REGISTER
+    // =====================================================================
+    // REGISTER — Step 1: simpan data diri, kirim OTP
+    // =====================================================================
     public function register(Request $request)
     {
         $request->validate([
-            'nama'     => ['required', 'string', 'max:100'],
-            'email'    => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', 'min:6', 'confirmed'],
-            'no_hp'    => ['nullable', 'string', 'max:20'],
+            'nama'  => ['required', 'string', 'max:100'],
+            'email' => ['required', 'email', 'unique:users,email'],
+            'no_hp' => ['nullable', 'string', 'max:20'],
         ]);
 
         $otp = (string) rand(100000, 999999);
@@ -88,7 +97,7 @@ class AuthController extends Controller
         $user = User::create([
             'nama'               => $request->nama,
             'email'              => $request->email,
-            'password'           => Hash::make($request->password),
+            'password'           => null,
             'no_hp'              => $request->no_hp,
             'role'               => 'pelanggan',
             'status_akun'        => 'aktif',
@@ -124,6 +133,9 @@ class AuthController extends Controller
     public function verifyEmailNotice()
     {
         if (Auth::check() && Auth::user()->email_verified_at) {
+            if (!Auth::user()->password) {
+                return redirect()->route('register.set-password');
+            }
             return $this->redirectByRole(Auth::user()->role);
         }
         return view('auth.verify-email-otp');
@@ -149,10 +161,10 @@ class AuthController extends Controller
             'token_expires_at'   => null,
         ]);
 
-        return redirect('/')->with('success', 'Email berhasil diverifikasi! Selamat datang 🎉');
+        return redirect()->route('register.set-password')
+            ->with('success', 'Email berhasil diverifikasi! Sekarang buat password kamu.');
     }
 
-    // Resend OTP email (user sudah login)
     public function resendVerification(Request $request)
     {
         $user = Auth::user();
@@ -172,7 +184,6 @@ class AuthController extends Controller
         return back()->with('success', 'Kode OTP baru telah dikirim ke email kamu.');
     }
 
-    // Handler verifyEmail via link lama
     public function verifyEmail(string $otp)
     {
         $user = User::where('email_verify_token', $otp)->first();
@@ -192,10 +203,14 @@ class AuthController extends Controller
 
         Auth::login($user);
 
+        if (!$user->password) {
+            return redirect()->route('register.set-password')
+                ->with('success', 'Email diverifikasi! Sekarang buat password kamu.');
+        }
+
         return redirect('/')->with('success', 'Email berhasil diverifikasi 🎉');
     }
 
-    // Resend untuk guest (belum login)
     public function resendVerificationGuest(Request $request)
     {
         $request->validate(['email' => ['required', 'email']]);
@@ -222,6 +237,52 @@ class AuthController extends Controller
 
         return redirect()->route('verification.notice')
             ->with('success', 'Kode OTP baru telah dikirim ke email kamu.');
+    }
+
+    // =====================================================================
+    // SET PASSWORD — Step 3 registrasi
+    // =====================================================================
+
+    public function showSetPassword()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        if (!$user->email_verified_at) {
+            return redirect()->route('verification.notice')
+                ->with('info', 'Verifikasi email kamu terlebih dahulu.');
+        }
+
+        if ($user->password) {
+            return $this->redirectByRole($user->role);
+        }
+
+        return view('auth.set-password');
+    }
+
+    public function setPassword(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'min:6', 'confirmed'],
+            'agree'    => ['accepted'],
+        ], [
+            'agree.accepted' => 'Kamu harus menyetujui syarat & ketentuan.',
+        ]);
+
+        $user = Auth::user();
+
+        if (!$user || !$user->email_verified_at) {
+            return redirect()->route('verification.notice');
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password),
+        ]);
+
+        return redirect('/')->with('success', 'Akun berhasil dibuat! Selamat datang 🎉');
     }
 
     // =====================================================================
@@ -284,8 +345,10 @@ class AuthController extends Controller
     // HELPER
     // =====================================================================
 
-    private function checkPassword(string $plain, string $hashed): bool
+    private function checkPassword(string $plain, ?string $hashed): bool
     {
+        if (!$hashed) return false;
+
         if (str_starts_with($hashed, '$2y$') || str_starts_with($hashed, '$2a$')) {
             return Hash::check($plain, $hashed);
         }
