@@ -14,24 +14,19 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        $cabangs = Cabang::where('status', 'BUKA')->get();
+        $cabangs       = Cabang::where('status', 'BUKA')->get();
         $selectedCabang = $request->cabang;
 
-        $stats = $this->getDashboardStats($selectedCabang);
-        $revenues = $this->getRevenueChartData($selectedCabang);
-        $chartData = $revenues['data'];
-        $chartLabels = $revenues['labels'];
+        $stats          = $this->getDashboardStats($selectedCabang);
+        $revenues       = $this->getRevenueChartData($selectedCabang);
+        $chartData      = $revenues['data'];
+        $chartLabels    = $revenues['labels'];
         $popularServices = $this->getPopularServices($selectedCabang);
         $staffPerformance = $this->getStaffPerformance($selectedCabang);
 
         return view('owner.dashboard', compact(
-            'cabangs',
-            'selectedCabang',
-            'stats',
-            'chartData',
-            'chartLabels',
-            'popularServices',
-            'staffPerformance'
+            'cabangs', 'selectedCabang', 'stats',
+            'chartData', 'chartLabels', 'popularServices', 'staffPerformance'
         ));
     }
 
@@ -39,7 +34,7 @@ class DashboardController extends Controller
     {
         $allCabangs = Cabang::where('status', 'BUKA')->get();
 
-        $revenueForCabang = function($cabangId) {
+        $revenueForCabang = function ($cabangId) {
             return DB::table('pembayaran')
                 ->join('booking', 'pembayaran.booking_id', '=', 'booking.booking_id')
                 ->where('pembayaran.status', 'verified')
@@ -48,46 +43,49 @@ class DashboardController extends Controller
                 ->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
                         ->from('booking_detail')
-                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                         ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                        ->where('layanan_cabang.cabang_id', $cabangId);
+                        ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$cabangId]);
                 })
                 ->sum('pembayaran.jumlah');
         };
 
-        $bookingForCabang = function($cabangId) {
+        $bookingForCabang = function ($cabangId) {
             return DB::table('booking')
                 ->whereDate('tanggal_booking', today())
                 ->where('status', 'completed')
                 ->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
                         ->from('booking_detail')
-                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                         ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                        ->where('layanan_cabang.cabang_id', $cabangId);
+                        ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$cabangId]);
                 })
                 ->count();
         };
 
-        $customerForCabang = function($cabangId) {
+        $customerForCabang = function ($cabangId) {
             return DB::table('booking')
                 ->join('pelanggan', 'booking.pelanggan_id', '=', 'pelanggan.pelanggan_id')
                 ->whereDate('booking.tanggal_booking', today())
+                ->where('booking.status', 'completed')
                 ->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
                         ->from('booking_detail')
-                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                         ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                        ->where('layanan_cabang.cabang_id', $cabangId);
+                        ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$cabangId]);
                 })
                 ->distinct()
                 ->count('pelanggan.pelanggan_id');
         };
 
-        $staffForCabang = function($cabangId) {
+        $staffForCabang = function ($cabangId) {
             return Pegawai::join('users', 'pegawai.user_id', '=', 'users.user_id')
                 ->where('pegawai.status_kerja', 'aktif')
-                // ->whereIn('users.role', ['pegawai', 'admin'])
                 ->where('users.role', 'pegawai')
                 ->where('pegawai.cabang_id', $cabangId)
                 ->count();
@@ -98,20 +96,19 @@ class DashboardController extends Controller
             foreach ($allCabangs as $cabang) {
                 $rev = $revenueForCabang($cabang->cabang_id);
                 $cabangBreakdown[] = [
-                    'nama'     => $cabang->nama_cabang,
-                    'revenue'  => $this->formatCurrency($rev),
-                    'bookings' => $bookingForCabang($cabang->cabang_id),
-                    'customers'=> $customerForCabang($cabang->cabang_id),
-                    'staff'    => $staffForCabang($cabang->cabang_id),
+                    'nama'      => $cabang->nama_cabang,
+                    'revenue'   => $this->formatCurrency($rev),
+                    'bookings'  => $bookingForCabang($cabang->cabang_id),
+                    'customers' => $customerForCabang($cabang->cabang_id),
+                    'staff'     => $staffForCabang($cabang->cabang_id),
                 ];
             }
         }
 
-        // TOTAL STATS
-        $todayRevenue = $this->getTodayRevenue($selectedCabang);
-        $todayBookings = $this->getTodayBookings($selectedCabang);
+        $todayRevenue   = $this->getTodayRevenue($selectedCabang);
+        $todayBookings  = $this->getTodayBookings($selectedCabang);
         $todayCustomers = $this->getTodayCustomers($selectedCabang);
-        $activeStaff = $this->getActiveStaff($selectedCabang);
+        $activeStaff    = $this->getActiveStaff($selectedCabang);
 
         $selectedCabangName = $selectedCabang
             ? Cabang::where('cabang_id', $selectedCabang)->first()?->nama_cabang ?? 'Cabang Tidak Ditemukan'
@@ -139,9 +136,10 @@ class DashboardController extends Controller
             $query->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where('layanan_cabang.cabang_id', $selectedCabang);
+                    ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$selectedCabang]);
             });
         }
 
@@ -158,9 +156,10 @@ class DashboardController extends Controller
             $query->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where('layanan_cabang.cabang_id', $selectedCabang);
+                    ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$selectedCabang]);
             });
         }
 
@@ -178,9 +177,10 @@ class DashboardController extends Controller
             $query->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where('layanan_cabang.cabang_id', $selectedCabang);
+                    ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$selectedCabang]);
             });
         }
 
@@ -217,9 +217,10 @@ class DashboardController extends Controller
             $query->whereExists(function ($sub) use ($selectedCabang) {
                 $sub->select(DB::raw(1))
                     ->from('booking_detail')
-                    ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                    ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                     ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                    ->where('layanan_cabang.cabang_id', $selectedCabang);
+                    ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$selectedCabang]);
             });
         }
 
@@ -228,12 +229,12 @@ class DashboardController extends Controller
             ->groupBy('bulan')
             ->pluck('total', 'bulan');
 
-        $chartData = [];
+        $chartData   = [];
         $chartLabels = [];
 
         for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i)->month;
-            $chartData[] = $revenues[$month] ?? 0;
+            $month         = now()->subMonths($i)->month;
+            $chartData[]   = $revenues[$month] ?? 0;
             $chartLabels[] = now()->subMonths($i)->locale('id')->isoFormat('MMM');
         }
 
@@ -242,7 +243,7 @@ class DashboardController extends Controller
 
     private function getPopularServices($selectedCabang = null)
     {
-        // Layanan langsung
+        // Layanan satuan
         $layananQuery = DB::table('booking_detail as bd')
             ->join('booking', 'bd.booking_id', '=', 'booking.booking_id')
             ->join('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
@@ -297,6 +298,7 @@ class DashboardController extends Controller
     {
         $verifiedBookings = DB::table('booking')
             ->whereYear('tanggal_booking', now()->year)
+            ->whereMonth('tanggal_booking', now()->month)
             ->where('status', 'completed')
             ->whereExists(function ($sub) {
                 $sub->select(DB::raw(1))
@@ -339,32 +341,31 @@ class DashboardController extends Controller
 
     public function exportPDF(Request $request)
     {
-        $branch = $request->branch;
-        $reports = json_decode($request->reports, true);
-        $period = $request->period;
+        $branch    = $request->branch;
+        $reports   = json_decode($request->reports, true);
+        $period    = $request->period;
         $startDate = $request->start_date;
-        $endDate = $request->end_date;
+        $endDate   = $request->end_date;
 
-        // Validate date range
         $dateRange = $this->getDateRange($period, $startDate, $endDate);
-        
+
         $data = [
-            'branch' => $branch,
-            'reports' => $reports,
-            'date_range' => $dateRange,
-            'branch_name' => $this->getBranchName($branch),
-            'financial_data' => $this->getFinancialData($branch, $dateRange),
-            'services_data' => $this->getServicesData($branch, $dateRange),
-            'employees_data' => $this->getEmployeesData($branch, $dateRange),
-            'customers_data' => $this->getCustomersData($branch, $dateRange),
+            'branch'          => $branch,
+            'reports'         => $reports,
+            'date_range'      => $dateRange,
+            'branch_name'     => $this->getBranchName($branch),
+            'financial_data'  => $this->getFinancialData($branch, $dateRange),
+            'services_data'   => $this->getServicesData($branch, $dateRange),
+            'employees_data'  => $this->getEmployeesData($branch, $dateRange),
+            'customers_data'  => $this->getCustomersData($branch, $dateRange),
         ];
 
         $pdf = Pdf::loadView('owner.reports.pdf-report', $data);
         $pdf->setPaper('A4', 'portrait');
         $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
+            'defaultFont'        => 'sans-serif',
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
+            'isRemoteEnabled'    => true,
         ]);
 
         return $pdf->stream('salon-report-' . now()->format('Y-m-d-His') . '.pdf');
@@ -372,44 +373,44 @@ class DashboardController extends Controller
 
     private function getDateRange($period, $startDate, $endDate)
     {
-        return match($period) {
-            'today' => [
+        return match ($period) {
+            'today'  => [
                 'start' => today()->format('Y-m-d'),
-                'end' => today()->format('Y-m-d'),
-                'label' => 'Hari Ini'
+                'end'   => today()->format('Y-m-d'),
+                'label' => 'Hari Ini',
             ],
-            'week' => [
+            'week'   => [
                 'start' => now()->startOfWeek()->format('Y-m-d'),
-                'end' => now()->endOfWeek()->format('Y-m-d'),
-                'label' => 'Minggu Ini'
+                'end'   => now()->endOfWeek()->format('Y-m-d'),
+                'label' => 'Minggu Ini',
             ],
-            'month' => [
+            'month'  => [
                 'start' => now()->startOfMonth()->format('Y-m-d'),
-                'end' => now()->endOfMonth()->format('Y-m-d'),
-                'label' => 'Bulan Ini'
+                'end'   => now()->endOfMonth()->format('Y-m-d'),
+                'label' => 'Bulan Ini',
             ],
-            'year' => [
+            'year'   => [
                 'start' => now()->startOfYear()->format('Y-m-d'),
-                'end' => now()->endOfYear()->format('Y-m-d'),
-                'label' => 'Tahun Ini'
+                'end'   => now()->endOfYear()->format('Y-m-d'),
+                'label' => 'Tahun Ini',
             ],
             'custom' => [
                 'start' => $startDate,
-                'end' => $endDate,
-                'label' => Carbon::parse($startDate)->format('d M Y') . ' - ' . Carbon::parse($endDate)->format('d M Y')
+                'end'   => $endDate,
+                'label' => Carbon::parse($startDate)->format('d M Y') . ' - ' . Carbon::parse($endDate)->format('d M Y'),
             ],
-            default => [
+            default  => [
                 'start' => today()->format('Y-m-d'),
-                'end' => today()->format('Y-m-d'),
-                'label' => 'Hari Ini'
-            ]
+                'end'   => today()->format('Y-m-d'),
+                'label' => 'Hari Ini',
+            ],
         };
     }
 
     private function getBranchName($branch)
     {
         if ($branch === 'Semua') return 'Semua Cabang';
-        
+
         $cabang = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first();
         return $cabang?->nama_cabang ?? $branch;
     }
@@ -423,23 +424,24 @@ class DashboardController extends Controller
             ->whereBetween('booking.tanggal_booking', [$dateRange['start'], $dateRange['end']]);
 
         if ($branch !== 'Semua') {
-            $query->whereExists(function ($sub) use ($branch) {
-                $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
-                if ($cabangId) {
+            $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
+            if ($cabangId) {
+                $query->whereExists(function ($sub) use ($cabangId) {
                     $sub->select(DB::raw(1))
                         ->from('booking_detail')
-                        ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
+                        ->leftJoin('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
                         ->whereColumn('booking_detail.booking_id', 'booking.booking_id')
-                        ->where('layanan_cabang.cabang_id', $cabangId);
-                }
-            });
+                        ->whereRaw('COALESCE(layanan_cabang.cabang_id, paket_cabang.cabang_id) = ?', [$cabangId]);
+                });
+            }
         }
 
         return [
-            'total_revenue' => $query->sum('pembayaran.jumlah'),
+            'total_revenue'      => $query->sum('pembayaran.jumlah'),
             'total_transactions' => $query->count(),
-            'avg_transaction' => $query->avg('pembayaran.jumlah'),
-            'daily_breakdown' => $query
+            'avg_transaction'    => $query->avg('pembayaran.jumlah'),
+            'daily_breakdown'    => $query
                 ->selectRaw('
                     DATE(booking.tanggal_booking) as date,
                     SUM(pembayaran.jumlah) as revenue,
@@ -447,13 +449,14 @@ class DashboardController extends Controller
                 ')
                 ->groupBy('date')
                 ->orderBy('date')
-                ->get()
+                ->get(),
         ];
     }
 
     private function getServicesData($branch, $dateRange)
     {
-        $query = DB::table('booking_detail')
+        // Layanan satuan
+        $layananQuery = DB::table('booking_detail')
             ->join('layanan_cabang', 'booking_detail.layanan_cabang_id', '=', 'layanan_cabang.layanan_cabang_id')
             ->join('layanan', 'layanan_cabang.layanan_id', '=', 'layanan.layanan_id')
             ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
@@ -463,12 +466,34 @@ class DashboardController extends Controller
         if ($branch !== 'Semua') {
             $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
             if ($cabangId) {
-                $query->where('layanan_cabang.cabang_id', $cabangId);
+                $layananQuery->where('layanan_cabang.cabang_id', $cabangId);
             }
         }
 
-        return $query->select('layanan.nama_layanan', DB::raw('COUNT(*) as total'))
-            ->groupBy('layanan.nama_layanan')
+        $layananQuery->select('layanan.nama_layanan');
+
+        // Layanan dari paket
+        $paketQuery = DB::table('booking_detail')
+            ->join('paket_cabang', 'booking_detail.paket_cabang_id', '=', 'paket_cabang.paket_cabang_id')
+            ->join('paket_detail', 'paket_cabang.paket_id', '=', 'paket_detail.paket_id')
+            ->join('layanan', 'paket_detail.layanan_id', '=', 'layanan.layanan_id')
+            ->join('booking', 'booking_detail.booking_id', '=', 'booking.booking_id')
+            ->where('booking.status', 'completed')
+            ->whereBetween('booking.tanggal_booking', [$dateRange['start'], $dateRange['end']]);
+
+        if ($branch !== 'Semua') {
+            $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
+            if ($cabangId) {
+                $paketQuery->where('paket_cabang.cabang_id', $cabangId);
+            }
+        }
+
+        $paketQuery->select('layanan.nama_layanan');
+
+        return DB::query()
+            ->fromSub($layananQuery->unionAll($paketQuery), 'combined')
+            ->select('nama_layanan', DB::raw('COUNT(*) as total'))
+            ->groupBy('nama_layanan')
             ->orderByDesc('total')
             ->limit(10)
             ->get();
@@ -484,11 +509,10 @@ class DashboardController extends Controller
                     ->where('booking.status', '=', 'completed')
                     ->whereBetween('booking.tanggal_booking', [
                         $dateRange['start'],
-                        $dateRange['end']
+                        $dateRange['end'],
                     ]);
             })
             ->leftJoin('booking_detail', 'booking.booking_id', '=', 'booking_detail.booking_id')
-            // ->whereIn('users.role', ['pegawai', 'admin'])
             ->where('users.role', 'pegawai')
             ->where('pegawai.status_kerja', 'aktif');
 
@@ -500,13 +524,13 @@ class DashboardController extends Controller
         }
 
         return $query->select(
-                'pegawai.pegawai_id',
-                'users.nama as nama_pegawai',
-                'users.role',
-                'cabang.nama_cabang',
-                DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
-                DB::raw('COUNT(DISTINCT booking_detail.booking_detail_id) as total_services'),
-            )
+            'pegawai.pegawai_id',
+            'users.nama as nama_pegawai',
+            'users.role',
+            'cabang.nama_cabang',
+            DB::raw('COUNT(DISTINCT booking.booking_id) as total_booking'),
+            DB::raw('COUNT(DISTINCT booking_detail.booking_detail_id) as total_services'),
+        )
             ->groupBy('pegawai.pegawai_id', 'users.nama', 'users.role', 'cabang.nama_cabang')
             ->orderByDesc('total_booking')
             ->get();
@@ -515,61 +539,65 @@ class DashboardController extends Controller
     private function getCustomersData($branch, $dateRange)
     {
         $cabangCondition = '';
-        $bindings = [];
-        
+        $bindings        = [];
+
         if ($branch !== 'Semua') {
             $cabangId = Cabang::where('nama_cabang', 'LIKE', "%$branch%")->first()?->cabang_id;
             if ($cabangId) {
                 $cabangCondition = "AND EXISTS (
-                    SELECT 1 FROM booking_detail bd 
-                    JOIN layanan_cabang lc ON bd.layanan_cabang_id = lc.layanan_cabang_id 
-                    WHERE bd.booking_id = booking.booking_id 
-                    AND lc.cabang_id = ?
+                    SELECT 1 FROM booking_detail bd
+                    LEFT JOIN layanan_cabang lc ON bd.layanan_cabang_id = lc.layanan_cabang_id
+                    LEFT JOIN paket_cabang pc   ON bd.paket_cabang_id   = pc.paket_cabang_id
+                    WHERE bd.booking_id = booking.booking_id
+                    AND COALESCE(lc.cabang_id, pc.cabang_id) = ?
                 )";
                 $bindings[] = $cabangId;
             }
         }
 
-        // Total Customers
+        // Total Customers (hanya booking completed)
         $total_customers = DB::selectOne("
-            SELECT COUNT(DISTINCT pelanggan.pelanggan_id) as total 
-            FROM booking 
-            INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id 
-            WHERE booking.tanggal_booking BETWEEN ? AND ? 
+            SELECT COUNT(DISTINCT pelanggan.pelanggan_id) as total
+            FROM booking
+            INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id
+            WHERE booking.status = 'completed'
+            AND booking.tanggal_booking BETWEEN ? AND ?
             {$cabangCondition}
         ", array_merge([$dateRange['start'], $dateRange['end']], $bindings))->total;
 
-        // New Customers
+        // New Customers (hanya booking completed)
         $new_customers = DB::selectOne("
-            SELECT COUNT(DISTINCT pelanggan.pelanggan_id) as total 
-            FROM booking 
-            INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id 
-            INNER JOIN users ON pelanggan.user_id = users.user_id 
-            WHERE booking.tanggal_booking BETWEEN ? AND ? 
-            AND users.created_at >= ? 
+            SELECT COUNT(DISTINCT pelanggan.pelanggan_id) as total
+            FROM booking
+            INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id
+            INNER JOIN users ON pelanggan.user_id = users.user_id
+            WHERE booking.status = 'completed'
+            AND booking.tanggal_booking BETWEEN ? AND ?
+            AND users.created_at >= ?
             {$cabangCondition}
         ", array_merge([$dateRange['start'], $dateRange['end'], $dateRange['start']], $bindings))->total;
 
-        // Repeat
+        // Repeat Customers (hanya booking completed)
         $repeat_customers = DB::selectOne("
-            SELECT COUNT(*) as total 
+            SELECT COUNT(*) as total
             FROM (
                 SELECT pelanggan.pelanggan_id
-                FROM booking 
-                INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id 
-                INNER JOIN users ON pelanggan.user_id = users.user_id 
-                WHERE booking.tanggal_booking BETWEEN ? AND ? 
-                AND users.created_at < ? 
+                FROM booking
+                INNER JOIN pelanggan ON booking.pelanggan_id = pelanggan.pelanggan_id
+                INNER JOIN users ON pelanggan.user_id = users.user_id
+                WHERE booking.status = 'completed'
+                AND booking.tanggal_booking BETWEEN ? AND ?
+                AND users.created_at < ?
                 {$cabangCondition}
-                GROUP BY pelanggan.pelanggan_id 
+                GROUP BY pelanggan.pelanggan_id
                 HAVING COUNT(DISTINCT booking.booking_id) > 1
             ) as repeat_customers
         ", array_merge([$dateRange['start'], $dateRange['end'], $dateRange['start']], $bindings))->total;
 
         return [
-            'total_customers' => (int) $total_customers,
-            'new_customers' => (int) $new_customers,
-            'repeat_customers' => (int) $repeat_customers
+            'total_customers'  => (int) $total_customers,
+            'new_customers'    => (int) $new_customers,
+            'repeat_customers' => (int) $repeat_customers,
         ];
     }
 }

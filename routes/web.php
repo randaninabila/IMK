@@ -19,6 +19,7 @@ use App\Http\Controllers\Owner\ServiceController;
 use App\Http\Controllers\Owner\ManageServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
 use App\Http\Controllers\Owner\CustomerController;
+use App\Http\Controllers\Owner\OwnerProfileController;
 
 use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
@@ -347,6 +348,15 @@ Route::middleware(['auth', 'reg.complete', 'role:owner'])->group(function () {
 
     Route::get('/customers', [CustomerController::class, 'index'])
         ->name('owner.customer');
+
+    Route::get('/owner/profile', [OwnerProfileController::class, 'index'])
+        ->name('owner.profile');
+ 
+    Route::put('/owner/profile/update', [OwnerProfileController::class, 'update'])
+        ->name('owner.profile.update');
+ 
+    Route::put('/owner/profile/password', [OwnerProfileController::class, 'updatePassword'])
+        ->name('owner.profile.password');
 });
 
 

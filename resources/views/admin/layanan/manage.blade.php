@@ -28,10 +28,21 @@
 
     @include('admin.partial.sidebar')
 
-    <main class="ml-[235px] w-[calc(100%-235px)] min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
+    <main class="lg:ml-[235px] lg:w-[calc(100%-235px)] w-full min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
 
         {{-- HEADER --}}
-        <header class="h-[92px] px-[58px] flex items-center justify-between">
+        <header class="h-[92px] px-4 lg:px-[58px] flex items-center justify-between gap-3">
+            
+            <button type="button"
+                    onclick="adminSidebarOpen()"
+                    class="lg:hidden p-2 rounded-[8px] text-[#6B4D46] hover:bg-[#FFF1F1] transition shrink-0"
+                    aria-label="Buka menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+
             <h2 class="text-[22px] font-extrabold text-[#3F3838] tracking-[-0.03em]">
                 Halo, <span class="italic">Admin</span> Salon Dina Muslimah 👋
             </h2>
@@ -42,22 +53,22 @@
 
         {{-- ALERTS --}}
         @if(session('success'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
                 {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ session('error') }}
             </div>
         @endif
         @if($errors->any())
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ $errors->first() }}
             </div>
         @endif
 
-        <section class="px-[42px] mt-[14px] pb-[60px]">
+        <section class="px-4 lg:px-[42px] mt-[14px] pb-[60px]">
 
             {{-- MAIN WRAPPER --}}
             <div class="bg-[#FDE7EC] rounded-[18px] soft-card px-[26px] pt-[22px] pb-[36px]">

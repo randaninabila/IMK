@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 class PenjadwalanAdminController extends Controller
 {
@@ -23,658 +23,383 @@ class PenjadwalanAdminController extends Controller
             $selectedCabangId = (int) ($branches->first()->cabang_id ?? 1);
         }
 
-        $selectedBranch = $branches->firstWhere(
-            'cabang_id',
-            $selectedCabangId
-        );
+        $selectedBranch  = $branches->firstWhere('cabang_id', $selectedCabangId);
+        $selectedDate    = $this->getSelectedDate($request);
+        $dateOptions     = $this->getDateOptions();
+        $staffList       = $this->getStaffList($selectedCabangId);
+        $services        = $this->getServices($selectedCabangId);
+        $packages        = $this->getPackages($selectedCabangId);
+        $customers       = $this->getCustomers();
+        $bookings        = $this->getBookings($selectedCabangId, $selectedDate);
+        $times           = $this->getTimes();
+        $jadwalPegawai   = $this->getJadwalPegawai($selectedDate, $staffList);
+        $scheduleGrid    = $this->buildScheduleGrid($times, $staffList, $bookings, $jadwalPegawai);
+        $bookingList     = $this->buildBookingList($bookings);
 
-        $selectedDate = $this->getSelectedDate($request);
-        $dateOptions = $this->getDateOptions();
-
-        $staffList = $this->getStaffList($selectedCabangId);
-        $services = $this->getServices($selectedCabangId);
-        $customers = $this->getCustomers();
-        $bookings = $this->getBookings(
-            $selectedCabangId,
-            $selectedDate
-        );
-
-        $times = $this->getTimes();
-
-        $jadwalPegawai = $this->getJadwalPegawai(
-            $selectedDate,
-            $staffList
-        );
-
-        $scheduleGrid = $this->buildScheduleGrid(
-            $times,
-            $staffList,
-            $bookings,
-            $jadwalPegawai
-        );
-
-        $bookingList = $this->buildBookingList($bookings);
-
-        return view(
-            'admin.penjadwalan.penjadwalanadmin',
-            compact(
-                'branches',
-                'selectedBranch',
-                'selectedCabangId',
-                'selectedDate',
-                'dateOptions',
-                'staffList',
-                'services',
-                'customers',
-                'times',
-                'scheduleGrid',
-                'bookingList'
-            )
-        );
+        return view('admin.penjadwalan.penjadwalanadmin', compact(
+            'branches', 'selectedBranch', 'selectedCabangId',
+            'selectedDate', 'dateOptions', 'staffList',
+            'services', 'packages', 'customers',
+            'times', 'scheduleGrid', 'bookingList'
+        ));
     }
 
     public function storeBooking(Request $request)
     {
         $request->validate([
-            'pelanggan_id' => 'required|integer',
-            'layanan_cabang_id' => 'required|integer',
-            'pegawai_id' => 'required|integer',
-            'tanggal_booking' => 'required|date',
-            'jam_booking' => 'required',
+            'booking_type'      => 'required|in:layanan,paket',
+            'layanan_cabang_id' => 'required_if:booking_type,layanan|nullable|integer',
+            'paket_cabang_id'   => 'required_if:booking_type,paket|nullable|integer',
+            'pelanggan_id'      => 'required|integer',
+            'pegawai_id'        => 'required|integer',
+            'tanggal_booking'   => 'required|date',
+            'jam_booking'       => 'required',
             'metode_pembayaran' => 'required|in:cash,qris',
-            'status' => [
-                'required',
-                'in:pending,confirmed,tunda,dikonfirmasi,assigned,proses,selesai,batal,in_progress,completed,cancelled',
-            ],
-            'catatan' => 'nullable|string|max:500',
+            'status'            => 'required|in:pending,confirmed,in_progress,completed,cancelled',
         ]);
 
-        $service = $this->getServiceForBooking(
-            $request->layanan_cabang_id
-        );
+        $isPaket  = $request->booking_type === 'paket';
+        $cabangId = null;
+        $harga    = 0;
 
-        if (!$service) {
-            return back()->with(
-                'error',
-                'Layanan tidak ditemukan.'
-            );
+        if ($isPaket) {
+            $paket = $this->getPaketForBooking($request->paket_cabang_id);
+            if (!$paket) {
+                return back()->with('error', 'Paket tidak ditemukan.');
+            }
+            $cabangId = $paket->cabang_id;
+            $harga    = $paket->harga;
+        } else {
+            $service = $this->getServiceForBooking($request->layanan_cabang_id);
+            if (!$service) {
+                return back()->with('error', 'Layanan tidak ditemukan.');
+            }
+            $cabangId = $service->cabang_id;
+            $harga    = $service->harga;
         }
 
-        $pegawai = $this->getValidPegawai(
-            $request->pegawai_id,
-            $service->cabang_id
-        );
-
+        $pegawai = $this->getValidPegawai($request->pegawai_id, $cabangId);
         if (!$pegawai) {
-            return back()->with(
-                'error',
-                'Specialist tidak ditemukan atau tidak sesuai dengan cabang layanan.'
-            );
+            return back()->with('error', 'Specialist tidak ditemukan atau tidak sesuai cabang.');
         }
 
-        $status = $this->normalizeBookingStatus(
-            $request->status
-        );
+        try {
+            DB::transaction(function () use ($request, $isPaket, $harga) {
+                // Cek 1: pelanggan sudah booking di jam yang sama (sesuai uniq_booking DB)
+                $pelangganBooked = DB::table('booking')
+                    ->where('pelanggan_id', $request->pelanggan_id)
+                    ->whereDate('tanggal_booking', $request->tanggal_booking)
+                    ->whereTime('jam_booking', $request->jam_booking)
+                    ->whereNotIn('status', ['cancelled'])
+                    ->lockForUpdate()
+                    ->exists();
 
-        $alreadyBooked = DB::table('booking')
-            ->where('pegawai_id', $request->pegawai_id)
-            ->whereDate(
-                'tanggal_booking',
-                $request->tanggal_booking
-            )
-            ->whereTime(
-                'jam_booking',
-                $request->jam_booking
-            )
-            ->whereNotIn('status', ['cancelled'])
-            ->exists();
+                if ($pelangganBooked) {
+                    throw new \RuntimeException('Pelanggan sudah memiliki booking pada jam tersebut.');
+                }
 
-        if ($alreadyBooked) {
-            return back()->with(
-                'error',
-                'Specialist sudah memiliki booking pada jam tersebut.'
-            );
+                // Cek 2: specialist sudah ada booking di jam yang sama
+                $pegawaiBooked = DB::table('booking')
+                    ->where('pegawai_id', $request->pegawai_id)
+                    ->whereDate('tanggal_booking', $request->tanggal_booking)
+                    ->whereTime('jam_booking', $request->jam_booking)
+                    ->whereNotIn('status', ['cancelled'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($pegawaiBooked) {
+                    throw new \RuntimeException('Specialist sudah memiliki booking pada jam tersebut.');
+                }
+
+                // Gunakan AUTO_INCREMENT — tidak perlu manual max()+1
+                $newBookingId = DB::table('booking')->insertGetId([
+                    'pelanggan_id'    => $request->pelanggan_id,
+                    'tanggal_booking' => $request->tanggal_booking,
+                    'jam_booking'     => $request->jam_booking,
+                    'status'          => $request->status,
+                    'tipe_booking'    => 'offline',
+                    'pegawai_id'      => $request->pegawai_id,
+                    'created_by'      => auth()->id() ?? 1,
+                    'created_at'      => now(),
+                ], 'booking_id');
+
+                DB::table('booking_detail')->insert([
+                    'booking_id'        => $newBookingId,
+                    'layanan_cabang_id' => $isPaket ? null : $request->layanan_cabang_id,
+                    'paket_cabang_id'   => $isPaket ? $request->paket_cabang_id : null,
+                    'harga_snapshot'    => $harga,
+                ]);
+
+                DB::table('pembayaran')->insert([
+                    'booking_id'        => $newBookingId,
+                    'metode_pembayaran' => $request->metode_pembayaran,
+                    'jumlah'            => $harga,
+                    'status'            => 'pending',
+                    'tanggal_bayar'     => null,
+                    'verified_by'       => null,
+                ]);
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->with('error', 'Pelanggan sudah memiliki booking pada jam tersebut.');
         }
-
-        DB::transaction(function () use (
-            $request,
-            $service,
-            $status
-        ) {
-            $newBookingId =
-                (DB::table('booking')->max('booking_id') ?? 0) + 1;
-
-            $bookingData = [
-                'booking_id' => $newBookingId,
-                'pelanggan_id' => $request->pelanggan_id,
-                'tanggal_booking' => $request->tanggal_booking,
-                'jam_booking' => $request->jam_booking,
-                'status' => $status,
-            ];
-
-            if (Schema::hasColumn('booking', 'pegawai_id')) {
-                $bookingData['pegawai_id'] =
-                    $request->pegawai_id;
-            }
-
-            if (Schema::hasColumn('booking', 'tipe_booking')) {
-                $bookingData['tipe_booking'] = 'offline';
-            }
-
-            if (Schema::hasColumn('booking', 'created_by')) {
-                $bookingData['created_by'] =
-                    auth()->id() ?? 1;
-            }
-
-            if (Schema::hasColumn('booking', 'catatan')) {
-                $bookingData['catatan'] =
-                    $request->catatan;
-            }
-
-            if (Schema::hasColumn('booking', 'keluhan')) {
-                $bookingData['keluhan'] =
-                    $request->catatan;
-            }
-
-            if (Schema::hasColumn('booking', 'created_at')) {
-                $bookingData['created_at'] = now();
-            }
-
-            if (Schema::hasColumn('booking', 'updated_at')) {
-                $bookingData['updated_at'] = now();
-            }
-
-            DB::table('booking')->insert($bookingData);
-
-            $bookingDetailData = [
-                'booking_id' => $newBookingId,
-                'layanan_cabang_id' =>
-                    $request->layanan_cabang_id,
-            ];
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'booking_detail_id'
-                )
-            ) {
-                $bookingDetailData['booking_detail_id'] =
-                    (
-                        DB::table('booking_detail')
-                            ->max('booking_detail_id') ?? 0
-                    ) + 1;
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'paket_cabang_id'
-                )
-            ) {
-                $bookingDetailData['paket_cabang_id'] = null;
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'harga_snapshot'
-                )
-            ) {
-                $bookingDetailData['harga_snapshot'] =
-                    $service->harga ?? 0;
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'created_at'
-                )
-            ) {
-                $bookingDetailData['created_at'] = now();
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'updated_at'
-                )
-            ) {
-                $bookingDetailData['updated_at'] = now();
-            }
-
-            DB::table('booking_detail')
-                ->insert($bookingDetailData);
-
-            $this->insertPaymentIfTableExists(
-                $request,
-                $service,
-                $newBookingId
-            );
-        });
 
         return redirect()
             ->route('admin.penjadwalan', [
-                'cabang_id' => $service->cabang_id,
-                'tanggal' => $request->tanggal_booking,
+                'cabang_id' => $cabangId,
+                'tanggal'   => $request->tanggal_booking,
             ])
-            ->with(
-                'success',
-                'Booking berhasil ditambahkan.'
-            );
+            ->with('success', 'Booking berhasil ditambahkan.');
     }
 
-    public function updateBooking(
-        Request $request,
-        $booking_id
-    ) {
+    public function updateBooking(Request $request, $booking_id)
+    {
         $request->validate([
-            'pelanggan_id' => 'required|integer',
-            'layanan_cabang_id' => 'required|integer',
-            'pegawai_id' => 'required|integer',
-            'tanggal_booking' => 'required|date',
-            'jam_booking' => 'required',
+            'booking_type'      => 'required|in:layanan,paket',
+            'layanan_cabang_id' => 'required_if:booking_type,layanan|nullable|integer',
+            'paket_cabang_id'   => 'required_if:booking_type,paket|nullable|integer',
+            'pelanggan_id'      => 'required|integer',
+            'pegawai_id'        => 'required|integer',
+            'tanggal_booking'   => 'required|date',
+            'jam_booking'       => 'required',
             'metode_pembayaran' => 'required|in:cash,qris',
-            'status' => [
-                'required',
-                'in:pending,confirmed,tunda,dikonfirmasi,assigned,proses,selesai,batal,in_progress,completed,cancelled',
-            ],
-            'catatan' => 'nullable|string|max:500',
+            'status'            => 'required|in:pending,confirmed,in_progress,completed,cancelled',
         ]);
 
-        $booking = DB::table('booking')
-            ->where('booking_id', $booking_id)
-            ->first();
-
+        $booking = DB::table('booking')->where('booking_id', $booking_id)->first();
         if (!$booking) {
-            return back()->with(
-                'error',
-                'Booking tidak ditemukan.'
-            );
+            return back()->with('error', 'Booking tidak ditemukan.');
         }
 
-        $service = $this->getServiceForBooking(
-            $request->layanan_cabang_id
-        );
+        $isPaket  = $request->booking_type === 'paket';
+        $cabangId = null;
+        $harga    = 0;
 
-        if (!$service) {
-            return back()->with(
-                'error',
-                'Layanan tidak ditemukan.'
-            );
+        if ($isPaket) {
+            $paket = $this->getPaketForBooking($request->paket_cabang_id);
+            if (!$paket) {
+                return back()->with('error', 'Paket tidak ditemukan.');
+            }
+            $cabangId = $paket->cabang_id;
+            $harga    = $paket->harga;
+        } else {
+            $service = $this->getServiceForBooking($request->layanan_cabang_id);
+            if (!$service) {
+                return back()->with('error', 'Layanan tidak ditemukan.');
+            }
+            $cabangId = $service->cabang_id;
+            $harga    = $service->harga;
         }
 
-        $pegawai = $this->getValidPegawai(
-            $request->pegawai_id,
-            $service->cabang_id
-        );
-
+        $pegawai = $this->getValidPegawai($request->pegawai_id, $cabangId);
         if (!$pegawai) {
-            return back()->with(
-                'error',
-                'Specialist tidak ditemukan atau tidak sesuai dengan cabang layanan.'
-            );
+            return back()->with('error', 'Specialist tidak ditemukan atau tidak sesuai cabang.');
         }
 
-        $status = $this->normalizeBookingStatus(
-            $request->status
-        );
+        try {
+            DB::transaction(function () use ($request, $booking_id, $isPaket, $harga) {
+                // Cek 1: pelanggan lain (bukan booking ini) sudah ada di jam yang sama
+                $pelangganBooked = DB::table('booking')
+                    ->where('booking_id', '!=', $booking_id)
+                    ->where('pelanggan_id', $request->pelanggan_id)
+                    ->whereDate('tanggal_booking', $request->tanggal_booking)
+                    ->whereTime('jam_booking', $request->jam_booking)
+                    ->whereNotIn('status', ['cancelled'])
+                    ->lockForUpdate()
+                    ->exists();
 
-        $alreadyBooked = DB::table('booking')
-            ->where('booking_id', '!=', $booking_id)
-            ->where('pegawai_id', $request->pegawai_id)
-            ->whereDate(
-                'tanggal_booking',
-                $request->tanggal_booking
-            )
-            ->whereTime(
-                'jam_booking',
-                $request->jam_booking
-            )
-            ->whereNotIn(
-                'status',
-                ['cancelled', 'completed']
-            )
-            ->exists();
+                if ($pelangganBooked) {
+                    throw new \RuntimeException('Pelanggan sudah memiliki booking pada jam tersebut.');
+                }
 
-        if ($alreadyBooked) {
-            return back()->with(
-                'error',
-                'Specialist sudah memiliki booking pada jam tersebut.'
-            );
+                // Cek 2: specialist sudah ada di jam yang sama
+                $pegawaiBooked = DB::table('booking')
+                    ->where('booking_id', '!=', $booking_id)
+                    ->where('pegawai_id', $request->pegawai_id)
+                    ->whereDate('tanggal_booking', $request->tanggal_booking)
+                    ->whereTime('jam_booking', $request->jam_booking)
+                    ->whereNotIn('status', ['cancelled', 'completed'])
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($pegawaiBooked) {
+                    throw new \RuntimeException('Specialist sudah memiliki booking pada jam tersebut.');
+                }
+
+                DB::table('booking')->where('booking_id', $booking_id)->update([
+                    'pelanggan_id'    => $request->pelanggan_id,
+                    'tanggal_booking' => $request->tanggal_booking,
+                    'jam_booking'     => $request->jam_booking,
+                    'status'          => $request->status,
+                    'tipe_booking'    => 'offline',
+                    'pegawai_id'      => $request->pegawai_id,
+                ]);
+
+                $existingDetail = DB::table('booking_detail')
+                    ->where('booking_id', $booking_id)
+                    ->orderBy('booking_detail_id', 'asc')
+                    ->first();
+
+                if ($existingDetail) {
+                    DB::table('booking_detail')
+                        ->where('booking_detail_id', $existingDetail->booking_detail_id)
+                        ->update([
+                            'layanan_cabang_id' => $isPaket ? null : $request->layanan_cabang_id,
+                            'paket_cabang_id'   => $isPaket ? $request->paket_cabang_id : null,
+                            'harga_snapshot'    => $harga,
+                        ]);
+                } else {
+                    DB::table('booking_detail')->insert([
+                        'booking_id'        => $booking_id,
+                        'layanan_cabang_id' => $isPaket ? null : $request->layanan_cabang_id,
+                        'paket_cabang_id'   => $isPaket ? $request->paket_cabang_id : null,
+                        'harga_snapshot'    => $harga,
+                    ]);
+                }
+
+                $existingPayment = DB::table('pembayaran')
+                    ->where('booking_id', $booking_id)
+                    ->orderByDesc('pembayaran_id')
+                    ->first();
+
+                if ($existingPayment) {
+                    DB::table('pembayaran')
+                        ->where('pembayaran_id', $existingPayment->pembayaran_id)
+                        ->update([
+                            'metode_pembayaran' => $request->metode_pembayaran,
+                            'jumlah'            => $harga,
+                        ]);
+                } else {
+                    DB::table('pembayaran')->insert([
+                        'booking_id'        => $booking_id,
+                        'metode_pembayaran' => $request->metode_pembayaran,
+                        'jumlah'            => $harga,
+                        'status'            => 'pending',
+                        'tanggal_bayar'     => null,
+                        'verified_by'       => null,
+                    ]);
+                }
+            });
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (UniqueConstraintViolationException $e) {
+            return back()->with('error', 'Pelanggan sudah memiliki booking pada jam tersebut.');
         }
-
-        DB::transaction(function () use (
-            $request,
-            $booking_id,
-            $service,
-            $status
-        ) {
-            $bookingData = [
-                'pelanggan_id' => $request->pelanggan_id,
-                'tanggal_booking' =>
-                    $request->tanggal_booking,
-                'jam_booking' => $request->jam_booking,
-                'status' => $status,
-            ];
-
-            if (Schema::hasColumn('booking', 'pegawai_id')) {
-                $bookingData['pegawai_id'] =
-                    $request->pegawai_id;
-            }
-
-            if (Schema::hasColumn('booking', 'tipe_booking')) {
-                $bookingData['tipe_booking'] = 'offline';
-            }
-
-            if (Schema::hasColumn('booking', 'catatan')) {
-                $bookingData['catatan'] =
-                    $request->catatan;
-            }
-
-            if (Schema::hasColumn('booking', 'keluhan')) {
-                $bookingData['keluhan'] =
-                    $request->catatan;
-            }
-
-            if (Schema::hasColumn('booking', 'updated_at')) {
-                $bookingData['updated_at'] = now();
-            }
-
-            DB::table('booking')
-                ->where('booking_id', $booking_id)
-                ->update($bookingData);
-
-            $bookingDetailData = [
-                'layanan_cabang_id' =>
-                    $request->layanan_cabang_id,
-            ];
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'paket_cabang_id'
-                )
-            ) {
-                $bookingDetailData['paket_cabang_id'] = null;
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'harga_snapshot'
-                )
-            ) {
-                $bookingDetailData['harga_snapshot'] =
-                    $service->harga ?? 0;
-            }
-
-            if (
-                Schema::hasColumn(
-                    'booking_detail',
-                    'updated_at'
-                )
-            ) {
-                $bookingDetailData['updated_at'] = now();
-            }
-
-            $bookingDetail = DB::table('booking_detail')
-                ->where('booking_id', $booking_id)
-                ->orderBy('booking_detail_id', 'asc')
-                ->first();
-
-            if ($bookingDetail) {
-                DB::table('booking_detail')
-                    ->where(
-                        'booking_detail_id',
-                        $bookingDetail->booking_detail_id
-                    )
-                    ->update($bookingDetailData);
-            } else {
-                $bookingDetailData['booking_id'] =
-                    $booking_id;
-
-                if (
-                    Schema::hasColumn(
-                        'booking_detail',
-                        'booking_detail_id'
-                    )
-                ) {
-                    $bookingDetailData['booking_detail_id'] =
-                        (
-                            DB::table('booking_detail')
-                                ->max('booking_detail_id') ?? 0
-                        ) + 1;
-                }
-
-                if (
-                    Schema::hasColumn(
-                        'booking_detail',
-                        'created_at'
-                    )
-                ) {
-                    $bookingDetailData['created_at'] = now();
-                }
-
-                DB::table('booking_detail')
-                    ->insert($bookingDetailData);
-            }
-
-            $this->upsertPaymentForBooking(
-                $request,
-                $service,
-                $booking_id
-            );
-        });
 
         return redirect()
             ->route('admin.penjadwalan', [
-                'cabang_id' => $service->cabang_id,
-                'tanggal' => $request->tanggal_booking,
+                'cabang_id' => $cabangId,
+                'tanggal'   => $request->tanggal_booking,
             ])
-            ->with(
-                'success',
-                'Booking berhasil diperbarui.'
-            );
+            ->with('success', 'Booking berhasil diperbarui.');
     }
 
-    public function updateBookingStatus(
-        Request $request,
-        $booking_id
-    ) {
+    public function updateBookingStatus(Request $request, $booking_id)
+    {
         $request->validate([
-            'status' => [
-                'required',
-                'in:pending,confirmed,tunda,dikonfirmasi,assigned,proses,selesai,batal,in_progress,completed,cancelled,payment_pending,payment_verified',
-            ],
+            'status' => 'required|in:pending,confirmed,in_progress,completed,cancelled,payment_pending,payment_verified',
         ]);
 
-        $booking = DB::table('booking')
-            ->where('booking_id', $booking_id)
-            ->first();
-
+        $booking = DB::table('booking')->where('booking_id', $booking_id)->first();
         if (!$booking) {
-            return back()->with(
-                'error',
-                'Slot ini tidak ada pelanggan yang memesan.'
-            );
+            return back()->with('error', 'Booking tidak ditemukan.');
         }
 
-        /*
-         * Saat admin memilih Verifikasi Pembayaran:
-         * pembayaran.status menjadi verified
-         * booking.status menjadi completed
-         */
-        if (
-            in_array(
-                $request->status,
-                ['payment_pending', 'payment_verified'],
-                true
-            )
-        ) {
-            $paymentStatus =
-                $request->status === 'payment_verified'
-                    ? 'verified'
-                    : 'pending';
+        if (in_array($request->status, ['payment_pending', 'payment_verified'], true)) {
+            $paymentStatus = $request->status === 'payment_verified' ? 'verified' : 'pending';
 
-            DB::transaction(function () use (
-                $booking_id,
-                $paymentStatus
-            ) {
-                $this->updatePaymentVerificationForBooking(
-                    $booking_id,
-                    $paymentStatus
-                );
+            DB::transaction(function () use ($booking_id, $paymentStatus) {
+                $existingPayment = DB::table('pembayaran')
+                    ->where('booking_id', $booking_id)
+                    ->orderByDesc('pembayaran_id')
+                    ->first();
+
+                if ($existingPayment) {
+                    DB::table('pembayaran')
+                        ->where('pembayaran_id', $existingPayment->pembayaran_id)
+                        ->update([
+                            'status'        => $paymentStatus,
+                            'tanggal_bayar' => $paymentStatus === 'verified' ? now() : null,
+                            'verified_by'   => $paymentStatus === 'verified' ? (auth()->id() ?? 1) : null,
+                        ]);
+                }
 
                 if ($paymentStatus === 'verified') {
-                    $bookingUpdate = [
-                        'status' => 'completed',
-                    ];
-
-                    if (
-                        Schema::hasColumn(
-                            'booking',
-                            'updated_at'
-                        )
-                    ) {
-                        $bookingUpdate['updated_at'] = now();
-                    }
-
                     DB::table('booking')
                         ->where('booking_id', $booking_id)
-                        ->update($bookingUpdate);
+                        ->update(['status' => 'completed']);
                 }
             });
 
-            return back()->with(
-                'success',
+            return back()->with('success',
                 $paymentStatus === 'verified'
-                    ? 'Pembayaran berhasil diverifikasi dan booking otomatis diselesaikan.'
-                    : 'Status pembayaran berhasil diubah menjadi pending.'
+                    ? 'Pembayaran berhasil diverifikasi.'
+                    : 'Status pembayaran diubah ke pending.'
             );
-        }
-
-        $status = $this->normalizeBookingStatus(
-            $request->status
-        );
-
-        if (
-            $status === 'confirmed'
-            && empty($booking->pegawai_id)
-        ) {
-            return back()->with(
-                'error',
-                'Pilih specialist dulu sebelum booking dikonfirmasi.'
-            );
-        }
-
-        $updateData = [
-            'status' => $status,
-        ];
-
-        if (Schema::hasColumn('booking', 'updated_at')) {
-            $updateData['updated_at'] = now();
         }
 
         DB::table('booking')
             ->where('booking_id', $booking_id)
-            ->update($updateData);
+            ->update(['status' => $request->status]);
 
-        $this->updatePaymentStatusIfExists(
-            $booking_id,
-            $status
-        );
+        if ($request->status === 'cancelled') {
+            DB::table('pembayaran')
+                ->where('booking_id', $booking_id)
+                ->whereIn('status', ['pending', 'verified'])
+                ->update([
+                    'status'        => 'on_hold',
+                    'tanggal_bayar' => null,
+                    'verified_by'   => null,
+                ]);
+        }
 
-        return back()->with(
-            'success',
-            'Status booking berhasil diperbarui.'
-        );
+        return back()->with('success', 'Status booking berhasil diperbarui.');
     }
 
     public function cancelBooking($booking_id)
     {
-        $booking = DB::table('booking')
-            ->where('booking_id', $booking_id)
-            ->first();
-
+        $booking = DB::table('booking')->where('booking_id', $booking_id)->first();
         if (!$booking) {
-            return back()->with(
-                'error',
-                'Slot ini tidak ada pelanggan yang memesan.'
-            );
+            return back()->with('error', 'Booking tidak ditemukan.');
         }
 
-        DB::transaction(function () use ($booking_id) {
-            $updateData = [
-                'status' => 'cancelled',
-            ];
+        DB::table('booking')
+            ->where('booking_id', $booking_id)
+            ->update(['status' => 'cancelled']);
 
-            if (Schema::hasColumn('booking', 'updated_at')) {
-                $updateData['updated_at'] = now();
-            }
+        DB::table('pembayaran')
+            ->where('booking_id', $booking_id)
+            ->whereIn('status', ['pending', 'verified'])
+            ->update([
+                'status'        => 'on_hold',
+                'tanggal_bayar' => null,
+                'verified_by'   => null,
+            ]);
 
-            DB::table('booking')
-                ->where('booking_id', $booking_id)
-                ->update($updateData);
-
-            $this->updatePaymentStatusIfExists(
-                $booking_id,
-                'cancelled'
-            );
-        });
-
-        return back()->with(
-            'success',
-            'Booking berhasil dibatalkan.'
-        );
+        return back()->with('success', 'Booking berhasil dibatalkan.');
     }
 
     private function getBranches()
     {
         $branches = DB::table('cabang')
-            ->select(
-                'cabang_id',
-                DB::raw(
-                    'MIN(nama_cabang) as nama_cabang'
-                ),
-                DB::raw('MIN(alamat) as alamat'),
-                DB::raw('MIN(status) as status')
-            )
+            ->select('cabang_id', DB::raw('MIN(nama_cabang) as nama_cabang'), DB::raw('MIN(alamat) as alamat'), DB::raw('MIN(status) as status'))
             ->whereIn('cabang_id', [1, 2])
             ->groupBy('cabang_id')
             ->orderBy('cabang_id', 'asc')
             ->get()
             ->map(function ($branch) {
-                $namaCabang = strtolower(
-                    $branch->nama_cabang ?? ''
-                );
-
-                $branch->label =
-                    (int) $branch->cabang_id === 2
-                    || str_contains($namaCabang, 'percut')
-                        ? 'Cabang Percut'
-                        : 'Cabang Tembung';
-
+                $namaCabang    = strtolower($branch->nama_cabang ?? '');
+                $branch->label = ((int) $branch->cabang_id === 2 || str_contains($namaCabang, 'percut'))
+                    ? 'Cabang Percut'
+                    : 'Cabang Tembung';
                 return $branch;
             });
 
         if ($branches->isEmpty()) {
             return collect([
-                (object) [
-                    'cabang_id' => 1,
-                    'nama_cabang' =>
-                        'Salon Muslimah Dina - Tembung',
-                    'alamat' => null,
-                    'status' => 'BUKA',
-                    'label' => 'Cabang Tembung',
-                ],
-                (object) [
-                    'cabang_id' => 2,
-                    'nama_cabang' =>
-                        'Salon Muslimah Dina - Percut',
-                    'alamat' => null,
-                    'status' => 'BUKA',
-                    'label' => 'Cabang Percut',
-                ],
+                (object) ['cabang_id' => 1, 'nama_cabang' => 'Salon Muslimah Dina - Tembung', 'label' => 'Cabang Tembung'],
+                (object) ['cabang_id' => 2, 'nama_cabang' => 'Salon Muslimah Dina - Percut',  'label' => 'Cabang Percut'],
             ]);
         }
 
@@ -684,66 +409,38 @@ class PenjadwalanAdminController extends Controller
     private function getSelectedDate(Request $request)
     {
         try {
-            return Carbon::parse(
-                $request->query(
-                    'tanggal',
-                    now()->toDateString()
-                )
-            )->toDateString();
-        } catch (\Throwable $exception) {
+            return Carbon::parse($request->query('tanggal', now()->toDateString()))->toDateString();
+        } catch (\Throwable $e) {
             return now()->toDateString();
         }
     }
 
     private function getDateOptions()
     {
-        return collect(range(0, 6))
-            ->map(function ($day) {
-                $date = now()->addDays($day);
-
-                return (object) [
-                    'date' => $date->toDateString(),
-                    'label' => $date
-                        ->locale('id')
-                        ->translatedFormat('d F Y'),
-                    'day' => $date
-                        ->locale('id')
-                        ->translatedFormat('l'),
-                ];
-            });
+        return collect(range(0, 6))->map(function ($day) {
+            $date = now()->addDays($day);
+            return (object) [
+                'date'  => $date->toDateString(),
+                'label' => $date->locale('id')->translatedFormat('d F Y'),
+                'day'   => $date->locale('id')->translatedFormat('l'),
+            ];
+        });
     }
 
-    private function getStaffList(
-        $selectedCabangId = null
-    ) {
+    private function getStaffList($selectedCabangId = null)
+    {
         $query = DB::table('pegawai as p')
-            ->join(
-                'users as u',
-                'u.user_id',
-                '=',
-                'p.user_id'
-            )
+            ->join('users as u', 'u.user_id', '=', 'p.user_id')
             ->where('u.role', 'pegawai')
-            ->where(function ($query) {
-                $query
-                    ->whereNull('u.status_akun')
-                    ->orWhere('u.status_akun', 'aktif');
+            ->where(function ($q) {
+                $q->whereNull('u.status_akun')->orWhere('u.status_akun', 'aktif');
             })
-            ->where(function ($query) {
-                $query
-                    ->whereNull('p.status_kerja')
-                    ->orWhere(
-                        'p.status_kerja',
-                        '!=',
-                        'resign'
-                    );
+            ->where(function ($q) {
+                $q->whereNull('p.status_kerja')->orWhere('p.status_kerja', '!=', 'resign');
             });
 
         if ($selectedCabangId) {
-            $query->where(
-                'p.cabang_id',
-                $selectedCabangId
-            );
+            $query->where('p.cabang_id', $selectedCabangId);
         }
 
         return $query
@@ -751,15 +448,8 @@ class PenjadwalanAdminController extends Controller
                 'p.pegawai_id',
                 'p.user_id',
                 'p.cabang_id',
-                DB::raw(
-                    Schema::hasColumn(
-                        'pegawai',
-                        'jabatan'
-                    )
-                        ? 'p.jabatan as jabatan'
-                        : 'NULL as jabatan'
-                ),
                 'p.status_kerja',
+                DB::raw("NULL as jabatan"),
                 'u.nama',
                 'u.email',
                 'u.no_hp',
@@ -769,312 +459,71 @@ class PenjadwalanAdminController extends Controller
             ->get();
     }
 
-    private function getHargaSelect()
-    {
-        $hasHarga = Schema::hasColumn(
-            'layanan_cabang',
-            'harga'
-        );
-
-        $hasHargaPromo = Schema::hasColumn(
-            'layanan_cabang',
-            'harga_promo'
-        );
-
-        if ($hasHarga && $hasHargaPromo) {
-            return
-                'COALESCE(lc.harga_promo, lc.harga, 0) as harga';
-        }
-
-        if ($hasHarga) {
-            return 'COALESCE(lc.harga, 0) as harga';
-        }
-
-        if ($hasHargaPromo) {
-            return
-                'COALESCE(lc.harga_promo, 0) as harga';
-        }
-
-        if (Schema::hasColumn('layanan', 'harga')) {
-            return 'COALESCE(l.harga, 0) as harga';
-        }
-
-        return '0 as harga';
-    }
-
     private function getServices($selectedCabangId)
     {
-        $query = DB::table('layanan_cabang as lc')
-            ->join(
-                'layanan as l',
-                'l.layanan_id',
-                '=',
-                'lc.layanan_id'
-            )
-            ->where(
-                'lc.cabang_id',
-                $selectedCabangId
-            );
-
-        if (
-            Schema::hasColumn(
-                'layanan_cabang',
-                'status'
-            )
-        ) {
-            $query->where(function ($query) {
-                $query
-                    ->whereNull('lc.status')
-                    ->orWhere('lc.status', 'tersedia');
-            });
-        }
-
-        return $query
+        return DB::table('layanan_cabang as lc')
+            ->join('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+            ->where('lc.cabang_id', $selectedCabangId)
+            ->where(function ($q) {
+                $q->whereNull('lc.status')->orWhere('lc.status', 'tersedia');
+            })
             ->select(
                 'lc.layanan_cabang_id',
                 'lc.layanan_id',
                 'lc.cabang_id',
                 'l.nama_layanan',
-                DB::raw($this->getHargaSelect())
+                DB::raw('COALESCE(lc.harga_promo, lc.harga, 0) as harga')
             )
             ->orderBy('l.nama_layanan', 'asc')
+            ->get();
+    }
+
+    private function getPackages($selectedCabangId)
+    {
+        return DB::table('paket_cabang as pc')
+            ->join('paket_layanan as pl', 'pl.paket_id', '=', 'pc.paket_id')
+            ->where('pc.cabang_id', $selectedCabangId)
+            ->where(function ($q) {
+                $q->whereNull('pc.status')->orWhere('pc.status', 'tersedia');
+            })
+            ->select(
+                'pc.paket_cabang_id',
+                'pc.paket_id',
+                'pc.cabang_id',
+                'pl.nama_paket',
+                DB::raw('COALESCE(pc.harga_promo, pc.harga_normal, 0) as harga')
+            )
+            ->orderBy('pl.nama_paket', 'asc')
             ->get();
     }
 
     private function getCustomers()
     {
         return DB::table('pelanggan as pl')
-            ->leftJoin(
-                'users as u',
-                'u.user_id',
-                '=',
-                'pl.user_id'
-            )
-            ->select(
-                'pl.pelanggan_id',
-                'pl.user_id',
-                'u.nama',
-                'u.email',
-                'u.no_hp'
-            )
+            ->leftJoin('users as u', 'u.user_id', '=', 'pl.user_id')
+            ->select('pl.pelanggan_id', 'pl.user_id', 'u.nama', 'u.email', 'u.no_hp')
             ->orderBy('u.nama', 'asc')
             ->get();
     }
 
-    private function getBookingNoteSelect()
+    private function getBookings($selectedCabangId, $selectedDate)
     {
-        if (Schema::hasColumn('booking', 'catatan')) {
-            return 'MAX(b.catatan) as catatan';
-        }
-
-        if (Schema::hasColumn('booking', 'keluhan')) {
-            return 'MAX(b.keluhan) as catatan';
-        }
-
-        return 'NULL as catatan';
-    }
-
-    private function getPaymentMethodSelect()
-    {
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode_pembayaran'
-            )
-        ) {
-            return
-                'MAX(py.metode_pembayaran) as metode_pembayaran';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode'
-            )
-        ) {
-            return
-                'MAX(py.metode) as metode_pembayaran';
-        }
-
-        return 'NULL as metode_pembayaran';
-    }
-
-    private function getPaymentStatusSelect()
-    {
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status'
-            )
-        ) {
-            return 'MAX(py.status) as payment_status';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status_bayar'
-            )
-        ) {
-            return
-                'MAX(py.status_bayar) as payment_status';
-        }
-
-        return 'NULL as payment_status';
-    }
-
-    private function getPaymentAmountSelect()
-    {
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'jumlah'
-            )
-        ) {
-            return 'MAX(py.jumlah) as jumlah';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'total_bayar'
-            )
-        ) {
-            return 'MAX(py.total_bayar) as jumlah';
-        }
-
-        return '0 as jumlah';
-    }
-
-    private function getBookings(
-        $selectedCabangId,
-        $selectedDate
-    ) {
-        $query = DB::table('booking as b')
-            ->leftJoin(
-                'pelanggan as pl',
-                'pl.pelanggan_id',
-                '=',
-                'b.pelanggan_id'
-            )
-            ->leftJoin(
-                'users as pelanggan_user',
-                'pelanggan_user.user_id',
-                '=',
-                'pl.user_id'
-            )
-            ->leftJoin(
-                'booking_detail as bd',
-                'bd.booking_id',
-                '=',
-                'b.booking_id'
-            )
-            ->leftJoin(
-                'layanan_cabang as lc',
-                'lc.layanan_cabang_id',
-                '=',
-                'bd.layanan_cabang_id'
-            )
-            ->leftJoin(
-                'layanan as l',
-                'l.layanan_id',
-                '=',
-                'lc.layanan_id'
-            )
-            ->leftJoin(
-                'pegawai as pg',
-                'pg.pegawai_id',
-                '=',
-                'b.pegawai_id'
-            )
-            ->leftJoin(
-                'users as pegawai_user',
-                'pegawai_user.user_id',
-                '=',
-                'pg.user_id'
-            );
-
-        if (
-            Schema::hasTable('paket_cabang')
-            && Schema::hasColumn(
-                'booking_detail',
-                'paket_cabang_id'
-            )
-        ) {
-            $query->leftJoin(
-                'paket_cabang as pc',
-                'pc.paket_cabang_id',
-                '=',
-                'bd.paket_cabang_id'
-            );
-        }
-
-        if (
-            Schema::hasTable('paket_layanan')
-            && Schema::hasTable('paket_cabang')
-        ) {
-            $query->leftJoin(
-                'paket_layanan as pkt',
-                'pkt.paket_id',
-                '=',
-                'pc.paket_id'
-            );
-        }
-
-        if (Schema::hasTable('pembayaran')) {
-            $query->leftJoin(
-                'pembayaran as py',
-                'py.booking_id',
-                '=',
-                'b.booking_id'
-            );
-        }
-
-        $serviceExpression = 'l.nama_layanan';
-        $packageIdSelect = 'NULL as paket_cabang_id';
-        $branchExpression =
-            'COALESCE(lc.cabang_id, pg.cabang_id)';
-
-        if (
-            Schema::hasTable('paket_cabang')
-            && Schema::hasTable('paket_layanan')
-        ) {
-            $serviceExpression =
-                'COALESCE(l.nama_layanan, pkt.nama_paket)';
-
-            $packageIdSelect =
-                'MAX(pc.paket_cabang_id) as paket_cabang_id';
-
-            $branchExpression =
-                'COALESCE(lc.cabang_id, pc.cabang_id, pg.cabang_id)';
-        }
-
-        $query
-            ->whereDate(
-                'b.tanggal_booking',
-                $selectedDate
-            )
-            ->where(function ($query) use (
-                $selectedCabangId
-            ) {
-                $query
-                    ->where(
-                        'lc.cabang_id',
-                        $selectedCabangId
-                    )
-                    ->orWhere(
-                        'pg.cabang_id',
-                        $selectedCabangId
-                    );
-
-                if (
-                    Schema::hasTable('paket_cabang')
-                ) {
-                    $query->orWhere(
-                        'pc.cabang_id',
-                        $selectedCabangId
-                    );
-                }
+        return DB::table('booking as b')
+            ->leftJoin('pelanggan as pl', 'pl.pelanggan_id', '=', 'b.pelanggan_id')
+            ->leftJoin('users as pelanggan_user', 'pelanggan_user.user_id', '=', 'pl.user_id')
+            ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
+            ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pkt', 'pkt.paket_id', '=', 'pc.paket_id')
+            ->leftJoin('pegawai as pg', 'pg.pegawai_id', '=', 'b.pegawai_id')
+            ->leftJoin('users as pegawai_user', 'pegawai_user.user_id', '=', 'pg.user_id')
+            ->leftJoin('pembayaran as py', 'py.booking_id', '=', 'b.booking_id')
+            ->whereDate('b.tanggal_booking', $selectedDate)
+            ->where(function ($q) use ($selectedCabangId) {
+                $q->where('lc.cabang_id', $selectedCabangId)
+                  ->orWhere('pc.cabang_id', $selectedCabangId)
+                  ->orWhere('pg.cabang_id', $selectedCabangId);
             })
             ->select(
                 'b.booking_id',
@@ -1082,40 +531,20 @@ class PenjadwalanAdminController extends Controller
                 'b.tanggal_booking',
                 'b.jam_booking',
                 'b.status',
-                DB::raw(
-                    $this->getBookingNoteSelect()
-                ),
+                'b.pegawai_id',
                 'pelanggan_user.nama as pelanggan_nama',
                 'pelanggan_user.no_hp as pelanggan_no_hp',
-                DB::raw(
-                    "GROUP_CONCAT(
-                        DISTINCT {$serviceExpression}
-                        ORDER BY {$serviceExpression}
-                        SEPARATOR ', '
-                    ) as layanan_nama"
-                ),
-                DB::raw(
-                    'MAX(lc.layanan_cabang_id) as layanan_cabang_id'
-                ),
-                DB::raw($packageIdSelect),
-                DB::raw(
-                    "MAX({$branchExpression}) as cabang_id"
-                ),
-                DB::raw(
-                    'MAX(pg.pegawai_id) as pegawai_id'
-                ),
-                DB::raw(
-                    'MAX(pegawai_user.nama) as pegawai_nama'
-                ),
-                DB::raw(
-                    $this->getPaymentMethodSelect()
-                ),
-                DB::raw(
-                    $this->getPaymentStatusSelect()
-                ),
-                DB::raw(
-                    $this->getPaymentAmountSelect()
-                )
+                DB::raw('NULL as catatan'),
+                DB::raw("COALESCE(MAX(l.nama_layanan), MAX(pkt.nama_paket)) as layanan_nama"),
+                DB::raw("CASE WHEN MAX(bd.paket_cabang_id) IS NOT NULL THEN 'paket' ELSE 'layanan' END as booking_type"),
+                DB::raw('MAX(bd.layanan_cabang_id) as layanan_cabang_id'),
+                DB::raw('MAX(bd.paket_cabang_id) as paket_cabang_id'),
+                DB::raw('MAX(pg.pegawai_id) as resolved_pegawai_id'),
+                DB::raw('MAX(pegawai_user.nama) as pegawai_nama'),
+                DB::raw('MAX(py.metode_pembayaran) as metode_pembayaran'),
+                DB::raw('MAX(py.status) as payment_status'),
+                DB::raw('MAX(py.jumlah) as jumlah'),
+                DB::raw('MAX(py.pembayaran_id) as pembayaran_id')
             )
             ->groupBy(
                 'b.booking_id',
@@ -1123,1098 +552,222 @@ class PenjadwalanAdminController extends Controller
                 'b.tanggal_booking',
                 'b.jam_booking',
                 'b.status',
+                'b.pegawai_id',
                 'pelanggan_user.nama',
                 'pelanggan_user.no_hp'
             )
-            ->orderBy('b.jam_booking', 'asc');
-
-        return $query->get();
+            ->orderBy('b.jam_booking', 'asc')
+            ->get();
     }
 
     private function getTimes()
     {
         return collect(range(9, 17))
-            ->map(function ($hour) {
-                return sprintf('%02d:00', $hour);
-            })
+            ->map(fn($h) => sprintf('%02d:00', $h))
             ->toArray();
     }
 
-    private function getJadwalPegawai(
-        $selectedDate,
-        $staffList
-    ) {
-        if (!Schema::hasTable('jadwal_pegawai')) {
-            return collect();
-        }
-
-        $staffIds = $staffList
-            ->pluck('pegawai_id')
-            ->filter()
-            ->values();
+    private function getJadwalPegawai($selectedDate, $staffList)
+    {
+        $staffIds = $staffList->pluck('pegawai_id')->filter()->values();
 
         return DB::table('jadwal_pegawai')
             ->whereDate('tanggal', $selectedDate)
-            ->whereIn(
-                'pegawai_id',
-                $staffIds->isEmpty()
-                    ? [0]
-                    : $staffIds->all()
-            )
-            ->select(
-                'jadwal_pegawai_id',
-                'pegawai_id',
-                'tanggal',
-                'jam_mulai',
-                'jam_selesai',
-                'status_ketersediaan'
-            )
+            ->whereIn('pegawai_id', $staffIds->isEmpty() ? [0] : $staffIds->all())
+            ->select('jadwal_pegawai_id', 'pegawai_id', 'tanggal', 'jam_mulai', 'jam_selesai', 'status_ketersediaan')
             ->get();
     }
 
-    private function buildScheduleGrid(
-        $times,
-        $staffList,
-        $bookings,
-        $jadwalPegawai
-    ) {
-        $firstStaffId =
-            $staffList->first()->pegawai_id ?? null;
-
-        $bookingsByTime = $bookings->groupBy(
-            function ($booking) {
-                return substr(
-                    (string) $booking->jam_booking,
-                    0,
-                    5
-                );
-            }
-        );
-
-        $scheduleGrid = [];
+    private function buildScheduleGrid($times, $staffList, $bookings, $jadwalPegawai)
+    {
+        $firstStaffId   = $staffList->first()->pegawai_id ?? null;
+        $bookingsByTime = $bookings->groupBy(fn($b) => substr((string) $b->jam_booking, 0, 5));
+        $scheduleGrid   = [];
 
         foreach ($times as $time) {
             foreach ($staffList as $staff) {
-                $bookingsAtTime =
-                    $bookingsByTime->get(
-                        $time,
-                        collect()
-                    );
+                $bookingsAtTime = $bookingsByTime->get($time, collect());
 
                 $booking = $bookingsAtTime->first(
-                    function ($item) use ($staff) {
-                        return
-                            (int) $item->pegawai_id
-                            === (int) $staff->pegawai_id;
-                    }
+                    fn($item) => (int) $item->pegawai_id === (int) $staff->pegawai_id
                 );
 
-                if (
-                    !$booking
-                    && (int) $staff->pegawai_id
-                        === (int) $firstStaffId
-                ) {
-                    $booking = $bookingsAtTime->first(
-                        function ($item) {
-                            return empty(
-                                $item->pegawai_id
-                            );
-                        }
-                    );
+                if (!$booking && (int) $staff->pegawai_id === (int) $firstStaffId) {
+                    $booking = $bookingsAtTime->first(fn($item) => empty($item->pegawai_id));
                 }
 
                 if ($booking) {
-                    $paymentStatus = strtolower(
-                        $booking->payment_status ?? ''
-                    );
-
-                    $bookingStatus = strtolower(
-                        $booking->status ?? ''
-                    );
-
-                    $isPending =
-                        in_array(
-                            $paymentStatus,
-                            ['pending', 'belum_bayar'],
-                            true
-                        )
-                        || in_array(
-                            $bookingStatus,
-                            ['pending', 'tunda'],
-                            true
-                        );
+                    $bookingStatus = strtolower($booking->status ?? '');
 
                     $cellType = match ($bookingStatus) {
-                        'in_progress',
-                        'proses' => 'in_progress',
-
-                        'completed',
-                        'selesai' => 'completed',
-
-                        'cancelled',
-                        'batal' => 'cancelled',
-
-                        default => 'booked',
+                        'in_progress' => 'in_progress',
+                        'completed'   => 'completed',
+                        'cancelled'   => 'cancelled',
+                        'pending'     => 'pending',
+                        default       => 'booked',
                     };
 
-                    if ($isPending) {
-                        $cellType = 'pending';
-                    }
+                    $timeLabel = $time . '-' . sprintf('%02d:00', ((int) substr($time, 0, 2)) + 1);
 
-                    $scheduleGrid[$time][$staff->pegawai_id] =
-                        (object) [
-                            'type' => $cellType,
-                            'booking_id' =>
-                                $booking->booking_id,
-                            'pelanggan_id' =>
-                                $booking->pelanggan_id,
-                            'layanan_cabang_id' =>
-                                $booking->layanan_cabang_id,
-                            'pegawai_id' =>
-                                $booking->pegawai_id,
-                            'tanggal_booking' =>
-                                $booking->tanggal_booking,
-                            'jam_booking' => substr(
-                                (string) $booking->jam_booking,
-                                0,
-                                5
-                            ),
-                            'payment_raw' => strtolower(
-                                $booking->metode_pembayaran
-                                    ?? 'cash'
-                            ),
-                            'status_raw' =>
-                                $this->denormalizeBookingStatus(
-                                    $booking->status
-                                        ?? 'confirmed'
-                                ),
-                            'service' =>
-                                $booking->layanan_nama ?? '-',
-                            'client' =>
-                                $booking->pelanggan_nama
-                                    ?? 'Pelanggan',
-                            'customer' =>
-                                $booking->pelanggan_nama
-                                    ?? 'Pelanggan',
-                            'phone' =>
-                                $booking->pelanggan_no_hp
-                                    ?? '-',
-                            'staff' =>
-                                $booking->pegawai_nama
-                                    ?? 'Belum assign',
-                            'time' =>
-                                $time
-                                . '-'
-                                . sprintf(
-                                    '%02d:00',
-                                    (
-                                        (int) substr(
-                                            $time,
-                                            0,
-                                            2
-                                        )
-                                    ) + 1
-                                ),
-                            'payment' =>
-                                $booking->metode_pembayaran
-                                    ? strtoupper(
-                                        $booking
-                                            ->metode_pembayaran
-                                    )
-                                    : '-',
-                            'status' =>
-                                $this->denormalizeBookingStatus(
-                                    $booking->status
-                                        ?? 'confirmed'
-                                ),
-                            'note' =>
-                                $booking->catatan ?? '-',
-                        ];
-
+                    $scheduleGrid[$time][$staff->pegawai_id] = (object) [
+                        'type'              => $cellType,
+                        'booking_id'        => $booking->booking_id,
+                        'pelanggan_id'      => $booking->pelanggan_id,
+                        'layanan_cabang_id' => $booking->layanan_cabang_id,
+                        'paket_cabang_id'   => $booking->paket_cabang_id,
+                        'booking_type'      => $booking->booking_type,
+                        'pegawai_id'        => $booking->pegawai_id,
+                        'tanggal_booking'   => $booking->tanggal_booking,
+                        'jam_booking'       => substr((string) $booking->jam_booking, 0, 5),
+                        'payment_raw'       => strtolower($booking->metode_pembayaran ?? 'cash'),
+                        'status_raw'        => $booking->status ?? 'pending',
+                        'service'           => $booking->layanan_nama ?? '-',
+                        'client'            => $booking->pelanggan_nama ?? 'Pelanggan',
+                        'customer'          => $booking->pelanggan_nama ?? 'Pelanggan',
+                        'phone'             => $booking->pelanggan_no_hp ?? '-',
+                        'staff'             => $booking->pegawai_nama ?? 'Belum assign',
+                        'time'              => $timeLabel,
+                        'payment'           => strtoupper($booking->metode_pembayaran ?? '-'),
+                        'status'            => $this->statusLabel($booking->status ?? 'pending'),
+                        'note'              => '-',
+                    ];
                     continue;
                 }
 
-                $currentSchedule =
-                    $jadwalPegawai->first(
-                        function ($jadwal) use (
-                            $staff,
-                            $time
-                        ) {
-                            $start = substr(
-                                (string) $jadwal->jam_mulai,
-                                0,
-                                5
-                            );
+                $currentSchedule = $jadwalPegawai->first(function ($j) use ($staff, $time) {
+                    $start = substr((string) $j->jam_mulai,   0, 5);
+                    $end   = substr((string) $j->jam_selesai, 0, 5);
+                    return (int) $j->pegawai_id === (int) $staff->pegawai_id
+                        && $time >= $start
+                        && $time < $end;
+                });
 
-                            $end = substr(
-                                (string) $jadwal->jam_selesai,
-                                0,
-                                5
-                            );
+                $slotType = ($currentSchedule && $currentSchedule->status_ketersediaan === 'tidak_tersedia')
+                    ? 'break'
+                    : 'available';
 
-                            return
-                                (int) $jadwal->pegawai_id
-                                    ===
-                                    (int) $staff->pegawai_id
-                                && $time >= $start
-                                && $time < $end;
-                        }
-                    );
-
-                if (
-                    $currentSchedule
-                    && $currentSchedule
-                        ->status_ketersediaan
-                        === 'tidak_tersedia'
-                ) {
-                    $scheduleGrid[$time][$staff->pegawai_id] =
-                        $this->makeEmptyScheduleCell(
-                            'break',
-                            'Break',
-                            $staff,
-                            $time,
-                            'Specialist tidak tersedia pada jam ini'
-                        );
-                } else {
-                    $scheduleGrid[$time][$staff->pegawai_id] =
-                        $this->makeEmptyScheduleCell(
-                            'available',
-                            'Tersedia',
-                            $staff,
-                            $time,
-                            'Slot tersedia'
-                        );
-                }
+                $scheduleGrid[$time][$staff->pegawai_id] = $this->makeEmptyScheduleCell(
+                    $slotType, $staff, $time
+                );
             }
         }
 
         return $scheduleGrid;
     }
 
-    private function makeEmptyScheduleCell(
-        $type,
-        $service,
-        $staff,
-        $time,
-        $note
-    ) {
+    private function makeEmptyScheduleCell($type, $staff, $time)
+    {
+        $timeLabel = $time . '-' . sprintf('%02d:00', ((int) substr($time, 0, 2)) + 1);
         return (object) [
-            'type' => $type,
-            'booking_id' => null,
-            'pelanggan_id' => null,
+            'type'              => $type,
+            'booking_id'        => null,
+            'pelanggan_id'      => null,
             'layanan_cabang_id' => null,
-            'pegawai_id' =>
-                $staff->pegawai_id ?? null,
-            'tanggal_booking' => null,
-            'jam_booking' => substr(
-                (string) $time,
-                0,
-                5
-            ),
-            'payment_raw' => 'cash',
-            'status_raw' => $type,
-            'service' => $service,
-            'client' => '-',
-            'customer' => '-',
-            'phone' => '-',
-            'staff' =>
-                $staff->nama ?? 'Specialist',
-            'time' =>
-                $time
-                . '-'
-                . sprintf(
-                    '%02d:00',
-                    (
-                        (int) substr(
-                            $time,
-                            0,
-                            2
-                        )
-                    ) + 1
-                ),
-            'payment' => '-',
-            'status' => $type,
-            'note' => $note,
+            'paket_cabang_id'   => null,
+            'booking_type'      => 'layanan',
+            'pegawai_id'        => $staff->pegawai_id ?? null,
+            'tanggal_booking'   => null,
+            'jam_booking'       => substr((string) $time, 0, 5),
+            'payment_raw'       => 'cash',
+            'status_raw'        => $type,
+            'service'           => $type === 'break' ? 'Break' : 'Tersedia',
+            'client'            => '-',
+            'customer'          => '-',
+            'phone'             => '-',
+            'staff'             => $staff->nama ?? 'Specialist',
+            'time'              => $timeLabel,
+            'payment'           => '-',
+            'status'            => $type,
+            'note'              => $type === 'break' ? 'Specialist tidak tersedia' : 'Slot tersedia',
         ];
     }
 
     private function buildBookingList($bookings)
     {
-        return $bookings->map(
-            function ($booking) {
-                $statusLabel = match (
-                    strtolower($booking->status)
-                ) {
-                    'pending',
-                    'tunda' => 'Tunda',
+        return $bookings->map(function ($booking) {
+            $startTime = substr((string) $booking->jam_booking, 0, 5);
+            $endTime   = sprintf('%02d:00', ((int) substr((string) $booking->jam_booking, 0, 2)) + 1);
 
-                    'confirmed',
-                    'assigned',
-                    'dikonfirmasi' => 'Dikonfirmasi',
-
-                    'in_progress',
-                    'proses' => 'Berjalan',
-
-                    'completed',
-                    'selesai' => 'Selesai',
-
-                    'cancelled',
-                    'batal' => 'Dibatalkan',
-
-                    default => 'Dikonfirmasi',
-                };
-
-                $startTime = substr(
-                    (string) $booking->jam_booking,
-                    0,
-                    5
-                );
-
-                $endTime = sprintf(
-                    '%02d:00',
-                    (
-                        (int) substr(
-                            (string) $booking->jam_booking,
-                            0,
-                            2
-                        )
-                    ) + 1
-                );
-
-                return (object) [
-                    'id' => $booking->booking_id,
-                    'pelanggan_id' =>
-                        $booking->pelanggan_id,
-                    'layanan_cabang_id' =>
-                        $booking->layanan_cabang_id,
-                    'pegawai_id' =>
-                        $booking->pegawai_id,
-                    'tanggal_booking' =>
-                        $booking->tanggal_booking,
-                    'jam_booking' => $startTime,
-                    'payment_raw' => strtolower(
-                        $booking->metode_pembayaran
-                            ?? 'cash'
-                    ),
-                    'status_raw' =>
-                        $this->denormalizeBookingStatus(
-                            $booking->status
-                                ?? 'confirmed'
-                        ),
-                    'time' =>
-                        $startTime . '-' . $endTime,
-                    'customer' =>
-                        $booking->pelanggan_nama
-                            ?? 'Pelanggan',
-                    'phone' =>
-                        $booking->pelanggan_no_hp
-                            ?? '-',
-                    'service' =>
-                        $booking->layanan_nama ?? '-',
-                    'staff' =>
-                        $booking->pegawai_nama
-                            ?? 'Belum assign',
-                    'payment' =>
-                        $booking->metode_pembayaran
-                            ? strtoupper(
-                                $booking
-                                    ->metode_pembayaran
-                            )
-                            : '-',
-                    'status' => $statusLabel,
-                    'type' =>
-                        $statusLabel === 'Tunda'
-                            ? 'pending'
-                            : 'booked',
-                    'note' =>
-                        $booking->catatan ?? '-',
-                ];
-            }
-        );
+            return (object) [
+                'id'                => $booking->booking_id,
+                'pelanggan_id'      => $booking->pelanggan_id,
+                'layanan_cabang_id' => $booking->layanan_cabang_id,
+                'paket_cabang_id'   => $booking->paket_cabang_id,
+                'booking_type'      => $booking->booking_type,
+                'pegawai_id'        => $booking->pegawai_id,
+                'tanggal_booking'   => $booking->tanggal_booking,
+                'jam_booking'       => $startTime,
+                'payment_raw'       => strtolower($booking->metode_pembayaran ?? 'cash'),
+                'status_raw'        => $booking->status ?? 'pending',
+                'time'              => $startTime . '-' . $endTime,
+                'customer'          => $booking->pelanggan_nama ?? 'Pelanggan',
+                'phone'             => $booking->pelanggan_no_hp ?? '-',
+                'service'           => $booking->layanan_nama ?? '-',
+                'staff'             => $booking->pegawai_nama ?? 'Belum assign',
+                'payment'           => strtoupper($booking->metode_pembayaran ?? '-'),
+                'status'            => $this->statusLabel($booking->status ?? 'pending'),
+                'type'              => in_array($booking->status, ['pending']) ? 'pending' : 'booked',
+                'note'              => '-',
+            ];
+        });
     }
 
-    private function getServiceForBooking(
-        $layananCabangId
-    ) {
+    private function getServiceForBooking($layananCabangId)
+    {
         return DB::table('layanan_cabang as lc')
-            ->leftJoin(
-                'layanan as l',
-                'l.layanan_id',
-                '=',
-                'lc.layanan_id'
-            )
-            ->where(
-                'lc.layanan_cabang_id',
-                $layananCabangId
-            )
+            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
+            ->where('lc.layanan_cabang_id', $layananCabangId)
             ->select(
                 'lc.layanan_cabang_id',
                 'lc.cabang_id',
-                DB::raw($this->getHargaSelect())
+                DB::raw('COALESCE(lc.harga_promo, lc.harga, 0) as harga')
             )
             ->first();
     }
 
-    private function getValidPegawai(
-        $pegawaiId,
-        $cabangId = null
-    ) {
-        $query = DB::table('pegawai as p')
-            ->join(
-                'users as u',
-                'u.user_id',
-                '=',
-                'p.user_id'
+    private function getPaketForBooking($paketCabangId)
+    {
+        return DB::table('paket_cabang as pc')
+            ->join('paket_layanan as pl', 'pl.paket_id', '=', 'pc.paket_id')
+            ->where('pc.paket_cabang_id', $paketCabangId)
+            ->select(
+                'pc.paket_cabang_id',
+                'pc.cabang_id',
+                'pl.nama_paket',
+                DB::raw('COALESCE(pc.harga_promo, pc.harga_normal, 0) as harga')
             )
+            ->first();
+    }
+
+    private function getValidPegawai($pegawaiId, $cabangId = null)
+    {
+        $query = DB::table('pegawai as p')
+            ->join('users as u', 'u.user_id', '=', 'p.user_id')
             ->where('p.pegawai_id', $pegawaiId)
             ->where('u.role', 'pegawai')
-            ->where(function ($query) {
-                $query
-                    ->whereNull('u.status_akun')
-                    ->orWhere('u.status_akun', 'aktif');
+            ->where(function ($q) {
+                $q->whereNull('u.status_akun')->orWhere('u.status_akun', 'aktif');
             })
-            ->where(function ($query) {
-                $query
-                    ->whereNull('p.status_kerja')
-                    ->orWhere(
-                        'p.status_kerja',
-                        '!=',
-                        'resign'
-                    );
+            ->where(function ($q) {
+                $q->whereNull('p.status_kerja')->orWhere('p.status_kerja', '!=', 'resign');
             });
 
         if ($cabangId) {
-            $query->where(
-                'p.cabang_id',
-                $cabangId
-            );
+            $query->where('p.cabang_id', $cabangId);
         }
 
-        return $query
-            ->select('p.*')
-            ->first();
+        return $query->select('p.*')->first();
     }
 
-    private function insertPaymentIfTableExists(
-        Request $request,
-        $service,
-        $newBookingId
-    ) {
-        if (!Schema::hasTable('pembayaran')) {
-            return;
-        }
-
-        $paymentData = [
-            'booking_id' => $newBookingId,
-        ];
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'pembayaran_id'
-            )
-        ) {
-            $paymentData['pembayaran_id'] =
-                (
-                    DB::table('pembayaran')
-                        ->max('pembayaran_id') ?? 0
-                ) + 1;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode_pembayaran'
-            )
-        ) {
-            $paymentData['metode_pembayaran'] =
-                $request->metode_pembayaran;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode'
-            )
-        ) {
-            $paymentData['metode'] =
-                $request->metode_pembayaran;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status'
-            )
-        ) {
-            $paymentData['status'] = 'pending';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status_bayar'
-            )
-        ) {
-            $paymentData['status_bayar'] = 'pending';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'jumlah'
-            )
-        ) {
-            $paymentData['jumlah'] =
-                $service->harga ?? 0;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'total_bayar'
-            )
-        ) {
-            $paymentData['total_bayar'] =
-                $service->harga ?? 0;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'tanggal_bayar'
-            )
-        ) {
-            $paymentData['tanggal_bayar'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'verified_by'
-            )
-        ) {
-            $paymentData['verified_by'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'created_at'
-            )
-        ) {
-            $paymentData['created_at'] = now();
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'updated_at'
-            )
-        ) {
-            $paymentData['updated_at'] = now();
-        }
-
-        DB::table('pembayaran')
-            ->insert($paymentData);
-    }
-
-    private function upsertPaymentForBooking(
-        Request $request,
-        $service,
-        $bookingId
-    ) {
-        if (!Schema::hasTable('pembayaran')) {
-            return;
-        }
-
-        $paymentData = [];
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode_pembayaran'
-            )
-        ) {
-            $paymentData['metode_pembayaran'] =
-                $request->metode_pembayaran;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode'
-            )
-        ) {
-            $paymentData['metode'] =
-                $request->metode_pembayaran;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'jumlah'
-            )
-        ) {
-            $paymentData['jumlah'] =
-                $service->harga ?? 0;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'total_bayar'
-            )
-        ) {
-            $paymentData['total_bayar'] =
-                $service->harga ?? 0;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'updated_at'
-            )
-        ) {
-            $paymentData['updated_at'] = now();
-        }
-
-        $existingPayment =
-            $this->getLatestPayment($bookingId);
-
-        if ($existingPayment) {
-            $paymentQuery = DB::table('pembayaran');
-
-            if (
-                Schema::hasColumn(
-                    'pembayaran',
-                    'pembayaran_id'
-                )
-            ) {
-                $paymentQuery->where(
-                    'pembayaran_id',
-                    $existingPayment->pembayaran_id
-                );
-            } else {
-                $paymentQuery->where(
-                    'booking_id',
-                    $bookingId
-                );
-            }
-
-            if (!empty($paymentData)) {
-                $paymentQuery->update($paymentData);
-            }
-
-            return;
-        }
-
-        $paymentData['booking_id'] = $bookingId;
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'pembayaran_id'
-            )
-        ) {
-            $paymentData['pembayaran_id'] =
-                (
-                    DB::table('pembayaran')
-                        ->max('pembayaran_id') ?? 0
-                ) + 1;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status'
-            )
-        ) {
-            $paymentData['status'] = 'pending';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status_bayar'
-            )
-        ) {
-            $paymentData['status_bayar'] = 'pending';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'tanggal_bayar'
-            )
-        ) {
-            $paymentData['tanggal_bayar'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'verified_by'
-            )
-        ) {
-            $paymentData['verified_by'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'created_at'
-            )
-        ) {
-            $paymentData['created_at'] = now();
-        }
-
-        DB::table('pembayaran')
-            ->insert($paymentData);
-    }
-
-    private function normalizeBookingStatus($status)
+    private function statusLabel($status)
     {
-        return match ($status) {
-            'tunda' => 'pending',
-            'dikonfirmasi' => 'confirmed',
-            'assigned' => 'confirmed',
-            'proses' => 'in_progress',
-            'selesai' => 'completed',
-            'batal' => 'cancelled',
-            default => $status,
+        return match (strtolower($status)) {
+            'pending'     => 'Tunda',
+            'confirmed'   => 'Dikonfirmasi',
+            'in_progress' => 'Berjalan',
+            'completed'   => 'Selesai',
+            'cancelled'   => 'Dibatalkan',
+            default       => 'Dikonfirmasi',
         };
-    }
-
-    private function denormalizeBookingStatus($status)
-    {
-        return match ($status) {
-            'pending' => 'tunda',
-            'confirmed' => 'dikonfirmasi',
-            'in_progress' => 'proses',
-            'completed' => 'selesai',
-            'cancelled' => 'batal',
-            default => $status,
-        };
-    }
-
-    private function updatePaymentVerificationForBooking(
-        $bookingId,
-        $paymentStatus
-    ) {
-        if (!Schema::hasTable('pembayaran')) {
-            return;
-        }
-
-        $paymentStatus =
-            $paymentStatus === 'verified'
-                ? 'verified'
-                : 'pending';
-
-        $booking = DB::table('booking')
-            ->where('booking_id', $bookingId)
-            ->first();
-
-        if (!$booking) {
-            return;
-        }
-
-        $totalHarga = $this->getBookingTotal(
-            $bookingId
-        );
-
-        $paymentData = [];
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status'
-            )
-        ) {
-            $paymentData['status'] =
-                $paymentStatus;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status_bayar'
-            )
-        ) {
-            $paymentData['status_bayar'] =
-                $paymentStatus;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'tanggal_bayar'
-            )
-        ) {
-            $paymentData['tanggal_bayar'] =
-                $paymentStatus === 'verified'
-                    ? now()
-                    : null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'verified_by'
-            )
-        ) {
-            $paymentData['verified_by'] =
-                $paymentStatus === 'verified'
-                    ? (auth()->id() ?? 1)
-                    : null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'updated_at'
-            )
-        ) {
-            $paymentData['updated_at'] = now();
-        }
-
-        $existingPayment =
-            $this->getLatestPayment($bookingId);
-
-        if ($existingPayment) {
-            $paymentQuery = DB::table('pembayaran');
-
-            if (
-                Schema::hasColumn(
-                    'pembayaran',
-                    'pembayaran_id'
-                )
-            ) {
-                $paymentQuery->where(
-                    'pembayaran_id',
-                    $existingPayment->pembayaran_id
-                );
-            } else {
-                $paymentQuery->where(
-                    'booking_id',
-                    $bookingId
-                );
-            }
-
-            if (!empty($paymentData)) {
-                $paymentQuery->update($paymentData);
-            }
-
-            return;
-        }
-
-        $paymentData['booking_id'] = $bookingId;
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'pembayaran_id'
-            )
-        ) {
-            $paymentData['pembayaran_id'] =
-                (
-                    DB::table('pembayaran')
-                        ->max('pembayaran_id') ?? 0
-                ) + 1;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode_pembayaran'
-            )
-        ) {
-            $paymentData['metode_pembayaran'] =
-                'cash';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'metode'
-            )
-        ) {
-            $paymentData['metode'] = 'cash';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'jumlah'
-            )
-        ) {
-            $paymentData['jumlah'] = $totalHarga;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'total_bayar'
-            )
-        ) {
-            $paymentData['total_bayar'] =
-                $totalHarga;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'created_at'
-            )
-        ) {
-            $paymentData['created_at'] = now();
-        }
-
-        DB::table('pembayaran')
-            ->insert($paymentData);
-    }
-
-    private function getLatestPayment($bookingId)
-    {
-        if (!Schema::hasTable('pembayaran')) {
-            return null;
-        }
-
-        $query = DB::table('pembayaran')
-            ->where('booking_id', $bookingId);
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'pembayaran_id'
-            )
-        ) {
-            $query->orderByDesc('pembayaran_id');
-        } elseif (
-            Schema::hasColumn(
-                'pembayaran',
-                'created_at'
-            )
-        ) {
-            $query->orderByDesc('created_at');
-        }
-
-        return $query->first();
-    }
-
-    private function getBookingTotal($bookingId)
-    {
-        if (!Schema::hasTable('booking_detail')) {
-            return 0;
-        }
-
-        if (
-            Schema::hasColumn(
-                'booking_detail',
-                'harga_snapshot'
-            )
-        ) {
-            return (float) DB::table('booking_detail')
-                ->where('booking_id', $bookingId)
-                ->sum('harga_snapshot');
-        }
-
-        $details = DB::table('booking_detail')
-            ->where('booking_id', $bookingId)
-            ->get();
-
-        $total = 0;
-
-        foreach ($details as $detail) {
-            if (
-                !empty($detail->layanan_cabang_id)
-            ) {
-                $service =
-                    $this->getServiceForBooking(
-                        $detail->layanan_cabang_id
-                    );
-
-                $total += (float) (
-                    $service->harga ?? 0
-                );
-            }
-        }
-
-        return $total;
-    }
-
-    private function updatePaymentStatusIfExists(
-        $bookingId,
-        $status
-    ) {
-        if (!Schema::hasTable('pembayaran')) {
-            return;
-        }
-
-        $status = $this->normalizeBookingStatus(
-            $status
-        );
-
-        /*
-         * Status pembayaran hanya berubah otomatis
-         * ketika booking dibatalkan.
-         */
-        if ($status !== 'cancelled') {
-            return;
-        }
-
-        $paymentUpdate = [];
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status'
-            )
-        ) {
-            $paymentUpdate['status'] = 'on_hold';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'status_bayar'
-            )
-        ) {
-            $paymentUpdate['status_bayar'] =
-                'on_hold';
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'tanggal_bayar'
-            )
-        ) {
-            $paymentUpdate['tanggal_bayar'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'verified_by'
-            )
-        ) {
-            $paymentUpdate['verified_by'] = null;
-        }
-
-        if (
-            Schema::hasColumn(
-                'pembayaran',
-                'updated_at'
-            )
-        ) {
-            $paymentUpdate['updated_at'] = now();
-        }
-
-        if (!empty($paymentUpdate)) {
-            DB::table('pembayaran')
-                ->where('booking_id', $bookingId)
-                ->update($paymentUpdate);
-        }
     }
 }

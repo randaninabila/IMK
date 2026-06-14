@@ -49,9 +49,19 @@
 
     @include('admin.partial.sidebar')
 
-    <main class="ml-[235px] w-[calc(100%-235px)] min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
+    <main class="lg:ml-[235px] lg:w-[calc(100%-235px)] w-full min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
 
-        <header class="h-[92px] px-[58px] flex items-center justify-between">
+        <header class="h-[92px] px-4 lg:px-[58px] flex items-center justify-between gap-3">
+
+            <button type="button"
+                    onclick="adminSidebarOpen()"
+                    class="lg:hidden p-2 rounded-[8px] text-[#6B4D46] hover:bg-[#FFF1F1] transition shrink-0"
+                    aria-label="Buka menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
 
             <h2 class="text-[22px] font-extrabold text-[#3F3838] tracking-[-0.03em]">
                 Halo, <span class="italic">{{ $adminName }}</span> 👋
@@ -68,24 +78,24 @@
         </header>
 
         @if(session('success'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
                 {{ session('success') }}
             </div>
         @endif
 
         @if(session('error'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ session('error') }}
             </div>
         @endif
 
         @if($errors->any())
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ $errors->first() }}
             </div>
         @endif
 
-        <section class="px-[42px] mt-[14px] pb-[45px]">
+        <section class="px-4 lg:px-[42px] mt-[14px] pb-[45px]">
 
             <div class="bg-white rounded-[18px] min-h-[610px] px-[24px] pt-[24px] pb-[30px] soft-card border border-[#F1D9DD]">
 
@@ -159,9 +169,14 @@
                             <div>
                                 <label class="text-[17px] font-extrabold text-[#3F3838]">No. Telepon</label>
                                 <input name="no_hp"
-                                       type="text"
-                                       value="{{ $adminPhone }}"
-                                       class="mt-[8px] w-full h-[42px] border border-[#D8C4C7] rounded-[8px] px-[16px] text-[17px] bg-white outline-none focus:ring-2 focus:ring-[#E8A9B4]">
+                                    type="text"
+                                    value="{{ $adminPhone }}"
+                                    class="mt-[8px] w-full h-[42px] border border-[#D8C4C7] rounded-[8px] px-[16px] text-[17px] bg-white outline-none focus:ring-2 focus:ring-[#E8A9B4]
+                                        @error('no_hp') border-red-400 @enderror">
+                                @error('no_hp')
+                                    <p class="text-red-500 text-[12px] font-semibold mt-[4px]">{{ $message }}</p>
+                                @enderror
+                                <p class="text-[11px] text-[#9A8B86] font-semibold mt-[4px]">Format: 08xxx, 628xxx, atau +628xxx</p>
                             </div>
 
                             <div class="row-span-2 flex items-end justify-end pb-[6px]">

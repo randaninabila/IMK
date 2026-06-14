@@ -115,9 +115,19 @@
 
     @include('admin.partial.sidebar')
 
-    <main class="ml-[235px] w-[calc(100%-235px)] min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
+    <main class="lg:ml-[235px] lg:w-[calc(100%-235px)] w-full min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
 
         <header class="h-[92px] px-[44px] flex items-center justify-between">
+
+        <button type="button"
+                onclick="adminSidebarOpen()"
+                class="lg:hidden p-2 rounded-[8px] text-[#6B4D46] hover:bg-[#FFF1F1] transition shrink-0"
+                aria-label="Buka menu">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
 
             <h2 class="text-[22px] font-extrabold text-[#3F3838] tracking-[-0.03em]">
                 Halo, <span class="italic">Admin</span> Salon Dina Muslimah 👋

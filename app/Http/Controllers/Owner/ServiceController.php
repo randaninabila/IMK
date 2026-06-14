@@ -29,7 +29,6 @@ class ServiceController extends Controller
         $topLayanan  = $this->getTopLayanan($selectedCabang, $selectedMonth, $selectedCategory);
         $leaderboard = $this->getLeaderboardData($selectedCabang, $selectedMonth, $selectedCategory, $perPage, $selectedSort);
 
-        // Hitung total kategori dari data leaderboard aktual (bukan semua jenis_layanan)
         $totalKategori = collect($leaderboard instanceof \Illuminate\Pagination\LengthAwarePaginator
             ? $leaderboard->getCollection()
             : $leaderboard
@@ -142,7 +141,6 @@ class ServiceController extends Controller
         $currentMonth = Carbon::parse($month);
         $prevMonth    = $currentMonth->copy()->subMonth();
 
-        // Normalise direction
         $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
 
         // ── BULAN INI
@@ -235,7 +233,6 @@ class ServiceController extends Controller
         if ($selectedSort === 'revenue') {
             $currentQuery->orderBy('total_revenue', $dir);
         } elseif ($selectedSort === 'performance') {
-            // Saat cabang=all, bisa sort by booking count cabang tertentu
             if ($cabangId === 'all' && $sortCabang && is_numeric($sortCabang)) {
                 $sortCabangId = (int) $sortCabang;
                 $dirSql = strtoupper($dir) === 'ASC' ? 'ASC' : 'DESC';

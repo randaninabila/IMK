@@ -73,10 +73,10 @@
                 <div class="flex justify-between items-center text-sm text-[#3d352f] mb-6">
                     <label class="flex items-center gap-2">
                         <input type="checkbox" name="remember" class="w-4 h-4">
-                        Remember me
+                        Ingat saya
                     </label>
                     <a href="{{ route('password.request') }}" class="hover:underline">
-                        Forgot Password ?
+                        Lupa Password ?
                     </a>
                 </div>
 

@@ -34,6 +34,7 @@
     $dateOptions     = $dateOptions     ?? collect();
     $staffList       = $staffList       ?? collect();
     $services        = $services        ?? collect();
+    $packages        = $packages        ?? collect();
     $customers       = $customers       ?? collect();
     $times           = $times           ?? [];
     $scheduleGrid    = $scheduleGrid    ?? [];
@@ -50,10 +51,21 @@
 
     @include('admin.partial.sidebar')
 
-    <main class="ml-[235px] w-[calc(100%-235px)] min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
+    <main class="lg:ml-[235px] lg:w-[calc(100%-235px)] w-full min-h-screen bg-gradient-to-b from-white via-[#FFF7F8] to-[#FDE7EC]">
 
         {{-- ===== HEADER ===== --}}
-        <header class="h-[92px] px-[58px] flex items-center justify-between">
+        <header class="h-[92px] px-4 lg:px-[58px] flex items-center justify-between gap-3">
+            
+            <button type="button"
+                    onclick="adminSidebarOpen()"
+                    class="lg:hidden p-2 rounded-[8px] text-[#6B4D46] hover:bg-[#FFF1F1] transition shrink-0"
+                    aria-label="Buka menu">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+
             <h2 class="text-[22px] font-extrabold text-[#3F3838] tracking-[-0.03em]">
                 Halo, <span class="italic">Admin</span> Salon Dina Muslimah 👋
             </h2>
@@ -120,17 +132,17 @@
 
         {{-- Flash messages --}}
         @if(session('success'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-green-100 text-green-700 px-5 py-3 text-sm font-bold">
                 {{ session('success') }}
             </div>
         @endif
         @if(session('error'))
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ session('error') }}
             </div>
         @endif
         @if($errors->any())
-            <div class="mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
+            <div class="mx-4 lg:mx-[42px] mt-[8px] rounded-[12px] bg-red-100 text-red-600 px-5 py-3 text-sm font-bold">
                 {{ $errors->first() }}
             </div>
         @endif
@@ -195,7 +207,8 @@
                                     </div>
                                     <div>
                                         <p class="text-[18px] font-extrabold leading-none">{{ $staff->nama ?? 'Specialist' }}</p>
-                                        <p class="text-[13px] italic font-extrabold leading-none mt-[4px]">{{ $staff->jabatan ?? 'Specialist' }}</p>
+                                        {{-- pegawai tidak punya jabatan di DB --}}
+                                        <p class="text-[13px] italic font-extrabold leading-none mt-[4px]">Specialist</p>
                                     </div>
                                 </div>
                             @empty
@@ -247,6 +260,13 @@
                                             <button type="button" onclick="selectSlot(this)"
                                                     data-type="{{ $cell->type }}"
                                                     data-booking-id="{{ $cell->booking_id }}"
+                                                    data-booking-type="{{ $cell->booking_type }}"
+                                                    data-layanan-cabang-id="{{ $cell->layanan_cabang_id }}"
+                                                    data-paket-cabang-id="{{ $cell->paket_cabang_id }}"
+                                                    data-pelanggan-id="{{ $cell->pelanggan_id }}"
+                                                    data-pegawai-id="{{ $cell->pegawai_id }}"
+                                                    data-tanggal-booking="{{ $cell->tanggal_booking }}"
+                                                    data-jam-booking="{{ $cell->jam_booking }}"
                                                     data-service="{{ $cell->service }}"
                                                     data-client="{{ $cell->client }}"
                                                     data-customer="{{ $cell->customer }}"
@@ -254,11 +274,16 @@
                                                     data-staff="{{ $cell->staff }}"
                                                     data-time="{{ $cell->time }}"
                                                     data-payment="{{ $cell->payment }}"
+                                                    data-payment-raw="{{ $cell->payment_raw }}"
                                                     data-status="{{ $cell->status }}"
+                                                    data-status-raw="{{ $cell->status_raw }}"
                                                     data-note="{{ $cell->note }}"
                                                     class="schedule-cell relative w-full h-full rounded-[8px] text-left px-[8px] pt-[8px] {{ $bookingCellClass }}">
                                                 <p class="{{ $bookingTextClass }} text-[16px] leading-none font-extrabold">{{ $cell->service }}</p>
-                                                <p class="mt-[10px] text-black text-[13px] leading-none italic font-extrabold">{{ $cell->client }}</p>
+                                                <p class="mt-[6px] text-black text-[12px] leading-none italic font-bold opacity-60">
+                                                    {{ $cell->booking_type === 'paket' ? '📦 Paket' : '✂️ Layanan' }}
+                                                </p>
+                                                <p class="mt-[4px] text-black text-[13px] leading-none italic font-extrabold">{{ $cell->client }}</p>
                                                 <p class="absolute right-[8px] bottom-[8px] text-black text-[13px] leading-none font-extrabold">{{ $cell->payment }}</p>
                                             </button>
                                         @endif
@@ -296,8 +321,8 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-[80px_135px_1fr_130px_125px_105px_135px] px-[18px] py-[14px] bg-[#FFF0F2] border-b border-[#F1C7CE] text-[13px] font-extrabold text-[#4B4242]">
-                            <span>ID</span><span>Waktu</span><span>Pelanggan</span><span>Layanan</span><span>Specialist</span><span>Bayar</span><span>Status</span>
+                        <div class="grid grid-cols-[80px_135px_1fr_145px_125px_105px_135px] px-[18px] py-[14px] bg-[#FFF0F2] border-b border-[#F1C7CE] text-[13px] font-extrabold text-[#4B4242]">
+                            <span>ID</span><span>Waktu</span><span>Pelanggan</span><span>Layanan/Paket</span><span>Specialist</span><span>Bayar</span><span>Status</span>
                         </div>
 
                         <div id="bookingRows">
@@ -305,8 +330,10 @@
                                 <button type="button" onclick="selectBookingRow(this)"
                                         data-id="{{ $booking->id }}"
                                         data-type="{{ $booking->type }}"
+                                        data-booking-type="{{ $booking->booking_type }}"
                                         data-pelanggan-id="{{ $booking->pelanggan_id }}"
                                         data-layanan-cabang-id="{{ $booking->layanan_cabang_id }}"
+                                        data-paket-cabang-id="{{ $booking->paket_cabang_id }}"
                                         data-pegawai-id="{{ $booking->pegawai_id }}"
                                         data-tanggal-booking="{{ $booking->tanggal_booking }}"
                                         data-jam-booking="{{ $booking->jam_booking }}"
@@ -320,14 +347,19 @@
                                         data-payment="{{ $booking->payment }}"
                                         data-status="{{ $booking->status }}"
                                         data-note="{{ $booking->note }}"
-                                        class="booking-row w-full grid grid-cols-[80px_135px_1fr_130px_125px_105px_135px] items-center px-[18px] py-[16px] text-left border-b border-[#F1C7CE] hover:bg-[#FFF4F5] transition">
+                                        class="booking-row w-full grid grid-cols-[80px_135px_1fr_145px_125px_105px_135px] items-center px-[18px] py-[16px] text-left border-b border-[#F1C7CE] hover:bg-[#FFF4F5] transition">
                                     <span class="text-[13px] font-extrabold text-[#8A4357]">BK-{{ str_pad($booking->id, 3, '0', STR_PAD_LEFT) }}</span>
                                     <span class="text-[13px] font-bold">{{ $booking->time }}</span>
                                     <span>
                                         <p class="text-[14px] font-extrabold text-black">{{ $booking->customer }}</p>
                                         <p class="text-[11px] font-semibold text-[#7A6A63] mt-[2px]">{{ $booking->phone }}</p>
                                     </span>
-                                    <span class="text-[13px] font-extrabold">{{ $booking->service }}</span>
+                                    <span>
+                                        <p class="text-[13px] font-extrabold">{{ $booking->service }}</p>
+                                        <p class="text-[11px] font-semibold text-[#7A6A63] mt-[1px]">
+                                            {{ $booking->booking_type === 'paket' ? '📦 Paket' : '✂️ Layanan' }}
+                                        </p>
+                                    </span>
                                     <span class="text-[13px] font-extrabold">{{ $booking->staff }}</span>
                                     <span>
                                         <span class="{{ strtolower($booking->payment) === 'cash' ? 'bg-[#FFE5E9]' : 'bg-[#F4ECFF]' }} border border-[#D6B8C0] rounded-[6px] px-[10px] py-[4px] text-[12px] font-extrabold">
@@ -392,8 +424,9 @@
                                 <path d="M15 11L17 13L22 7" stroke="#4B4242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                             <div>
-                                <p class="text-[13px] font-extrabold leading-none">Layanan</p>
+                                <p class="text-[13px] font-extrabold leading-none">Layanan / Paket</p>
                                 <p id="detailService" class="text-[13px] font-extrabold leading-none mt-[3px] text-black">-</p>
+                                <p id="detailServiceType" class="text-[11px] font-semibold mt-[2px] text-[#8A7B7B]">-</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-[25px_1fr] gap-[6px] items-start">
@@ -418,6 +451,7 @@
                                 <p id="detailTime" class="text-[13px] font-extrabold leading-none mt-[3px] text-black">-</p>
                             </div>
                         </div>
+                        {{-- booking tidak punya catatan di DB, ditampilkan tapi selalu '-' --}}
                         <div class="grid grid-cols-[25px_1fr] gap-[6px] items-start">
                             <svg class="w-[24px] h-[24px]" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 20H8L19 9L15 5L4 16V20Z" stroke="#4B4242" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -443,18 +477,17 @@
                         <form id="statusUpdateForm" method="POST" action="#" onsubmit="return validateStatusUpdate(event)" class="space-y-[10px]">
                             @csrf
                             @method('PUT')
+                            {{-- Status sesuai ENUM booking di DB: pending, confirmed, in_progress, completed, cancelled --}}
                             <select id="statusSelect" name="status" onchange="updateBadgeByStatus(this.value)"
                                     class="w-full h-[42px] bg-white border border-[#D6B8C0] rounded-[6px] px-[12px] text-[13px] font-extrabold card-shadow outline-none">
                                 <option value="payment_pending">Bayar Pending</option>
                                 <option value="payment_verified">Bayar Terverifikasi</option>
                                 <option disabled>──────────</option>
-                                <option value="dikonfirmasi">Dikonfirmasi</option>
-                                <option value="proses">Berjalan</option>
-                                <option value="selesai">Selesai</option>
-                                <option value="tunda">Tunda</option>
-                                <option value="batal">Dibatalkan</option>
-                                <option value="available">Tersedia</option>
-                                <option value="break">Break</option>
+                                <option value="confirmed">Dikonfirmasi</option>
+                                <option value="in_progress">Berjalan</option>
+                                <option value="completed">Selesai</option>
+                                <option value="pending">Tunda</option>
+                                <option value="cancelled">Dibatalkan</option>
                             </select>
                             <button type="submit" class="w-full h-[40px] rounded-[6px] bg-[#3F372E] text-white text-[13px] font-extrabold">Update Status</button>
                         </form>
@@ -491,7 +524,7 @@
 
         <div class="px-[26px] py-[20px] bg-[#FFF0F2] border-b border-[#F1D9DD] flex items-center justify-between">
             <div>
-                <h2 id="bookingModalTitle" class="text-[24px] font-extrabold text-[#4B3A36]">Tambah Booking</h2>
+                <h2 class="text-[24px] font-extrabold text-[#4B3A36]">Tambah Booking</h2>
                 <p class="text-[13px] font-semibold text-[#7B6A62] mt-[4px]">
                     {{ $selectedBranch->label ?? 'Cabang Salon' }} - {{ $selectedDayLabel }}, {{ $selectedDateLabel }}
                 </p>
@@ -519,8 +552,7 @@
                         </option>
                     @endforeach
                 </select>
-                <div id="dropdownPelanggan"
-                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                <div id="dropdownPelanggan" class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
                     @foreach($customers as $customer)
                         <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
                              data-value="{{ $customer->pelanggan_id }}"
@@ -534,20 +566,6 @@
                 </div>
             </div>
 
-            {{-- Layanan --}}
-            <div>
-                <label class="text-[13px] font-extrabold text-[#4B3A36]">Layanan</label>
-                <select name="layanan_cabang_id" id="bookingLayananCabangId"
-                        class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none" required>
-                    <option value="">Pilih Layanan</option>
-                    @foreach($services as $service)
-                        <option value="{{ $service->layanan_cabang_id }}">
-                            {{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
             {{-- Specialist - Searchable --}}
             <div class="relative">
                 <label class="text-[13px] font-extrabold text-[#4B3A36]">Specialist</label>
@@ -559,23 +577,104 @@
                 <select name="pegawai_id" id="bookingPegawaiId" class="hidden" required>
                     <option value="">Pilih Specialist</option>
                     @foreach($staffList as $staff)
-                        <option value="{{ $staff->pegawai_id }}"
-                                data-label="{{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}">
-                            {{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}
+                        <option value="{{ $staff->pegawai_id }}" data-label="{{ $staff->nama ?? 'Specialist' }}">
+                            {{ $staff->nama ?? 'Specialist' }}
                         </option>
                     @endforeach
                 </select>
-                <div id="dropdownPegawai"
-                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                <div id="dropdownPegawai" class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
                     @foreach($staffList as $staff)
                         <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
                              data-value="{{ $staff->pegawai_id }}"
-                             data-label="{{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}"
+                             data-label="{{ $staff->nama ?? 'Specialist' }}"
                              onclick="pickSearchOption('searchPegawai','dropdownPegawai','bookingPegawaiId',this)">
                             <span class="font-extrabold text-[#3F3838]">{{ $staff->nama ?? 'Specialist' }}</span>
-                            <span class="text-[#8A7B7B] ml-1 text-[12px]">{{ $staff->jabatan ?? 'Specialist' }}</span>
                         </div>
                     @endforeach
+                    <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
+                </div>
+            </div>
+
+            {{-- Toggle Layanan / Paket (col-span-2) --}}
+            <div class="col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Tipe Pesanan</label>
+                <div class="mt-[6px] flex gap-[10px]">
+                    <button type="button" id="btnTypeLayanan"
+                            onclick="setBookingType('layanan')"
+                            class="h-[36px] px-[20px] rounded-[8px] bg-[#E8A9B4] text-white text-[13px] font-extrabold transition">
+                        ✂️ Layanan
+                    </button>
+                    <button type="button" id="btnTypePaket"
+                            onclick="setBookingType('paket')"
+                            class="h-[36px] px-[20px] rounded-[8px] bg-[#F0E0E4] text-[#4B3A36] text-[13px] font-extrabold transition">
+                        📦 Paket
+                    </button>
+                </div>
+                <input type="hidden" name="booking_type" id="bookingType" value="layanan">
+            </div>
+
+            {{-- Dropdown Layanan (searchable) --}}
+            <div id="wrapLayanan" class="relative col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Layanan</label>
+                <input type="text" id="searchLayanan" autocomplete="off"
+                       placeholder="Ketik nama layanan..."
+                       oninput="filterSearchDropdown('searchLayanan','dropdownLayanan','bookingLayananCabangId')"
+                       onfocus="openSearchDropdown('dropdownLayanan')"
+                       class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none text-[13px]">
+                <select name="layanan_cabang_id" id="bookingLayananCabangId" class="hidden" required>
+                    <option value="">Pilih Layanan</option>
+                    @foreach($services as $service)
+                        <option value="{{ $service->layanan_cabang_id }}"
+                                data-label="{{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}">
+                            {{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}
+                        </option>
+                    @endforeach
+                </select>
+                <div id="dropdownLayanan"
+                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                    @foreach($services as $service)
+                        <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
+                             data-value="{{ $service->layanan_cabang_id }}"
+                             data-label="{{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}"
+                             onclick="pickSearchOption('searchLayanan','dropdownLayanan','bookingLayananCabangId',this)">
+                            <span class="font-extrabold text-[#3F3838]">{{ $service->nama_layanan }}</span>
+                            <span class="text-[#8A7B7B] ml-1 text-[12px]">Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    @endforeach
+                    <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
+                </div>
+            </div>
+
+            {{-- Dropdown Paket (searchable, hidden by default) --}}
+            <div id="wrapPaket" class="relative hidden col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Paket</label>
+                <input type="text" id="searchPaket" autocomplete="off"
+                       placeholder="Ketik nama paket..."
+                       oninput="filterSearchDropdown('searchPaket','dropdownPaket','bookingPaketCabangId')"
+                       onfocus="openSearchDropdown('dropdownPaket')"
+                       class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none text-[13px]">
+                <select name="paket_cabang_id" id="bookingPaketCabangId" class="hidden">
+                    <option value="">Pilih Paket</option>
+                    @foreach($packages as $package)
+                        <option value="{{ $package->paket_cabang_id }}"
+                                data-label="{{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}">
+                            {{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}
+                        </option>
+                    @endforeach
+                </select>
+                <div id="dropdownPaket"
+                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                    @forelse($packages as $package)
+                        <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
+                             data-value="{{ $package->paket_cabang_id }}"
+                             data-label="{{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}"
+                             onclick="pickSearchOption('searchPaket','dropdownPaket','bookingPaketCabangId',this)">
+                            <span class="font-extrabold text-[#3F3838]">{{ $package->nama_paket }}</span>
+                            <span class="text-[#8A7B7B] ml-1 text-[12px]">Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    @empty
+                        <p class="px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Belum ada paket tersedia</p>
+                    @endforelse
                     <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
                 </div>
             </div>
@@ -602,6 +701,7 @@
             {{-- Metode Pembayaran --}}
             <div>
                 <label class="text-[13px] font-extrabold text-[#4B3A36]">Metode Pembayaran</label>
+                {{-- pembayaran.metode_pembayaran ENUM: cash, qris --}}
                 <select name="metode_pembayaran" id="bookingMetodePembayaran"
                         class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none" required>
                     <option value="cash">Cash</option>
@@ -609,25 +709,18 @@
                 </select>
             </div>
 
-            {{-- Status --}}
+            {{-- Status — ENUM booking: pending, confirmed, in_progress, completed, cancelled --}}
             <div>
                 <label class="text-[13px] font-extrabold text-[#4B3A36]">Status</label>
                 <select name="status" id="bookingStatus"
                         class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none" required>
-                    <option value="dikonfirmasi">Dikonfirmasi</option>
-                    <option value="tunda">Tunda</option>
-                    <option value="proses">Berjalan</option>
-                    <option value="selesai">Selesai</option>
+                    <option value="confirmed">Dikonfirmasi</option>
+                    <option value="pending">Tunda</option>
+                    <option value="in_progress">Berjalan</option>
+                    <option value="completed">Selesai</option>
                 </select>
             </div>
 
-            {{-- Catatan --}}
-            <div class="col-span-2">
-                <label class="text-[13px] font-extrabold text-[#4B3A36]">Catatan</label>
-                <textarea name="catatan" id="bookingCatatan" rows="3"
-                          placeholder="Masukkan catatan booking..."
-                          class="mt-[6px] w-full rounded-[8px] bg-[#FFF0F2] px-[12px] py-[10px] outline-none resize-none"></textarea>
-            </div>
         </div>
 
         <div class="px-[26px] pb-[24px] flex justify-end gap-[12px]">
@@ -678,8 +771,7 @@
                         </option>
                     @endforeach
                 </select>
-                <div id="dropdownEditPelanggan"
-                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                <div id="dropdownEditPelanggan" class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
                     @foreach($customers as $customer)
                         <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
                              data-value="{{ $customer->pelanggan_id }}"
@@ -693,20 +785,6 @@
                 </div>
             </div>
 
-            {{-- Layanan --}}
-            <div>
-                <label class="text-[13px] font-extrabold text-[#4B3A36]">Layanan</label>
-                <select id="edit_layanan_cabang_id" name="layanan_cabang_id"
-                        class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none" required>
-                    <option value="">Pilih Layanan</option>
-                    @foreach($services as $service)
-                        <option value="{{ $service->layanan_cabang_id }}">
-                            {{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
             {{-- Specialist - Searchable --}}
             <div class="relative">
                 <label class="text-[13px] font-extrabold text-[#4B3A36]">Specialist</label>
@@ -718,23 +796,104 @@
                 <select id="edit_pegawai_id" name="pegawai_id" class="hidden" required>
                     <option value="">Pilih Specialist</option>
                     @foreach($staffList as $staff)
-                        <option value="{{ $staff->pegawai_id }}"
-                                data-label="{{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}">
-                            {{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}
+                        <option value="{{ $staff->pegawai_id }}" data-label="{{ $staff->nama ?? 'Specialist' }}">
+                            {{ $staff->nama ?? 'Specialist' }}
                         </option>
                     @endforeach
                 </select>
-                <div id="dropdownEditPegawai"
-                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                <div id="dropdownEditPegawai" class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
                     @foreach($staffList as $staff)
                         <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
                              data-value="{{ $staff->pegawai_id }}"
-                             data-label="{{ $staff->nama ?? 'Specialist' }} - {{ $staff->jabatan ?? 'Specialist' }}"
+                             data-label="{{ $staff->nama ?? 'Specialist' }}"
                              onclick="pickSearchOption('searchEditPegawai','dropdownEditPegawai','edit_pegawai_id',this)">
                             <span class="font-extrabold text-[#3F3838]">{{ $staff->nama ?? 'Specialist' }}</span>
-                            <span class="text-[#8A7B7B] ml-1 text-[12px]">{{ $staff->jabatan ?? 'Specialist' }}</span>
                         </div>
                     @endforeach
+                    <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
+                </div>
+            </div>
+
+            {{-- Toggle Layanan / Paket (edit) --}}
+            <div class="col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Tipe Pesanan</label>
+                <div class="mt-[6px] flex gap-[10px]">
+                    <button type="button" id="edit_btnTypeLayanan"
+                            onclick="setBookingType('layanan','edit_')"
+                            class="h-[36px] px-[20px] rounded-[8px] bg-[#E8A9B4] text-white text-[13px] font-extrabold transition">
+                        ✂️ Layanan
+                    </button>
+                    <button type="button" id="edit_btnTypePaket"
+                            onclick="setBookingType('paket','edit_')"
+                            class="h-[36px] px-[20px] rounded-[8px] bg-[#F0E0E4] text-[#4B3A36] text-[13px] font-extrabold transition">
+                        📦 Paket
+                    </button>
+                </div>
+                <input type="hidden" name="booking_type" id="edit_bookingType" value="layanan">
+            </div>
+
+            {{-- Dropdown Layanan (edit, searchable) --}}
+            <div id="edit_wrapLayanan" class="relative col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Layanan</label>
+                <input type="text" id="searchEditLayanan" autocomplete="off"
+                       placeholder="Ketik nama layanan..."
+                       oninput="filterSearchDropdown('searchEditLayanan','dropdownEditLayanan','edit_layanan_cabang_id')"
+                       onfocus="openSearchDropdown('dropdownEditLayanan')"
+                       class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none text-[13px]">
+                <select id="edit_layanan_cabang_id" name="layanan_cabang_id" class="hidden" required>
+                    <option value="">Pilih Layanan</option>
+                    @foreach($services as $service)
+                        <option value="{{ $service->layanan_cabang_id }}"
+                                data-label="{{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}">
+                            {{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}
+                        </option>
+                    @endforeach
+                </select>
+                <div id="dropdownEditLayanan"
+                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                    @foreach($services as $service)
+                        <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
+                             data-value="{{ $service->layanan_cabang_id }}"
+                             data-label="{{ $service->nama_layanan }} - Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}"
+                             onclick="pickSearchOption('searchEditLayanan','dropdownEditLayanan','edit_layanan_cabang_id',this)">
+                            <span class="font-extrabold text-[#3F3838]">{{ $service->nama_layanan }}</span>
+                            <span class="text-[#8A7B7B] ml-1 text-[12px]">Rp {{ number_format($service->harga ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    @endforeach
+                    <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
+                </div>
+            </div>
+
+            {{-- Dropdown Paket (edit, searchable, hidden by default) --}}
+            <div id="edit_wrapPaket" class="relative hidden col-span-2">
+                <label class="text-[13px] font-extrabold text-[#4B3A36]">Paket</label>
+                <input type="text" id="searchEditPaket" autocomplete="off"
+                       placeholder="Ketik nama paket..."
+                       oninput="filterSearchDropdown('searchEditPaket','dropdownEditPaket','edit_paket_cabang_id')"
+                       onfocus="openSearchDropdown('dropdownEditPaket')"
+                       class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none text-[13px]">
+                <select id="edit_paket_cabang_id" name="paket_cabang_id" class="hidden">
+                    <option value="">Pilih Paket</option>
+                    @foreach($packages as $package)
+                        <option value="{{ $package->paket_cabang_id }}"
+                                data-label="{{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}">
+                            {{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}
+                        </option>
+                    @endforeach
+                </select>
+                <div id="dropdownEditPaket"
+                     class="hidden absolute left-0 right-0 z-50 mt-[2px] max-h-[200px] overflow-y-auto bg-white border border-[#F1D9DD] rounded-[8px] shadow-lg">
+                    @forelse($packages as $package)
+                        <div class="search-option px-[12px] py-[9px] text-[13px] hover:bg-[#FFF0F2] cursor-pointer"
+                             data-value="{{ $package->paket_cabang_id }}"
+                             data-label="{{ $package->nama_paket }} - Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}"
+                             onclick="pickSearchOption('searchEditPaket','dropdownEditPaket','edit_paket_cabang_id',this)">
+                            <span class="font-extrabold text-[#3F3838]">{{ $package->nama_paket }}</span>
+                            <span class="text-[#8A7B7B] ml-1 text-[12px]">Rp {{ number_format($package->harga ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    @empty
+                        <p class="px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Belum ada paket tersedia</p>
+                    @endforelse
                     <p class="search-empty hidden px-[12px] py-[9px] text-[13px] text-[#8A7B7B] italic">Tidak ditemukan</p>
                 </div>
             </div>
@@ -773,21 +932,14 @@
                 <label class="text-[13px] font-extrabold text-[#4B3A36]">Status</label>
                 <select id="edit_status" name="status"
                         class="mt-[6px] w-full h-[42px] rounded-[8px] bg-[#FFF0F2] px-[12px] outline-none" required>
-                    <option value="dikonfirmasi">Dikonfirmasi</option>
-                    <option value="tunda">Tunda</option>
-                    <option value="proses">Berjalan</option>
-                    <option value="selesai">Selesai</option>
-                    <option value="batal">Dibatalkan</option>
+                    <option value="confirmed">Dikonfirmasi</option>
+                    <option value="pending">Tunda</option>
+                    <option value="in_progress">Berjalan</option>
+                    <option value="completed">Selesai</option>
+                    <option value="cancelled">Dibatalkan</option>
                 </select>
             </div>
 
-            {{-- Catatan --}}
-            <div class="col-span-2">
-                <label class="text-[13px] font-extrabold text-[#4B3A36]">Catatan</label>
-                <textarea id="edit_catatan" name="catatan" rows="3"
-                          placeholder="Masukkan catatan booking..."
-                          class="mt-[6px] w-full rounded-[8px] bg-[#FFF0F2] px-[12px] py-[10px] outline-none resize-none"></textarea>
-            </div>
         </div>
 
         <div class="px-[26px] pb-[24px] flex justify-end gap-[12px]">
@@ -820,9 +972,43 @@
 <script>
 let selectedBooking = null;
 
+// ============ TOGGLE LAYANAN / PAKET ============
+// prefix = '' untuk form tambah, 'edit_' untuk form edit
+function setBookingType(type, prefix = '') {
+    const p = prefix;
+    const inputId = p + 'bookingType';
+    const wrapLayananId = p + 'wrapLayanan';
+    const wrapPaketId   = p + 'wrapPaket';
+    const btnLayananId  = p + 'btnTypeLayanan';
+    const btnPaketId    = p + 'btnTypePaket';
+    const selectLayanan = document.getElementById(p + 'bookingLayananCabangId') || document.getElementById(p + 'layanan_cabang_id');
+    const selectPaket   = document.getElementById(p + 'bookingPaketCabangId')   || document.getElementById(p + 'paket_cabang_id');
+
+    document.getElementById(inputId).value = type;
+
+    if (type === 'paket') {
+        document.getElementById(wrapLayananId).classList.add('hidden');
+        document.getElementById(wrapPaketId).classList.remove('hidden');
+        if (selectLayanan) selectLayanan.removeAttribute('required');
+        if (selectPaket)   selectPaket.setAttribute('required', '');
+        document.getElementById(btnPaketId).classList.replace('bg-[#F0E0E4]',  'bg-[#E8A9B4]');
+        document.getElementById(btnPaketId).classList.replace('text-[#4B3A36]', 'text-white');
+        document.getElementById(btnLayananId).classList.replace('bg-[#E8A9B4]', 'bg-[#F0E0E4]');
+        document.getElementById(btnLayananId).classList.replace('text-white',    'text-[#4B3A36]');
+    } else {
+        document.getElementById(wrapLayananId).classList.remove('hidden');
+        document.getElementById(wrapPaketId).classList.add('hidden');
+        if (selectLayanan) selectLayanan.setAttribute('required', '');
+        if (selectPaket)   selectPaket.removeAttribute('required');
+        document.getElementById(btnLayananId).classList.replace('bg-[#F0E0E4]',  'bg-[#E8A9B4]');
+        document.getElementById(btnLayananId).classList.replace('text-[#4B3A36]', 'text-white');
+        document.getElementById(btnPaketId).classList.replace('bg-[#E8A9B4]', 'bg-[#F0E0E4]');
+        document.getElementById(btnPaketId).classList.replace('text-white',    'text-[#4B3A36]');
+    }
+}
+
 // ============ SEARCHABLE DROPDOWN ============
 function openSearchDropdown(dropdownId) {
-    // Tutup semua search-dropdown lain dulu
     document.querySelectorAll('[id^="dropdown"]').forEach(el => {
         if (el.id !== 'branchDropdown' && el.id !== 'dateDropdown' && el.id !== dropdownId) {
             el.classList.add('hidden');
@@ -837,9 +1023,7 @@ function filterSearchDropdown(inputId, dropdownId, selectId) {
     const options  = dropdown.querySelectorAll('.search-option');
     const emptyEl  = dropdown.querySelector('.search-empty');
 
-    // Reset value di select tersembunyi saat user mengetik ulang
     document.getElementById(selectId).value = '';
-
     dropdown.classList.remove('hidden');
     let visible = 0;
 
@@ -859,7 +1043,6 @@ function pickSearchOption(inputId, dropdownId, selectId, optEl) {
     document.getElementById(dropdownId).classList.add('hidden');
 }
 
-// Tutup semua search dropdown saat klik di luar
 document.addEventListener('click', function(e) {
     const insideSearch = e.target.closest('[id^="dropdown"],[id^="search"]');
     if (!insideSearch) {
@@ -869,7 +1052,6 @@ document.addEventListener('click', function(e) {
             }
         });
     }
-    // Tutup branch/date dropdown
     const insideBranchDate  = e.target.closest('#branchDropdown,#dateDropdown');
     const isDropdownTrigger = e.target.closest('button[onclick^="toggleDropdown"]');
     if (!insideBranchDate && !isDropdownTrigger) {
@@ -887,7 +1069,6 @@ function toggleDropdown(id) {
     target?.classList.toggle('hidden');
 }
 
-// ============ ESC CLOSE ============
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') { closeAddBookingModal(); closeEditBookingModal(); }
 });
@@ -910,7 +1091,9 @@ function showBookingListView() {
 function filterBookingByLegend(status) {
     showBookingListView();
     const filter = document.getElementById('bookingStatusFilter');
-    filter.value = (status === 'Dikonfirmasi') ? 'Dikonfirmasi' : (status === 'Tunda') ? 'Tunda' : 'Semua';
+    filter.value = (status === 'Dikonfirmasi') ? 'Dikonfirmasi'
+                 : (status === 'Tunda')        ? 'Tunda'
+                 : 'Semua';
     filterBookingList();
 }
 function filterBookingList() {
@@ -936,15 +1119,15 @@ function setSelectedBookingFromDataset(src) {
         id              : src.dataset.bookingId || src.dataset.id || '',
         pelangganId     : src.dataset.pelangganId     || '',
         layananCabangId : src.dataset.layananCabangId || '',
+        paketCabangId   : src.dataset.paketCabangId   || '',
+        bookingType     : src.dataset.bookingType     || 'layanan',
         pegawaiId       : src.dataset.pegawaiId       || '',
         tanggalBooking  : src.dataset.tanggalBooking  || "{{ $selectedDate }}",
         jamBooking      : src.dataset.jamBooking || (src.dataset.time ? src.dataset.time.substring(0,5) : ''),
-        metodePembayaran: src.dataset.paymentRaw || (src.dataset.payment ? src.dataset.payment.toLowerCase() : 'cash'),
-        status          : src.dataset.statusRaw  || src.dataset.status || 'dikonfirmasi',
-        catatan         : src.dataset.note || '',
-        // label untuk search input
-        pelangganLabel  : src.dataset.customer || '',
-        pegawaiLabel    : src.dataset.staff    || '',
+        metodePembayaran: src.dataset.paymentRaw  || 'cash',
+        status          : src.dataset.statusRaw   || 'confirmed',
+        pelangganLabel  : src.dataset.customer    || '',
+        pegawaiLabel    : src.dataset.staff       || '',
     };
 }
 function resetSelectedBooking() { selectedBooking = null; }
@@ -963,41 +1146,44 @@ function selectSlot(button) {
 
     if (bookingId) {
         setSelectedBookingFromDataset(button);
-        document.getElementById('statusUpdateForm').action = "{{ url('/admin/penjadwalan/booking') }}/" + bookingId + "/status";
+        document.getElementById('statusUpdateForm').action  = "{{ url('/admin/penjadwalan/booking') }}/" + bookingId + "/status";
         document.getElementById('cancelBookingForm').action = "{{ url('/admin/penjadwalan/booking') }}/" + bookingId;
     } else {
         resetSelectedBooking();
-        document.getElementById('statusUpdateForm').action = '#';
+        document.getElementById('statusUpdateForm').action  = '#';
         document.getElementById('cancelBookingForm').action = '#';
     }
 
     if (type === 'available') {
-        badge.textContent = 'Available';
+        badge.textContent = 'Tersedia';
         badge.className = 'inline-flex mt-[8px] bg-[#EEF7E6] text-[#7E9D62] rounded-[4px] px-[11px] py-[4px] text-[12px] font-extrabold';
-        document.getElementById('detailCustomer').textContent = '-';
-        document.getElementById('detailPhone').textContent    = '-';
-        document.getElementById('detailService').textContent  = 'Slot tersedia';
-        document.getElementById('detailNote').innerHTML       = 'Belum ada booking pada slot ini';
-        document.getElementById('statusSelect').value         = 'available';
+        document.getElementById('detailCustomer').textContent    = '-';
+        document.getElementById('detailPhone').textContent       = '-';
+        document.getElementById('detailService').textContent     = 'Slot tersedia';
+        document.getElementById('detailServiceType').textContent = '-';
+        document.getElementById('detailNote').textContent        = 'Belum ada booking pada slot ini';
+        document.getElementById('statusSelect').value            = 'confirmed';
         return;
     }
     if (type === 'break') {
         badge.textContent = 'Break';
         badge.className = 'inline-flex mt-[8px] bg-[#E7E2E2] text-[#6B6B6B] rounded-[4px] px-[11px] py-[4px] text-[12px] font-extrabold';
-        document.getElementById('detailCustomer').textContent = '-';
-        document.getElementById('detailPhone').textContent    = '-';
-        document.getElementById('detailService').textContent  = 'Break';
-        document.getElementById('detailNote').innerHTML       = 'Specialist tidak tersedia pada jam ini';
-        document.getElementById('statusSelect').value         = 'break';
+        document.getElementById('detailCustomer').textContent    = '-';
+        document.getElementById('detailPhone').textContent       = '-';
+        document.getElementById('detailService').textContent     = 'Break';
+        document.getElementById('detailServiceType').textContent = '-';
+        document.getElementById('detailNote').textContent        = 'Specialist tidak tersedia pada jam ini';
+        document.getElementById('statusSelect').value            = 'confirmed';
         return;
     }
 
-    document.getElementById('detailCustomer').textContent = button.dataset.customer || '-';
-    document.getElementById('detailPhone').textContent    = button.dataset.phone    || '-';
-    document.getElementById('detailService').textContent  = button.dataset.service  || '-';
-    document.getElementById('detailNote').innerHTML       = (button.dataset.note || '-').replace(',', ',<br>');
+    document.getElementById('detailCustomer').textContent    = button.dataset.customer || '-';
+    document.getElementById('detailPhone').textContent       = button.dataset.phone    || '-';
+    document.getElementById('detailService').textContent     = button.dataset.service  || '-';
+    document.getElementById('detailServiceType').textContent = button.dataset.bookingType === 'paket' ? '📦 Paket' : '✂️ Layanan';
+    document.getElementById('detailNote').textContent        = button.dataset.note     || '-';
 
-    const statusVal = button.dataset.statusRaw || button.dataset.status || 'dikonfirmasi';
+    const statusVal = button.dataset.statusRaw || 'confirmed';
     document.getElementById('statusSelect').value = statusVal;
     updateBadgeByStatus(statusVal);
     updatePaymentButton(button.dataset.payment || 'Cash');
@@ -1009,17 +1195,18 @@ function selectBookingRow(row) {
     row.classList.add('selected-booking-row');
     setSelectedBookingFromDataset(row);
 
-    document.getElementById('detailCustomer').textContent = row.dataset.customer || '-';
-    document.getElementById('detailPhone').textContent    = row.dataset.phone    || '-';
-    document.getElementById('detailService').textContent  = row.dataset.service  || '-';
-    document.getElementById('detailStaff').textContent    = row.dataset.staff    || '-';
-    document.getElementById('detailTime').textContent     = row.dataset.time     || '-';
-    document.getElementById('detailNote').innerHTML       = (row.dataset.note || '-').replace(',', ',<br>');
+    document.getElementById('detailCustomer').textContent    = row.dataset.customer || '-';
+    document.getElementById('detailPhone').textContent       = row.dataset.phone    || '-';
+    document.getElementById('detailService').textContent     = row.dataset.service  || '-';
+    document.getElementById('detailServiceType').textContent = row.dataset.bookingType === 'paket' ? '📦 Paket' : '✂️ Layanan';
+    document.getElementById('detailStaff').textContent       = row.dataset.staff    || '-';
+    document.getElementById('detailTime').textContent        = row.dataset.time     || '-';
+    document.getElementById('detailNote').textContent        = row.dataset.note     || '-';
 
     document.getElementById('statusUpdateForm').action  = "{{ url('/admin/penjadwalan/booking') }}/" + row.dataset.id + "/status";
     document.getElementById('cancelBookingForm').action = "{{ url('/admin/penjadwalan/booking') }}/" + row.dataset.id;
 
-    const statusVal = row.dataset.statusRaw || 'dikonfirmasi';
+    const statusVal = row.dataset.statusRaw || 'confirmed';
     document.getElementById('statusSelect').value = statusVal;
     updateBadgeByStatus(statusVal);
     updatePaymentButton(row.dataset.payment || 'Cash');
@@ -1040,22 +1227,17 @@ function updatePaymentButton(payment) {
     });
 }
 
-// ============ BADGE ============
+// ============ BADGE — sesuai ENUM DB ============
 function updateBadgeByStatus(status) {
     const badge = document.getElementById('detailBadge');
     const map = {
-        'payment_pending'  : ['Bayar Pending',       'bg-[#FFF4D5] text-[#6B6040]'],
-        'payment_verified' : ['Bayar Terverifikasi',  'bg-[#EEF7E6] text-[#7E9D62]'],
-        'available'        : ['Tersedia',             'bg-[#EEF7E6] text-[#7E9D62]'],
-        'break'            : ['Break',                'bg-[#E7E2E2] text-[#6B6B6B]'],
-        'selesai'          : ['Selesai',              'bg-[#EEF7E6] text-[#7E9D62]'],
-        'completed'        : ['Selesai',              'bg-[#EEF7E6] text-[#7E9D62]'],
-        'tunda'            : ['Tunda',                'bg-[#FFF4D5] text-[#6B6040]'],
-        'pending'          : ['Tunda',                'bg-[#FFF4D5] text-[#6B6040]'],
-        'batal'            : ['Batal',                'bg-[#B85C6A] text-white'],
-        'cancelled'        : ['Batal',                'bg-[#B85C6A] text-white'],
-        'proses'           : ['Berjalan',             'bg-[#F6E4A5] text-[#C77A45]'],
-        'in_progress'      : ['Berjalan',             'bg-[#F6E4A5] text-[#C77A45]'],
+        'payment_pending'  : ['Bayar Pending',      'bg-[#FFF4D5] text-[#6B6040]'],
+        'payment_verified' : ['Bayar Terverifikasi', 'bg-[#EEF7E6] text-[#7E9D62]'],
+        'confirmed'        : ['Dikonfirmasi',        'bg-[#E8B5BC] text-white'],
+        'in_progress'      : ['Berjalan',            'bg-[#F6E4A5] text-[#C77A45]'],
+        'completed'        : ['Selesai',             'bg-[#EEF7E6] text-[#7E9D62]'],
+        'pending'          : ['Tunda',               'bg-[#FFF4D5] text-[#6B6040]'],
+        'cancelled'        : ['Dibatalkan',          'bg-[#B85C6A] text-white'],
     };
     const [label, cls] = map[status] ?? ['Dikonfirmasi', 'bg-[#E8B5BC] text-white'];
     badge.textContent = label;
@@ -1069,42 +1251,42 @@ function validateStatusUpdate(event) {
         alert('Pilih booking dulu sebelum update status.');
         return false;
     }
-    const val = document.getElementById('statusSelect')?.value || '';
-    if (val === 'available' || val === 'break') {
-        event.preventDefault();
-        alert('Status Tersedia/Break hanya untuk slot kosong, bukan booking pelanggan.');
-        return false;
-    }
     return true;
 }
 
-// ============ RESET FORM TAMBAH BOOKING ============
+// ============ RESET FORM TAMBAH ============
 function resetBookingForm() {
-    // Search inputs
     ['searchPelanggan','searchPegawai'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    // Hidden selects
-    ['bookingPelangganId','bookingPegawaiId'].forEach(id => {
+    ['bookingPelangganId','bookingPegawaiId','bookingLayananCabangId','bookingPaketCabangId'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
     });
-    // Normal selects & inputs
-    const bookingLayanan = document.getElementById('bookingLayananCabangId');
-    if (bookingLayanan) bookingLayanan.value = '';
-    const bookingJam = document.getElementById('bookingJam');
-    if (bookingJam) bookingJam.value = '';
-    const bookingMetode = document.getElementById('bookingMetodePembayaran');
-    if (bookingMetode) bookingMetode.value = 'cash';
-    const bookingStatus = document.getElementById('bookingStatus');
-    if (bookingStatus) bookingStatus.value = 'dikonfirmasi';
-    const bookingCatatan = document.getElementById('bookingCatatan');
-    if (bookingCatatan) bookingCatatan.value = '';
+
+    // Reset search input text
+    ['searchPelanggan','searchPegawai','searchLayanan','searchPaket'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    const els = {
+        bookingJam             : '',
+        bookingMetodePembayaran: 'cash',
+        bookingStatus          : 'confirmed',
+    };
+    Object.entries(els).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val;
+    });
+
     const bookingTanggal = document.getElementById('bookingTanggal');
     if (bookingTanggal) bookingTanggal.value = "{{ $selectedDate }}";
 
-    // Tutup semua search dropdown
+    // Reset ke tipe layanan
+    setBookingType('layanan');
+
     document.querySelectorAll('[id^="dropdown"]').forEach(el => {
         if (el.id !== 'branchDropdown' && el.id !== 'dateDropdown') el.classList.add('hidden');
     });
@@ -1113,11 +1295,8 @@ function resetBookingForm() {
 // ============ MODAL TAMBAH ============
 function openAddBookingModal() {
     resetBookingForm();
-    document.getElementById('addBookingModal').classList.replace('hidden','flex') ||
-    (() => {
-        document.getElementById('addBookingModal').classList.remove('hidden');
-        document.getElementById('addBookingModal').classList.add('flex');
-    })();
+    document.getElementById('addBookingModal').classList.remove('hidden');
+    document.getElementById('addBookingModal').classList.add('flex');
 }
 function closeAddBookingModal() {
     document.getElementById('addBookingModal').classList.add('hidden');
@@ -1135,8 +1314,7 @@ function openEditBookingModal() {
 function closeEditBookingModal() {
     document.getElementById('editBookingModal').classList.add('hidden');
     document.getElementById('editBookingModal').classList.remove('flex');
-    // Tutup search dropdown dalam modal edit
-    ['dropdownEditPelanggan','dropdownEditPegawai'].forEach(id => {
+    ['dropdownEditPelanggan','dropdownEditPegawai','dropdownEditLayanan','dropdownEditPaket'].forEach(id => {
         document.getElementById(id)?.classList.add('hidden');
     });
 }
@@ -1150,30 +1328,49 @@ function enableEditMode() {
         return;
     }
 
-    updateBadgeByStatus('dikonfirmasi'); // reset badge sementara
-
     document.getElementById('editBookingForm').action =
         "{{ url('/admin/penjadwalan/booking') }}/" + selectedBooking.id;
 
-    document.getElementById('edit_booking_id').value          = selectedBooking.id;
-    document.getElementById('edit_layanan_cabang_id').value   = selectedBooking.layananCabangId;
-    document.getElementById('edit_tanggal_booking').value     = selectedBooking.tanggalBooking;
-    document.getElementById('edit_jam_booking').value         = selectedBooking.jamBooking;
-    document.getElementById('edit_metode_pembayaran').value   = selectedBooking.metodePembayaran;
-    document.getElementById('edit_status').value              = selectedBooking.status;
-    document.getElementById('edit_catatan').value             = (selectedBooking.catatan === '-') ? '' : selectedBooking.catatan;
+    document.getElementById('edit_booking_id').value        = selectedBooking.id;
+    document.getElementById('edit_tanggal_booking').value   = selectedBooking.tanggalBooking;
+    document.getElementById('edit_jam_booking').value       = selectedBooking.jamBooking;
+    document.getElementById('edit_metode_pembayaran').value = selectedBooking.metodePembayaran;
+    document.getElementById('edit_status').value            = selectedBooking.status;
+
+    // Set tipe booking (layanan/paket)
+    setBookingType(selectedBooking.bookingType || 'layanan', 'edit_');
+
+    if (selectedBooking.bookingType === 'paket') {
+        const paketSelect = document.getElementById('edit_paket_cabang_id');
+        paketSelect.value = selectedBooking.paketCabangId;
+        const paketOpt = paketSelect.querySelector(`option[value="${selectedBooking.paketCabangId}"]`);
+        document.getElementById('searchEditPaket').value   = paketOpt ? (paketOpt.dataset.label || paketOpt.textContent.trim()) : '';
+        document.getElementById('edit_layanan_cabang_id').value = '';
+        document.getElementById('searchEditLayanan').value = '';
+    } else {
+        const layananSelect = document.getElementById('edit_layanan_cabang_id');
+        layananSelect.value = selectedBooking.layananCabangId;
+        const layananOpt = layananSelect.querySelector(`option[value="${selectedBooking.layananCabangId}"]`);
+        document.getElementById('searchEditLayanan').value = layananOpt ? (layananOpt.dataset.label || layananOpt.textContent.trim()) : '';
+        document.getElementById('edit_paket_cabang_id').value = '';
+        document.getElementById('searchEditPaket').value  = '';
+    }
 
     // Set search pelanggan
     const pelSelect = document.getElementById('edit_pelanggan_id');
     pelSelect.value = selectedBooking.pelangganId;
     const pelOpt = pelSelect.querySelector(`option[value="${selectedBooking.pelangganId}"]`);
-    document.getElementById('searchEditPelanggan').value = pelOpt ? (pelOpt.dataset.label || pelOpt.textContent.trim()) : selectedBooking.pelangganLabel;
+    document.getElementById('searchEditPelanggan').value = pelOpt
+        ? (pelOpt.dataset.label || pelOpt.textContent.trim())
+        : selectedBooking.pelangganLabel;
 
     // Set search pegawai
     const pegSelect = document.getElementById('edit_pegawai_id');
     pegSelect.value = selectedBooking.pegawaiId;
     const pegOpt = pegSelect.querySelector(`option[value="${selectedBooking.pegawaiId}"]`);
-    document.getElementById('searchEditPegawai').value = pegOpt ? (pegOpt.dataset.label || pegOpt.textContent.trim()) : selectedBooking.pegawaiLabel;
+    document.getElementById('searchEditPegawai').value = pegOpt
+        ? (pegOpt.dataset.label || pegOpt.textContent.trim())
+        : selectedBooking.pegawaiLabel;
 
     openEditBookingModal();
 }
@@ -1181,8 +1378,8 @@ function enableEditMode() {
 // ============ MODAL BATAL ============
 function validateBookingAction() {
     const cancelAction = document.getElementById('cancelBookingForm').action;
-    if (!cancelAction.includes('/admin/penjadwalan/booking/')) {
-        alert('Pilih data booking terlebih dahulu, bukan slot break/kosong.');
+    if (!cancelAction.includes('/admin/penjadwalan/booking/') || !selectedBooking?.id) {
+        alert('Pilih data booking terlebih dahulu.');
         return false;
     }
     return true;
@@ -1210,18 +1407,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     });
 });
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.bg-green-100, .bg-red-100').forEach(function (el) {
-            setTimeout(function () {
-                el.style.transition = 'opacity 0.5s';
-                el.style.opacity = '0';
-                setTimeout(function () { el.remove(); }, 500);
-            }, 3000);
-        });
-    });
 </script>
 
 </body>

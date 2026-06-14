@@ -52,10 +52,12 @@ class PengaturanAdminController extends Controller
         }
 
         $request->validate([
-            'nama' => 'required|string|max:100',
-            'email' => 'required|email|max:100',
-            'no_hp' => 'nullable|string|max:20',
+            'nama'         => 'required|string|max:100',
+            'email'        => 'required|email|max:100',
+            'no_hp'        => ['nullable', 'regex:/^(\+?628|08)\d{8,11}$/'],
             'foto_profile' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'no_hp.regex' => 'Format nomor HP tidak valid. Gunakan format 08xxx, 628xxx, atau +628xxx.',
         ]);
 
         $emailExists = DB::table('users')

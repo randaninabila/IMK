@@ -43,8 +43,6 @@ class ManageServiceController extends Controller
 
         $jenisLayanan = JenisLayanan::orderBy('nama_jenis')->get();
 
-        // Ambil harga dari paket_cabang — pakai harga cabang pertama sebagai representasi
-        // (asumsi harga sama di semua cabang; kalau beda bisa di-group lebih lanjut)
         $paketLayanan = DB::table('paket_layanan as pl')
             ->leftJoin('paket_detail as pd', 'pl.paket_id', '=', 'pd.paket_id')
             ->leftJoin('layanan as l', 'pd.layanan_id', '=', 'l.layanan_id')
@@ -108,7 +106,6 @@ class ManageServiceController extends Controller
                 $layanan->update(['cover_foto' => $path]);
             }
 
-            // Otomatis daftarkan ke semua cabang aktif
             $cabangList = DB::table('cabang')->where('status', 'BUKA')->pluck('cabang_id');
 
             foreach ($cabangList as $cabangId) {

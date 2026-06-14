@@ -38,9 +38,9 @@ class EmployeeController extends Controller
         $topPerformers = collect(
             $perPage === 'all' ? $employees : $employees->items()
         )
-        ->filter(fn($employee) => $employee['total_clients'] > 0)
-        ->sortByDesc('total_clients')
-        ->take(3);
+            ->filter(fn($employee) => $employee['total_clients'] > 0)
+            ->sortByDesc('total_clients')
+            ->take(3);
 
         return view('owner.employees.employee', compact(
             'employees', 'topPerformers', 'cabangs', 'months',
@@ -59,10 +59,15 @@ class EmployeeController extends Controller
                 $join->on('p.pegawai_id', '=', 'b.pegawai_id')
                     ->where('b.status', '=', 'completed')
                     ->whereMonth('b.tanggal_booking', '=', $parsedMonth->month)
-                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year);
+                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year)
+                    ->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('pembayaran')
+                            ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                            ->where('pembayaran.status', 'verified');
+                    });
             })
             ->leftJoin('booking_detail as bd', 'b.booking_id', '=', 'bd.booking_id')
-            ->leftJoin('ulasan as ul', 'b.booking_id', '=', 'ul.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
             ->where('p.status_kerja', '!=', 'resign')
             ->whereDate('u.created_at', '<=', $parsedMonth->copy()->endOfMonth());
@@ -72,17 +77,40 @@ class EmployeeController extends Controller
         }
 
         $query->select(
-            'p.pegawai_id', 'p.status_kerja',
-            'u.nama', 'u.role', 'u.foto_profile',
+            'p.pegawai_id',
+            'p.status_kerja',
+            'u.nama',
+            'u.role',
+            'u.foto_profile',
             DB::raw("CASE WHEN p.status_kerja = 'aktif' THEN 'tersedia' ELSE 'tidak_tersedia' END as today_status"),
-            'c.nama_cabang', 'c.cabang_id',
+            'c.nama_cabang',
+            'c.cabang_id',
             DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
-            DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
+            DB::raw('
+                SUM(
+                    CASE
+                        WHEN bd.booking_detail_id IS NULL THEN 0
+                        WHEN bd.layanan_cabang_id IS NOT NULL THEN 1
+                        WHEN bd.paket_cabang_id IS NOT NULL THEN (
+                            SELECT COUNT(*)
+                            FROM paket_detail pdt2
+                            JOIN paket_cabang pc2 ON pc2.paket_id = pdt2.paket_id
+                            WHERE pc2.paket_cabang_id = bd.paket_cabang_id
+                        )
+                        ELSE 0
+                    END
+                ) as total_services
+            '),
             'u.created_at'
         )->groupBy(
-            'p.pegawai_id', 'p.status_kerja',
-            'u.nama', 'u.role', 'u.foto_profile', 'u.created_at',
-            'c.nama_cabang', 'c.cabang_id'
+            'p.pegawai_id',
+            'p.status_kerja',
+            'u.nama',
+            'u.role',
+            'u.foto_profile',
+            'u.created_at',
+            'c.nama_cabang',
+            'c.cabang_id'
         )->orderByDesc('p.pegawai_id');
 
         $employees = $perPage === 'all'
@@ -91,18 +119,18 @@ class EmployeeController extends Controller
 
         $transform = function ($item) {
             return [
-                'pegawai_id'    => $item->pegawai_id,
-                'nama'          => $item->nama,
-                'foto_profile'  => $item->foto_profile,
-                'initial'       => collect(explode(' ', $item->nama))->filter()->take(2)
-                                    ->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode(''),
-                'role'          => $item->role,
-                'status_kerja'  => $item->status_kerja,
-                'today_status'  => $item->today_status,
-                'nama_cabang'   => $item->nama_cabang,
-                'total_clients' => $item->role === 'admin' ? '-' : $item->total_clients,
-                'total_services'=> $item->role === 'admin' ? '-' : $item->total_services,
-                'since_joined' => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
+                'pegawai_id'     => $item->pegawai_id,
+                'nama'           => $item->nama,
+                'foto_profile'   => $item->foto_profile,
+                'initial'        => collect(explode(' ', $item->nama))->filter()->take(2)
+                    ->map(fn($w) => strtoupper(substr($w, 0, 1)))->implode(''),
+                'role'           => $item->role,
+                'status_kerja'   => $item->status_kerja,
+                'today_status'   => $item->today_status,
+                'nama_cabang'    => $item->nama_cabang,
+                'total_clients'  => $item->role === 'admin' ? '-' : (int) $item->total_clients,
+                'total_services' => $item->role === 'admin' ? '-' : (int) $item->total_services,
+                'since_joined'   => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
             ];
         };
 
@@ -115,9 +143,7 @@ class EmployeeController extends Controller
         return $employees;
     }
 
-    // ─────────────────────────────────────────────────
     //  EDIT / DIRECTORY PAGE
-    // ─────────────────────────────────────────────────
 
     public function edit(Request $request)
     {
@@ -155,7 +181,7 @@ class EmployeeController extends Controller
         $parsedMonth = Carbon::parse($selectedMonth);
 
         $cabangStats = $cabangs->map(function ($cabang) use ($parsedMonth) {
-            $total  = DB::table('pegawai as p')
+            $total = DB::table('pegawai as p')
                 ->join('users as u', 'p.user_id', '=', 'u.user_id')
                 ->where('p.cabang_id', $cabang->cabang_id)
                 ->whereIn('u.role', ['pegawai', 'admin'])
@@ -191,9 +217,9 @@ class EmployeeController extends Controller
         $cabangId,
         $month,
         $perPage      = 10,
-        $selectedSort  = 'clients',
-        $dir           = 'desc',
-        $sortCabang    = null
+        $selectedSort = 'clients',
+        $dir          = 'desc',
+        $sortCabang   = null
     ) {
         $parsedMonth = Carbon::parse($month);
         $dir         = strtolower($dir) === 'asc' ? 'asc' : 'desc';
@@ -205,7 +231,13 @@ class EmployeeController extends Controller
                 $join->on('p.pegawai_id', '=', 'b.pegawai_id')
                     ->where('b.status', '=', 'completed')
                     ->whereMonth('b.tanggal_booking', '=', $parsedMonth->month)
-                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year);
+                    ->whereYear('b.tanggal_booking', '=', $parsedMonth->year)
+                    ->whereExists(function ($sub) {
+                        $sub->select(DB::raw(1))
+                            ->from('pembayaran')
+                            ->whereColumn('pembayaran.booking_id', 'b.booking_id')
+                            ->where('pembayaran.status', 'verified');
+                    });
             })
             ->leftJoin('booking_detail as bd', 'b.booking_id', '=', 'bd.booking_id')
             ->whereIn('u.role', ['pegawai', 'admin'])
@@ -221,26 +253,52 @@ class EmployeeController extends Controller
         $dynamicCabangSelect = [];
         foreach ($cabangList as $cabang) {
             $dynamicCabangSelect[] = DB::raw("
-                SUM(CASE WHEN c.cabang_id = {$cabang->cabang_id} THEN 1 ELSE 0 END)
+                COUNT(DISTINCT CASE WHEN c.cabang_id = {$cabang->cabang_id} THEN b.booking_id ELSE NULL END)
                 as cabang{$cabang->cabang_id}_clients
             ");
         }
 
-        $query->select(array_merge([
-            'p.pegawai_id', 'p.status_kerja',
-            'u.nama', 'u.role', 'u.foto_profile', 'u.created_at',
-            DB::raw("CASE WHEN p.status_kerja = 'aktif' THEN 'tersedia' ELSE 'tidak_tersedia' END as today_status"),
-            'c.nama_cabang', 'c.cabang_id',
-            DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
-            DB::raw('COUNT(DISTINCT bd.booking_detail_id) as total_services'),
-        ], $dynamicCabangSelect))
-        ->groupBy(
-            'p.pegawai_id', 'p.status_kerja',
-            'u.nama', 'u.role', 'u.foto_profile', 'u.created_at',
-            'c.nama_cabang', 'c.cabang_id'
-        );
+        $totalServicesExpr = DB::raw('
+            SUM(
+                CASE
+                    WHEN bd.booking_detail_id IS NULL THEN 0
+                    WHEN bd.layanan_cabang_id IS NOT NULL THEN 1
+                    WHEN bd.paket_cabang_id IS NOT NULL THEN (
+                        SELECT COUNT(*)
+                        FROM paket_detail pdt2
+                        JOIN paket_cabang pc2 ON pc2.paket_id = pdt2.paket_id
+                        WHERE pc2.paket_cabang_id = bd.paket_cabang_id
+                    )
+                    ELSE 0
+                END
+            ) as total_services
+        ');
 
-        // ── APPLY SORT ──
+        $query->select(array_merge([
+            'p.pegawai_id',
+            'p.status_kerja',
+            'u.nama',
+            'u.role',
+            'u.foto_profile',
+            'u.created_at',
+            DB::raw("CASE WHEN p.status_kerja = 'aktif' THEN 'tersedia' ELSE 'tidak_tersedia' END as today_status"),
+            'c.nama_cabang',
+            'c.cabang_id',
+            DB::raw('COUNT(DISTINCT b.booking_id) as total_clients'),
+            $totalServicesExpr,
+        ], $dynamicCabangSelect))
+            ->groupBy(
+                'p.pegawai_id',
+                'p.status_kerja',
+                'u.nama',
+                'u.role',
+                'u.foto_profile',
+                'u.created_at',
+                'c.nama_cabang',
+                'c.cabang_id'
+            );
+
+        // APPLY SORT
         switch ($selectedSort) {
             case 'employee':
                 $query->orderBy('u.nama', $dir);
@@ -272,25 +330,25 @@ class EmployeeController extends Controller
                 ->map(fn($word) => strtoupper(substr($word, 0, 1)))->implode('');
 
             return [
-                'pegawai_id'      => $item->pegawai_id,
-                'nama'            => $item->nama,
-                'foto_profile'    => $item->foto_profile,
-                'initial'         => $initial,
-                'role'            => $item->role,
-                'status_kerja'    => $item->status_kerja,
-                'today_status'    => $item->today_status,
-                'nama_cabang'     => $item->nama_cabang,
-                'cabang_id'       => $item->cabang_id,
-                'total_clients' => $item->role === 'admin' ? '-' : (int) $item->total_clients,
+                'pegawai_id'     => $item->pegawai_id,
+                'nama'           => $item->nama,
+                'foto_profile'   => $item->foto_profile,
+                'initial'        => $initial,
+                'role'           => $item->role,
+                'status_kerja'   => $item->status_kerja,
+                'today_status'   => $item->today_status,
+                'nama_cabang'    => $item->nama_cabang,
+                'cabang_id'      => $item->cabang_id,
+                'total_clients'  => $item->role === 'admin' ? '-' : (int) $item->total_clients,
                 'total_services' => $item->role === 'admin' ? '-' : (int) $item->total_services,
-                'since_joined' => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
-                'created_at_raw'  => $item->created_at,
-                'branches'        => $cabangList->mapWithKeys(function ($cabang) use ($item) {
+                'since_joined'   => Carbon::parse($item->created_at)->locale('id')->translatedFormat('F Y'),
+                'created_at_raw' => $item->created_at,
+                'branches'       => $cabangList->mapWithKeys(function ($cabang) use ($item) {
                     return [$cabang->cabang_id => [
                         'clients' => $item->{'cabang' . $cabang->cabang_id . '_clients'} ?? 0,
                     ]];
                 }),
-                'selected_clients' => $item->total_clients,
+                'selected_clients' => (int) $item->total_clients,
             ];
         };
 
@@ -303,9 +361,7 @@ class EmployeeController extends Controller
         return $employees;
     }
 
-    // ─────────────────────────────────────────────────
     //  CRUD
-    // ─────────────────────────────────────────────────
 
     public function store(Request $request)
     {
@@ -316,15 +372,15 @@ class EmployeeController extends Controller
             'role'      => ['required', 'in:pegawai,admin'],
             'cabang_id' => ['required', 'exists:cabang,cabang_id'],
         ], [
-            'email.unique'    => 'Email sudah digunakan.',
-            'no_hp.unique'    => 'Nomor HP sudah digunakan.',
-            'no_hp.regex'     => 'Format nomor HP tidak valid.',
-            'cabang_id.exists'=> 'Cabang tidak ditemukan.',
+            'email.unique'     => 'Email sudah digunakan.',
+            'no_hp.unique'     => 'Nomor HP sudah digunakan.',
+            'no_hp.regex'      => 'Format nomor HP tidak valid.',
+            'cabang_id.exists' => 'Cabang tidak ditemukan.',
         ]);
 
         DB::beginTransaction();
         try {
-            $phone = preg_replace('/[^0-9+]/', '', $validated['no_hp']);
+            $phone         = preg_replace('/[^0-9+]/', '', $validated['no_hp']);
             $plainPassword = Str::slug($validated['nama'], '.');
 
             $userId = DB::table('users')->insertGetId([
@@ -340,9 +396,9 @@ class EmployeeController extends Controller
             ]);
 
             DB::table('pegawai')->insert([
-                'user_id'     => $userId,
-                'cabang_id'   => $validated['cabang_id'],
-                'status_kerja'=> 'aktif',
+                'user_id'      => $userId,
+                'cabang_id'    => $validated['cabang_id'],
+                'status_kerja' => 'aktif',
             ]);
 
             DB::commit();
@@ -353,10 +409,13 @@ class EmployeeController extends Controller
                     'bulan'  => request('bulan', Carbon::now()->format('Y-m')),
                 ])
                 ->with('success', 'Pegawai berhasil ditambahkan. Password default: ' . $plainPassword);
-
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Gagal tambah employee', ['message' => $e->getMessage(), 'line' => $e->getLine(), 'file' => $e->getFile()]);
+            Log::error('Gagal tambah employee', [
+                'message' => $e->getMessage(),
+                'line'    => $e->getLine(),
+                'file'    => $e->getFile(),
+            ]);
             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan saat menambahkan pegawai.');
         }
     }
@@ -365,7 +424,6 @@ class EmployeeController extends Controller
     {
         $request->validate(['status_ketersediaan' => 'required|in:tersedia,tidak_tersedia']);
 
-        // tersedia → aktif, tidak_tersedia → cuti
         $statusKerja = $request->status_ketersediaan === 'tersedia' ? 'aktif' : 'cuti';
 
         DB::beginTransaction();
@@ -414,8 +472,9 @@ class EmployeeController extends Controller
             $pegawai = DB::table('pegawai')->where('pegawai_id', $pegawai_id)->first();
             if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 
-            // Hanya update status_kerja di pegawai — tidak mengubah status_akun di users
-            DB::table('pegawai')->where('pegawai_id', $pegawai_id)->update(['status_kerja' => 'resign']);
+            DB::table('pegawai')
+                ->where('pegawai_id', $pegawai_id)
+                ->update(['status_kerja' => 'resign']);
 
             DB::commit();
             return redirect()->back()->with('success', 'Pegawai berhasil diresign');
@@ -429,7 +488,8 @@ class EmployeeController extends Controller
     {
         $pegawai = DB::table('pegawai')
             ->join('users', 'pegawai.user_id', '=', 'users.user_id')
-            ->where('pegawai_id', $pegawai_id)->first();
+            ->where('pegawai_id', $pegawai_id)
+            ->first();
 
         if (!$pegawai) return redirect()->back()->with('error', 'Pegawai tidak ditemukan');
 

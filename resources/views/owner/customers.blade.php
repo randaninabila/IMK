@@ -207,107 +207,79 @@
     {{-- STATS --}}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
-        @php
+        {{-- CARD 1: Pelanggan — tampilkan orang unik DAN total kunjungan --}}
+        <div class="bg-white rounded-3xl px-5 py-4 shadow-sm border border-pink-50">
 
-        $cards = [
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#FFE4E6] flex items-center justify-center text-base">
+                    👥
+                </div>
+            </div>
 
-        [
-        'title' => 'Pelanggan Aktif Bulan Ini',
-        'value' => $stats['active_customers'],
-        'desc' => 'Pesanan selesai',
-        'icon' => '👥'
-        ],
+            <p class="text-gray-500 text-xs mb-3">Pelanggan Bulan Ini</p>
 
-        [
-        'title' => 'Sebelum Pukul 12',
-        'value' => $reservationHabits['morning'] . '%',
-        'desc' => 'Aktivitas pagi',
-        'icon' => '☀️'
-        ],
+            <div class="flex items-end gap-4">
 
-        [
-        'title' => 'Setelah Pukul 12',
-        'value' =>
-        (
-        $reservationHabits['afternoon']
-        +
-        $reservationHabits['evening']
-        ) . '%',
+                <div>
+                    <h3 class="text-2xl font-bold text-[#f45b69] leading-none">
+                        {{ $stats['active_customers'] }}
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-1">orang</p>
+                </div>
 
-        'desc' => 'Siang & malam',
-        'icon' => '🌙'
-        ],
+                <div class="w-px h-8 bg-pink-100 self-center"></div>
 
-        ];
-
-        @endphp
-
-        @foreach($cards as $card)
-
-        <div class="
-            bg-white
-            rounded-3xl
-            px-5 py-4
-            shadow-sm
-            border border-pink-50
-        ">
-
-            <div class="
-                flex items-center
-                justify-between
-                mb-4
-            ">
-
-                <div class="
-                    w-10 h-10
-                    rounded-xl
-                    bg-[#FFE4E6]
-                    flex items-center justify-center
-                    text-base
-                ">
-
-                    {{ $card['icon'] }}
-
+                <div>
+                    <h3 class="text-2xl font-bold text-[#f45b69] leading-none">
+                        {{ $stats['total_visits'] }}
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-1">kunjungan</p>
                 </div>
 
             </div>
 
-            <p class="
-                text-gray-500
-                text-xs
-                mb-1
-            ">
-
-                {{ $card['title'] }}
-
+            @if($stats['total_visits'] > $stats['active_customers'])
+            <p class="text-xs text-gray-400 mt-3 leading-relaxed">
+                {{ $stats['total_visits'] - $stats['active_customers'] }} kunjungan dari pelanggan yang datang lebih dari sekali.
             </p>
-
-            <h3 class="
-                text-2xl
-                font-bold
-                text-[#f45b69]
-                leading-none
-                mb-2
-            ">
-
-                {{ $card['value'] }}
-
-            </h3>
-
-            <p class="
-                text-xs
-                text-gray-400
-            ">
-
-                {{ $card['desc'] }}
-
-            </p>
+            @else
+            <p class="text-xs text-gray-400 mt-3">Semua pelanggan baru di bulan ini.</p>
+            @endif
 
         </div>
 
-        @endforeach
+        {{-- CARD 2: Sebelum Pukul 12 --}}
+        <div class="bg-white rounded-3xl px-5 py-4 shadow-sm border border-pink-50">
+
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#FFE4E6] flex items-center justify-center text-base">
+                    ☀️
+                </div>
+            </div>
+
+            <p class="text-gray-500 text-xs mb-1">Sebelum Pukul 12</p>
+            <h3 class="text-2xl font-bold text-[#f45b69] leading-none mb-2">{{ $reservationHabits['morning'] }}%</h3>
+            <p class="text-xs text-gray-400">Aktivitas pagi</p>
+
+        </div>
+
+        {{-- CARD 3: Setelah Pukul 12 --}}
+        <div class="bg-white rounded-3xl px-5 py-4 shadow-sm border border-pink-50">
+
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-10 h-10 rounded-xl bg-[#FFE4E6] flex items-center justify-center text-base">
+                    🌙
+                </div>
+            </div>
+
+            <p class="text-gray-500 text-xs mb-1">Setelah Pukul 12</p>
+            <h3 class="text-2xl font-bold text-[#f45b69] leading-none mb-2">{{ $reservationHabits['afternoon'] + $reservationHabits['evening'] }}%</h3>
+            <p class="text-xs text-gray-400">Siang &amp; malam</p>
+
+        </div>
 
     </div>
+
 
 
     {{-- CHART + INSIGHT --}}
