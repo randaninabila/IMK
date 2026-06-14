@@ -60,6 +60,27 @@
                     <p class="text-xs text-gray-400 mt-1">Kami akan menghubungi kamu melalui nomor ini</p>
                 </div>
 
+                {{-- Spesialis --}}
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-[#3E382D] mb-2">
+                        Pilih Spesialis
+                    </label>
+                    <select name="pegawai_id"
+                            id="pegawaiSelect"
+                            class="w-full rounded-2xl border border-pink-100 px-5 py-3 focus:outline-none focus:ring-2 focus:ring-rose-200 @error('pegawai_id') border-red-300 @enderror">
+                        <option value="" selected>-- Pilih spesialis --</option>
+                        @foreach($specialists as $sp)
+                            <option value="{{ $sp->pegawai_id }}" {{ old('pegawai_id') == $sp->pegawai_id ? 'selected' : '' }}>
+                                {{ $sp->nama_spesialis }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('pegawai_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
+                    <p class="text-xs text-gray-400 mt-1">Kamu bisa memilih terapis favoritmu atau menyerahkan pilihan kepada kami</p>
+                </div>
+
                 {{-- Tanggal --}}
                 <div class="mb-6">
                     <label class="block text-sm font-semibold text-[#3E382D] mb-2">

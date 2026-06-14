@@ -150,19 +150,17 @@
                 </div>
 
                 {{-- PETUGAS --}}
-                @if($booking->nama_pegawai)
-                    <div class="bg-blue-50 rounded-2xl p-4 flex items-center gap-3">
-                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-xs text-gray-400 uppercase">Petugas</p>
-                            <p class="font-semibold text-[#3E382D]">{{ $booking->nama_pegawai }}</p>
-                        </div>
+                <div class="bg-blue-50 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
                     </div>
-                @endif
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase">Petugas</p>
+                        <p class="font-semibold text-[#3E382D]">{{ $booking->nama_pegawai ?? 'Pilih Otomatis (Akan ditugaskan admin)' }}</p>
+                    </div>
+                </div>
 
                 {{-- PEMBAYARAN --}}
                 <div class="border-t border-pink-100 pt-6">
@@ -182,7 +180,15 @@
                         @if($pembayaran)
                             <div class="flex items-center justify-between">
                                 <span class="text-sm text-gray-500">Metode</span>
-                                <span class="font-semibold text-[#3E382D]">{{ strtoupper($pembayaran->metode_pembayaran) }}</span>
+                                <span class="font-semibold text-[#3E382D]">
+                                    @if($pembayaran->metode_pembayaran === 'qris_lunas')
+                                        QRIS (Lunas)
+                                    @elseif($pembayaran->metode_pembayaran === 'qris_panjar')
+                                        QRIS (DP 30%)
+                                    @else
+                                        {{ strtoupper($pembayaran->metode_pembayaran) }}
+                                    @endif
+                                </span>
                             </div>
                         @endif
                         <div class="flex items-center justify-between">
@@ -196,9 +202,26 @@
                                    class="text-sm text-rose-500 hover:underline">Lihat Bukti</a>
                             </div>
                         @endif
-                        <div class="flex items-center justify-between pt-3 border-t border-pink-100">
-                            <span class="font-semibold text-[#3E382D]">Total</span>
-                            <span class="text-xl font-bold text-rose-400">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                        <div class="border-t border-pink-100 pt-3 space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-500">Total Biaya Layanan</span>
+                                <span class="font-semibold text-[#3E382D]">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                            </div>
+                            @if($pembayaran && $pembayaran->metode_pembayaran === 'qris_panjar')
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-500">Uang Panjar (DP 30%) Dibayar</span>
+                                    <span class="font-semibold text-green-600">Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-pink-50">
+                                    <span class="font-semibold text-[#3E382D]">Sisa Pelunasan di Salon</span>
+                                    <span class="text-lg font-bold text-rose-400">Rp {{ number_format($total - $pembayaran->jumlah, 0, ',', '.') }}</span>
+                                </div>
+                            @else
+                                <div class="flex items-center justify-between pt-2 border-t border-pink-50">
+                                    <span class="font-semibold text-[#3E382D]">Total Dibayar</span>
+                                    <span class="text-lg font-bold text-rose-400">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

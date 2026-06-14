@@ -6,43 +6,26 @@
         {{-- ANIMASI & JUDUL (DINAMIS BERDASARKAN METODE) --}}
         <div class="text-center mb-8 mt-16" id="successAnimation">
             <div class="relative inline-block">
-                @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'qris' && $pembayaran->status === 'Menunggu')
+                @if(isset($pembayaran) && in_array($pembayaran->metode_pembayaran, ['qris_lunas', 'qris_panjar']) && $pembayaran->status === 'Menunggu')
                     <div class="absolute inset-0 rounded-full bg-amber-100 animate-ping opacity-30"></div>
                 @endif
                 
                 {{-- Icon & Warna Dinamis --}}
-                <div class="relative w-28 h-28 rounded-full flex items-center justify-center mx-auto
-                    {{ isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash' ? 'bg-green-100' : 'bg-amber-100' }}">
-                    
-                    @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                        {{-- ✅ Cash: Icon Centang Hijau --}}
-                        <svg class="w-14 h-14 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    @else
-                        <svg class="w-14 h-14 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    @endif
+                <div class="relative w-28 h-28 rounded-full flex items-center justify-center mx-auto bg-amber-100">
+                    <svg class="w-14 h-14 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
             </div>
 
             {{-- Judul Dinamis --}}
             <h1 class="text-3xl font-bold text-[#3E382D] mt-6 mb-2">
-                @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                    Pesanan Telah Dikonfirmasi! 🎉
-                @else
-                    Bukti Terkirim! ✨
-                @endif
+                Bukti Terkirim! ✨
             </h1>
 
             {{-- Deskripsi Dinamis --}}
             <p class="text-gray-500 text-sm max-w-sm mx-auto">
-                @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                    Pesanan kamu sudah dikonfirmasi. Siapkan uang tunai dan hadir sesuai jadwal.
-                @else
-                    Bukti pembayaran kamu sudah kami terima dan sedang diverifikasi oleh tim kami.
-                @endif
+                Bukti pembayaran kamu sudah kami terima dan sedang diverifikasi oleh tim kami.
             </p>
         </div>
 
@@ -57,14 +40,12 @@
                             </svg>
                         </div>
                         <div>
+                        <div>
                             <p class="text-amber-800 font-semibold text-sm">Status: Menunggu Verifikasi</p>
                             <p class="text-amber-700 text-sm mt-0.5">
-                                @if($pembayaran->metode_pembayaran === 'cash')
-                                    Pembayaran tunai untuk pesanan ini akan diverifikasi saat kamu tiba di salon.
-                                @else
-                                    Bukti pembayaran QRIS sedang diverifikasi oleh admin. Proses biasanya ≤ 1 jam kerja.
-                                @endif
+                                Bukti pembayaran QRIS sedang diverifikasi oleh admin. Proses biasanya ≤ 1 jam kerja.
                             </p>
+                        </div>
                         </div>
                     </div>
 
@@ -188,7 +169,17 @@
                     <div class="bg-pink-50 rounded-2xl p-4">
                         <p class="text-gray-400 text-xs mb-1">Metode Bayar</p>
                         <p class="font-semibold text-[#3E382D]">
-                            {{ $pembayaran ? strtoupper($pembayaran->metode_pembayaran) : '-' }}
+                            @if($pembayaran)
+                                @if($pembayaran->metode_pembayaran === 'qris_lunas')
+                                    QRIS (Lunas)
+                                @elseif($pembayaran->metode_pembayaran === 'qris_panjar')
+                                    QRIS (DP 30%)
+                                @else
+                                    {{ strtoupper($pembayaran->metode_pembayaran) }}
+                                @endif
+                            @else
+                                -
+                            @endif
                         </p>
                     </div>
                     <div class="bg-pink-50 rounded-2xl p-4">
@@ -203,20 +194,27 @@
                 </div>
 
                 {{-- TOTAL PAKET / LAYANAN --}}
-                <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-5 border border-rose-100">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-xs text-gray-500">Total Pembayaran</p>
-                            @if($layananList->count() > 1)
-                                <p class="text-xs text-green-600 font-medium mt-0.5">
-                                    ✅ Hemat dengan paket combo!
-                                </p>
-                            @endif
-                        </div>
-                        <p class="text-2xl font-bold text-rose-500">
-                            Rp {{ number_format($total, 0, ',', '.') }}
-                        </p>
+                {{-- TOTAL PAKET / LAYANAN & Rincian DP --}}
+                <div class="bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl p-5 border border-rose-100 space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-gray-500">Total Biaya Layanan</span>
+                        <span class="font-bold text-[#3E382D]">Rp {{ number_format($total, 0, ',', '.') }}</span>
                     </div>
+                    @if($pembayaran && $pembayaran->metode_pembayaran === 'qris_panjar')
+                        <div class="flex items-center justify-between text-sm border-t border-pink-100/50 pt-2">
+                            <span class="text-gray-500">Uang Panjar (DP 30%) Dibayar</span>
+                            <span class="font-bold text-green-600">Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex items-center justify-between text-base border-t border-pink-100 pt-2">
+                            <span class="font-semibold text-[#3E382D]">Sisa Pelunasan di Salon</span>
+                            <span class="text-xl font-bold text-rose-500">Rp {{ number_format($total - $pembayaran->jumlah, 0, ',', '.') }}</span>
+                        </div>
+                    @else
+                        <div class="flex items-center justify-between text-base border-t border-pink-100 pt-2">
+                            <span class="font-semibold text-[#3E382D]">Total Dibayar (Lunas)</span>
+                            <span class="text-xl font-bold text-rose-500">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
                 </div>
 
             </div>
@@ -256,28 +254,14 @@
 {{-- Auto-dismiss toast notifikasi --}}
 <div id="toastNotif"
      class="fixed bottom-6 right-6 z-50 bg-white shadow-xl border border-pink-100 rounded-2xl p-4 flex items-center gap-3 max-w-xs transform translate-y-20 opacity-0 transition-all duration-500">
-    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-        {{ isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash' ? 'bg-green-100' : 'bg-amber-100' }}">
-        <svg class="w-5 h-5 {{ isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash' ? 'text-green-500' : 'text-amber-500' }}"
-             fill="currentColor" viewBox="0 0 20 20">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-amber-100">
+        <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
         </svg>
     </div>
     <div>
-        <p class="text-sm font-semibold text-[#3E382D]">
-            @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                Pesanan dikonfirmasi!
-            @else
-                Bukti pembayaran terkirim!
-            @endif
-        </p>
-        <p class="text-xs text-gray-500">
-            @if(isset($pembayaran) && $pembayaran->metode_pembayaran === 'cash')
-                Bayar saat kunjungan ya 💖
-            @else
-                Menunggu verifikasi admin 🌸
-            @endif
-        </p>
+        <p class="text-sm font-semibold text-[#3E382D]">Bukti Terkirim!</p>
+        <p class="text-xs text-gray-400">Menunggu verifikasi admin 🌸</p>
     </div>
 </div>
 

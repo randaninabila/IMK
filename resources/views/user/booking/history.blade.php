@@ -144,12 +144,18 @@
                                     ];
                                 @endphp
                                 <div class="flex items-center justify-between">
-                                    <div>
-                                        <p class="text-xs text-gray-400">Pembayaran</p>
-                                        <p class="text-sm font-semibold text-[#3E382D]">
-                                            {{ strtoupper($booking->metode_pembayaran) }}
-                                        </p>
-                                    </div>
+                                     <div>
+                                         <p class="text-xs text-gray-400">Pembayaran</p>
+                                         <p class="text-sm font-semibold text-[#3E382D]">
+                                             @if($booking->metode_pembayaran === 'qris_lunas')
+                                                 QRIS (Lunas)
+                                             @elseif($booking->metode_pembayaran === 'qris_panjar')
+                                                 QRIS (DP 30%)
+                                             @else
+                                                 {{ strtoupper($booking->metode_pembayaran) }}
+                                             @endif
+                                         </p>
+                                     </div>
                                     <div class="text-right">
                                         <p class="text-xs text-gray-400">Status</p>
                                         <p class="text-sm font-semibold {{ $payStatusColors[$booking->payment_status] ?? 'text-gray-600' }}">
