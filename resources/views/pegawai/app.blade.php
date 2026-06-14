@@ -6,38 +6,47 @@
     <title>Dina Salon Muslimah</title>
     @vite('resources/css/app.css')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+    const FONT_STEPS = [75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125];
+    let currentStep = 5;
+
+    function applyFontScale(step) {
+        step = Math.max(0, Math.min(FONT_STEPS.length - 1, step));
+        currentStep = step;
+        const pct = FONT_STEPS[step];
+        document.body.style.zoom = pct / 100;
+        localStorage.setItem('fontStep', step);
+        ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+            const label = document.getElementById(id);
+            if (label) label.textContent = pct + '%';
+        });
+    }
+
+    function changeFontScale(dir) {
+        applyFontScale(currentStep + dir);
+    }
+
+    (function () {
+        const saved = parseInt(localStorage.getItem('fontStep'));
+        const step  = (!isNaN(saved) && saved >= 0 && saved < FONT_STEPS.length) ? saved : 5;
+        currentStep = step;
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.style.zoom = FONT_STEPS[step] / 100;
+            ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+                const label = document.getElementById(id);
+                if (label) label.textContent = FONT_STEPS[step] + '%';
+            });
+        });
+    })();
+    </script>
 </head>
 
-{{-- x-data di body agar $dispatch('open-sidebar') dari hamburger bisa berjalan --}}
 <body x-data class="bg-gradient-to-b from-[#FFE4E6] via-[#FFF1F2] to-white font-sans min-h-screen">
 
-    {{-- TOP NAVBAR --}}
-    {{--
-        PENTING: pastikan di dalam file pegawai/layouts/navbar.blade.php
-        ada tombol hamburger berikut di bagian kiri navbar:
-
-        <button
-            @click="$dispatch('open-sidebar')"
-            class="lg:hidden p-2 rounded-xl text-[#7A6262] hover:bg-[#FFF4F4] transition"
-            aria-label="Buka menu"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none"
-                 viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-        </button>
-
-        Kalau navbar tidak bisa diedit sekarang, hamburger sementara
-        bisa dipasang di sini (lihat blok di bawah ini).
-    --}}
     @include('pegawai.layouts.navbar', ['user' => auth()->user()])
-
-    {{-- SIDEBAR --}}
     @include('pegawai.layouts.sidebar')
 
-    {{-- MAIN CONTENT --}}
-    {{-- Mobile: tidak ada margin kiri (sidebar tersembunyi) --}}
-    {{-- Desktop (lg+): margin kiri = lebar sidebar (300px) --}}
     <main class="lg:ml-[300px] px-4 lg:px-8 pb-15" style="padding-top: 75px;">
         @yield('content')
     </main>

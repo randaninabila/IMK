@@ -233,4 +233,37 @@
         const modal = document.getElementById('adminLogoutModal');
         if (e.target === modal) closeAdminLogoutModal();
     });
+
+
+    const FONT_STEPS = [75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125];
+    let currentStep = 5;
+
+    function applyFontScale(step) {
+        step = Math.max(0, Math.min(FONT_STEPS.length - 1, step));
+        currentStep = step;
+        const pct = FONT_STEPS[step];
+        document.body.style.zoom = pct / 100;
+        localStorage.setItem('fontStep', step);
+        ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+            const label = document.getElementById(id);
+            if (label) label.textContent = pct + '%';
+        });
+    }
+
+    function changeFontScale(dir) {
+        applyFontScale(currentStep + dir);
+    }
+
+    (function () {
+        const saved = parseInt(localStorage.getItem('fontStep'));
+        const step  = (!isNaN(saved) && saved >= 0 && saved < FONT_STEPS.length) ? saved : 5;
+        currentStep = step;
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.style.zoom = FONT_STEPS[step] / 100;
+            ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+                const label = document.getElementById(id);
+                if (label) label.textContent = FONT_STEPS[step] + '%';
+            });
+        });
+    })();
 </script>

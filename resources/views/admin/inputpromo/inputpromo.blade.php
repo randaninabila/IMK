@@ -36,6 +36,18 @@
             background: rgba(0, 0, 0, 0.28);
         }
     </style>
+
+    {{-- FONT SCALE RESTORE --}}
+    <script>
+    (function () {
+        const FONT_STEPS = [75,80,85,90,95,100,105,110,115,120,125];
+        const saved = parseInt(localStorage.getItem('fontStep'));
+        const step  = (!isNaN(saved) && saved >= 0 && saved < FONT_STEPS.length) ? saved : 5;
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.style.zoom = FONT_STEPS[step] / 100;
+        });
+    })();
+    </script>
 </head>
 
 <body class="bg-[#FFF3F5] text-[#4B4242]">

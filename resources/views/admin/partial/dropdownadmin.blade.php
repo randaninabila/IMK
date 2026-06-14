@@ -56,26 +56,44 @@
 
     {{-- DROPDOWN MENU --}}
     <div id="adminProfileDropdown"
-         class="hidden absolute right-0 top-[70px] z-[999] w-[205px] overflow-hidden rounded-[14px] border border-[#F1D9DD] bg-white shadow-[0_18px_38px_rgba(58,55,46,0.16)]">
+        class="hidden absolute right-0 top-[70px] z-[999] w-[205px] overflow-hidden rounded-[14px] border border-[#F1D9DD] bg-white shadow-[0_18px_38px_rgba(58,55,46,0.16)]">
 
         <div class="border-b border-[#F1E1DF] px-4 py-4">
             <p class="text-[14px] font-extrabold leading-tight text-[#3F3838]">
                 {{ $adminName }}
             </p>
-
             <p class="mt-1 text-[11px] font-bold tracking-[0.08em] text-[#B85C6A]">
                 {{ $adminRole }}
             </p>
         </div>
 
         <a href="{{ route('admin.pengaturan') }}"
-           class="block w-full px-4 py-3 text-left text-[14px] font-bold text-[#4B3A36] transition hover:bg-[#FFF1F1]">
+        class="block w-full px-4 py-3 text-left text-[14px] font-bold text-[#4B3A36] transition hover:bg-[#FFF1F1]">
             Profile Admin
         </a>
 
+        {{-- FONT SIZE CONTROL --}}
+        <div class="flex items-center justify-between px-4 py-3 border-t border-[#F1E1DF]">
+            <span class="text-[13px] font-bold text-[#4B3A36]">Ukuran Teks</span>
+            <div class="flex items-center gap-1">
+                <button onclick="changeFontScale(-1)"
+                        class="w-6 h-6 rounded-md bg-[#FFF1F1] border border-[#F1D9DD] text-[12px] font-bold text-[#7A4B55] hover:bg-[#F8D8DE] transition select-none">
+                    −
+                </button>
+                <span id="fontScaleLabelAdmin"
+                    class="text-[11px] text-[#7A4B55] w-8 text-center tabular-nums select-none">
+                    100%
+                </span>
+                <button onclick="changeFontScale(1)"
+                        class="w-6 h-6 rounded-md bg-[#FFF1F1] border border-[#F1D9DD] text-[12px] font-bold text-[#7A4B55] hover:bg-[#F8D8DE] transition select-none">
+                    +
+                </button>
+            </div>
+        </div>
+
         <button type="button"
                 onclick="openDropdownLogoutModal()"
-                class="block w-full px-4 py-3 text-left text-[14px] font-bold text-[#B85C6A] transition hover:bg-[#FFF1F1]">
+                class="block w-full px-4 py-3 text-left text-[14px] font-bold text-[#B85C6A] transition hover:bg-[#FFF1F1] border-t border-[#F1E1DF]">
             Keluar
         </button>
     </div>

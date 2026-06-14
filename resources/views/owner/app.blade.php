@@ -9,15 +9,45 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
-        h1{
-            font-family: 'Cormorant Garamond', serif;
-        }
-        h4{
-            font-family: 'Playfair Display', serif;
-        }
+        h1 { font-family: 'Cormorant Garamond', serif; }
+        h4 { font-family: 'Playfair Display', serif; }
     </style>
     
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+    const FONT_STEPS = [75, 80, 85, 90, 95, 100, 105, 110, 115, 120, 125];
+    let currentStep = 5;
+
+    function applyFontScale(step) {
+        step = Math.max(0, Math.min(FONT_STEPS.length - 1, step));
+        currentStep = step;
+        const pct = FONT_STEPS[step];
+        document.body.style.zoom = pct / 100;
+        localStorage.setItem('fontStep', step);
+        ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+            const label = document.getElementById(id);
+            if (label) label.textContent = pct + '%';
+        });
+    }
+
+    function changeFontScale(dir) {
+        applyFontScale(currentStep + dir);
+    }
+
+    (function () {
+        const saved = parseInt(localStorage.getItem('fontStep'));
+        const step  = (!isNaN(saved) && saved >= 0 && saved < FONT_STEPS.length) ? saved : 5;
+        currentStep = step;
+        document.addEventListener('DOMContentLoaded', function () {
+            document.body.style.zoom = FONT_STEPS[step] / 100;
+            ['fontScaleLabel', 'fontScaleLabelUser', 'fontScaleLabelAdmin'].forEach(function(id) {
+                const label = document.getElementById(id);
+                if (label) label.textContent = FONT_STEPS[step] + '%';
+            });
+        });
+    })();
+    </script>
 </head>
 
 <body x-data class="m-0 p-0 bg-[#FFF6F7] text-[#3E382D] antialiased">
@@ -43,30 +73,49 @@
                 Dina <span class="italic font-light">Salon Muslimah</span>
             </h2>
 
-            {{-- PROFILE — langsung ke halaman profil --}}
-            <a href="{{ route('owner.profile') }}"
-               class="bg-[#F8D7DC] rounded-full pl-2 pr-4 py-1.5
-                      flex items-center gap-2.5 border border-[#F1DFDF]
-                      hover:bg-[#F5CDD3] transition">
-                <img src="{{ auth()->user()->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->nama) . '&background=FFE4E6&color=3E382D' }}"
-                    alt="{{ auth()->user()->nama }}"
-                    class="w-9 h-9 rounded-full object-cover border-2 border-white shrink-0">
-                <div class="text-left leading-tight">
-                    <h3 class="text-[14px] font-semibold text-[#2F2A2A] max-w-[110px] truncate">
-                        {{ auth()->user()->nama }}
-                    </h3>
-                    <p class="text-[11px] tracking-wide uppercase text-[#7A6262] mt-0.5">
-                        {{ auth()->user()->role }}
-                    </p>
+            {{-- KANAN: font control + profile --}}
+            <div class="flex items-center gap-3">
+
+                {{-- FONT SIZE CONTROL --}}
+                <div class="hidden lg:flex items-center gap-1">
+                    <button onclick="changeFontScale(-1)"
+                            class="w-7 h-7 rounded-lg bg-[#FFF4F4] border border-[#F1DFDF] text-[13px] font-bold text-[#7A6262] hover:bg-[#F8D7DC] transition select-none">
+                        −
+                    </button>
+                    <span id="fontScaleLabel"
+                          class="text-[11px] text-[#7A6262] w-8 text-center tabular-nums select-none">
+                        100%
+                    </span>
+                    <button onclick="changeFontScale(1)"
+                            class="w-7 h-7 rounded-lg bg-[#FFF4F4] border border-[#F1DFDF] text-[13px] font-bold text-[#7A6262] hover:bg-[#F8D7DC] transition select-none">
+                        +
+                    </button>
                 </div>
-            </a>
+
+                {{-- PROFILE --}}
+                <a href="{{ route('owner.profile') }}"
+                   class="bg-[#F8D7DC] rounded-full pl-2 pr-4 py-1.5
+                          flex items-center gap-2.5 border border-[#F1DFDF]
+                          hover:bg-[#F5CDD3] transition">
+                    <img src="{{ auth()->user()->foto_profile_url ?? 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->nama) . '&background=FFE4E6&color=3E382D' }}"
+                        alt="{{ auth()->user()->nama }}"
+                        class="w-9 h-9 rounded-full object-cover border-2 border-white shrink-0">
+                    <div class="text-left leading-tight">
+                        <h3 class="text-[14px] font-semibold text-[#2F2A2A] max-w-[110px] truncate">
+                            {{ auth()->user()->nama }}
+                        </h3>
+                        <p class="text-[11px] tracking-wide uppercase text-[#7A6262] mt-0.5">
+                            {{ auth()->user()->role }}
+                        </p>
+                    </div>
+                </a>
+
+            </div>
 
         </div>
     </header>
 
-
     {{-- GLOBAL NOTIFICATION --}}
-    {{-- Mobile: tidak ada ml (sidebar tersembunyi). Desktop: ml sesuai lebar sidebar --}}
     <div class="fixed top-20 left-4 right-4 lg:left-[240px] lg:right-6 z-[999] pointer-events-none">
 
         @if(session('success') || session('success_password'))
@@ -113,13 +162,10 @@
 
     </div>
 
-
     {{-- ===== SIDEBAR ===== --}}
     @include('owner.sidebar')
 
-
     {{-- ===== MAIN CONTENT ===== --}}
-    {{-- Mobile: tidak ada ml (sidebar hidden). Desktop: ml = lebar sidebar (220px) --}}
     <main class="lg:ml-[220px] bg-[#FFF6F7] min-h-screen" style="padding-top:64px;">
         <div class="px-4 lg:px-6 py-5">
             @yield('content')
