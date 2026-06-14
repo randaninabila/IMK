@@ -9,9 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 class BookingController extends Controller
 {
-    // =====================================================================
     // CREATE — Booking layanan tunggal
-    // =====================================================================
     public function create(Request $request, $layanan_cabang_id = null)
     {
         $user = Auth::user();
@@ -55,12 +53,17 @@ class BookingController extends Controller
             ->get()
             ->keyBy('hari');
 
-        return view('user.booking.create', compact('layanan', 'user', 'jadwalOperasional'));
+        $specialists = DB::table('pegawai as p')
+            ->join('users as u', 'p.user_id', '=', 'u.user_id')
+            ->where('p.cabang_id', $layanan->cabang_id)
+            ->where('p.status_kerja', 'aktif')
+            ->select('p.pegawai_id', 'u.nama as nama_spesialis')
+            ->get();
+
+        return view('user.booking.create', compact('layanan', 'user', 'jadwalOperasional', 'specialists'));
     }
 
-    // =====================================================================
     // CREATE FROM PAKET — Booking dari halaman paket
-    // =====================================================================
     public function createFromPaket($paket_id, $cabang_id)
     {
         $user = Auth::user();
@@ -116,20 +119,34 @@ class BookingController extends Controller
             ? $paketCabang->harga_promo
             : $paketCabang->harga_normal;
 
-        $packageData = [
-            'paket' => $paket,
-            'paketCabang' => $paketCabang,
-            'paket_cabang_id' => $paketCabang->paket_cabang_id,
-            'totalHarga' => $hargaPaket,
-        ];
-
         $totalHarga = $hargaPaket;
-        $isPackageBooking = true;
+
+        $totalSatuan = $layananList->sum(function ($item) {
+            return $item->harga_promo > 0 ? $item->harga_promo : $item->harga;
+        });
+        $hemat = max(0, $totalSatuan - $totalHarga);
 
         $jadwalOperasional = DB::table('jadwal_operasional')
             ->where('cabang_id', $cabang_id)
             ->get()
             ->keyBy('hari');
+
+        $specialists = DB::table('pegawai as p')
+            ->join('users as u', 'p.user_id', '=', 'u.user_id')
+            ->where('p.cabang_id', $cabang_id)
+            ->where('p.status_kerja', 'aktif')
+            ->select('p.pegawai_id', 'u.nama as nama_spesialis')
+            ->get();
+
+        $packageData = [
+            'paket'           => $paket,
+            'paketCabang'     => $paketCabang,
+            'paket_cabang_id' => $paketCabang->paket_cabang_id,
+            'totalHarga'      => $totalHarga,
+            'hemat'           => $hemat,
+        ];
+
+        $isPackageBooking = true;
 
         return view('user.booking.create', compact(
             'layananList',
@@ -138,40 +155,42 @@ class BookingController extends Controller
             'packageData',
             'isPackageBooking',
             'cabang_id',
-            'totalHarga'
+            'totalHarga',
+            'specialists'
         ));
     }
 
-    // =====================================================================
     // STORE — Simpan booking layanan / paket
-    // =====================================================================
     public function store(Request $request)
     {
         $isPaket = $request->boolean('is_paket');
 
         if ($isPaket) {
             $request->validate([
-                'paket_cabang_id' => 'required|integer',
-                'cabang_id' => 'nullable|integer|exists:cabang,cabang_id',
-                'tanggal' => 'required|date|after_or_equal:today',
-                'jam' => 'required',
+                'paket_cabang_id' => 'required|integer|exists:paket_cabang,paket_cabang_id',
+                'tanggal'         => 'required|date|after_or_equal:today',
+                'jam'             => 'required',
+                'pegawai_id'      => 'nullable|integer|exists:pegawai,pegawai_id',
             ], [
-                'tanggal.after_or_equal' => 'Tanggal booking tidak boleh di masa lalu.',
-                'tanggal.required' => 'Tanggal booking wajib diisi.',
-                'jam.required' => 'Jam booking wajib dipilih.',
+                'tanggal.after_or_equal'   => 'Tanggal booking tidak boleh di masa lalu.',
+                'tanggal.required'         => 'Tanggal booking wajib diisi.',
+                'jam.required'             => 'Jam booking wajib dipilih.',
                 'paket_cabang_id.required' => 'Paket tidak boleh kosong.',
+                'paket_cabang_id.exists'   => 'Paket tidak ditemukan.',
             ]);
         } else {
             $request->validate([
-                'layanan_cabang_id' => 'required|array|min:1|max:1',
+                'layanan_cabang_id'   => 'required|array|min:1|max:1',
                 'layanan_cabang_id.*' => 'integer|exists:layanan_cabang,layanan_cabang_id',
-                'tanggal' => 'required|date|after_or_equal:today',
-                'jam' => 'required',
+                'tanggal'             => 'required|date|after_or_equal:today',
+                'jam'                 => 'required',
+                'pegawai_id'          => 'nullable|integer|exists:pegawai,pegawai_id',
             ], [
-                'tanggal.after_or_equal' => 'Tanggal booking tidak boleh di masa lalu.',
-                'tanggal.required' => 'Tanggal booking wajib diisi.',
-                'jam.required' => 'Jam booking wajib dipilih.',
-                'layanan_cabang_id.required' => 'Layanan tidak boleh kosong.',
+                'tanggal.after_or_equal'      => 'Tanggal booking tidak boleh di masa lalu.',
+                'tanggal.required'            => 'Tanggal booking wajib diisi.',
+                'jam.required'                => 'Jam booking wajib dipilih.',
+                'layanan_cabang_id.required'  => 'Layanan tidak boleh kosong.',
+                'layanan_cabang_id.exists'    => 'Layanan tidak ditemukan.',
             ]);
         }
 
@@ -186,15 +205,12 @@ class BookingController extends Controller
             ->first();
 
         if (!$pelanggan) {
-            \Log::error('Pelanggan not found', [
-                'user_id' => $user->user_id,
-            ]);
-
             return back()
                 ->withErrors(['error' => 'Data pelanggan tidak ditemukan. Hubungi admin.'])
                 ->withInput();
         }
 
+        // Cek double booking pelanggan
         $conflict = DB::table('booking')
             ->where('pelanggan_id', $pelanggan->pelanggan_id)
             ->whereDate('tanggal_booking', $request->tanggal)
@@ -208,24 +224,37 @@ class BookingController extends Controller
                 ->withInput();
         }
 
-        $lcId = null;
+        // Cek double booking spesialis (jika dipilih)
+        if ($request->filled('pegawai_id')) {
+            $conflictPegawai = DB::table('booking')
+                ->where('pegawai_id', $request->pegawai_id)
+                ->where('tanggal_booking', $request->tanggal)
+                ->where('jam_booking', $request->jam)
+                ->whereNotIn('status', ['cancelled'])
+                ->exists();
+
+            if ($conflictPegawai) {
+                return back()
+                    ->withErrors(['error' => 'Spesialis yang Anda pilih sudah memiliki booking pada tanggal dan jam tersebut. Silakan pilih spesialis lain atau waktu lain.'])
+                    ->withInput();
+            }
+        }
+
+        // Validasi ketersediaan & hitung harga snapshot
+        $lcId          = null;
         $paketCabangId = null;
         $hargaSnapshot = 0;
 
         if ($isPaket) {
-            $paketCabang = $this->resolvePaketCabang(
-                $request->paket_cabang_id,
-                $request->cabang_id
-            );
+            $paketCabang = $this->resolvePaketCabang($request->paket_cabang_id);
 
             if (!$paketCabang) {
                 return back()
-                    ->withErrors(['error' => 'Paket tidak tersedia atau cabang paket tidak valid.'])
+                    ->withErrors(['error' => 'Paket tidak tersedia.'])
                     ->withInput();
             }
 
             $paketCabangId = $paketCabang->paket_cabang_id;
-
             $hargaSnapshot = $paketCabang->harga_promo > 0
                 ? $paketCabang->harga_promo
                 : $paketCabang->harga_normal;
@@ -252,20 +281,21 @@ class BookingController extends Controller
 
         try {
             $bookingId = DB::table('booking')->insertGetId([
-                'pelanggan_id' => $pelanggan->pelanggan_id,
+                'pelanggan_id'    => $pelanggan->pelanggan_id,
                 'tanggal_booking' => $request->tanggal,
-                'jam_booking' => $request->jam,
-                'status' => 'pending',
-                'tipe_booking' => 'online',
-                'pegawai_id' => null,
-                'created_by' => $user->user_id,
+                'jam_booking'     => $request->jam,
+                'status'          => 'pending',
+                'tipe_booking'    => 'online',
+                'pegawai_id'      => $request->filled('pegawai_id') ? $request->pegawai_id : null,
+                'created_by'      => $user->user_id,
+                'created_at'      => now(),
             ]);
 
             DB::table('booking_detail')->insert([
-                'booking_id' => $bookingId,
+                'booking_id'        => $bookingId,
                 'layanan_cabang_id' => $isPaket ? null : $lcId,
-                'paket_cabang_id' => $isPaket ? $paketCabangId : null,
-                'harga_snapshot' => $hargaSnapshot,
+                'paket_cabang_id'   => $isPaket ? $paketCabangId : null,
+                'harga_snapshot'    => $hargaSnapshot,
             ]);
 
             DB::commit();
@@ -278,7 +308,7 @@ class BookingController extends Controller
 
             \Log::error('Booking store FAILED', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'trace'   => $e->getTraceAsString(),
             ]);
 
             return back()
@@ -287,9 +317,7 @@ class BookingController extends Controller
         }
     }
 
-    // =====================================================================
     // HISTORY — Riwayat booking pelanggan
-    // =====================================================================
     public function history(Request $request)
     {
         $user = Auth::user();
@@ -308,18 +336,15 @@ class BookingController extends Controller
                 $join->on('p.booking_id', '=', 'b.booking_id')
                     ->whereIn('p.status', ['pending', 'verified']);
             })
-            ->leftJoin('booking_detail as bd', 'bd.booking_id', '=', 'b.booking_id')
-
-            ->leftJoin('layanan_cabang as lc', 'lc.layanan_cabang_id', '=', 'bd.layanan_cabang_id')
-            ->leftJoin('layanan as l', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->leftJoin('cabang as c', 'c.cabang_id', '=', 'lc.cabang_id')
-
-            ->leftJoin('paket_cabang as pc', 'pc.paket_cabang_id', '=', 'bd.paket_cabang_id')
-            ->leftJoin('paket_layanan as pak', 'pak.paket_id', '=', 'pc.paket_id')
-            ->leftJoin('cabang as cp', 'cp.cabang_id', '=', 'pc.cabang_id')
-
-            ->leftJoin('ulasan as u', 'u.booking_id', '=', 'b.booking_id')
-            ->leftJoin('booking_reschedule as br', 'br.booking_id', '=', 'b.booking_id')
+            ->leftJoin('booking_detail as bd',  'bd.booking_id',         '=', 'b.booking_id')
+            ->leftJoin('layanan_cabang as lc',  'lc.layanan_cabang_id',  '=', 'bd.layanan_cabang_id')
+            ->leftJoin('layanan as l',          'l.layanan_id',          '=', 'lc.layanan_id')
+            ->leftJoin('cabang as c',           'c.cabang_id',           '=', 'lc.cabang_id')
+            ->leftJoin('paket_cabang as pc',    'pc.paket_cabang_id',    '=', 'bd.paket_cabang_id')
+            ->leftJoin('paket_layanan as pak',  'pak.paket_id',          '=', 'pc.paket_id')
+            ->leftJoin('cabang as cp',          'cp.cabang_id',          '=', 'pc.cabang_id')
+            ->leftJoin('ulasan as u',           'u.booking_id',          '=', 'b.booking_id')
+            ->leftJoin('booking_reschedule as br', 'br.booking_id',      '=', 'b.booking_id')
             ->where('pl.user_id', $user->user_id)
             ->groupBy(
                 'b.booking_id',
@@ -369,9 +394,7 @@ class BookingController extends Controller
         return view('user.booking.history', compact('bookings', 'user'));
     }
 
-    // =====================================================================
     // SHOW — Detail booking
-    // =====================================================================
     public function show($booking_id)
     {
         $user = Auth::user();
@@ -425,14 +448,14 @@ class BookingController extends Controller
                     'l.durasi',
                     'l.kategori_pelanggan',
                     'l.cover_foto',
-                    DB::raw((float) $paketCabang->harga_normal . ' as harga_normal'),
-                    DB::raw((float) $paketCabang->harga_promo . ' as harga_promo')
+                    DB::raw("{$paketCabang->harga_normal} as harga_normal"),
+                    DB::raw("{$paketCabang->harga_promo} as harga_promo")
                 )
                 ->get();
 
             foreach ($layananList as $item) {
                 $item->nama_cabang = $cabang->nama_cabang ?? null;
-                $item->alamat = $cabang->alamat ?? null;
+                $item->alamat      = $cabang->alamat ?? null;
             }
 
             $total = $paketCabang->harga_promo > 0
@@ -483,9 +506,7 @@ class BookingController extends Controller
         ));
     }
 
-    // =====================================================================
     // SHOW RESCHEDULE — Form reschedule
-    // =====================================================================
     public function showReschedule($booking_id)
     {
         $user = Auth::user();
@@ -520,7 +541,7 @@ class BookingController extends Controller
 
         $cabangId = DB::table('booking_detail as bd')
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
-            ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
+            ->leftJoin('paket_cabang as pc',   'bd.paket_cabang_id',   '=', 'pc.paket_cabang_id')
             ->where('bd.booking_id', $booking_id)
             ->selectRaw('COALESCE(lc.cabang_id, pc.cabang_id) as cabang_id')
             ->value('cabang_id');
@@ -532,9 +553,9 @@ class BookingController extends Controller
 
         $layananList = DB::table('booking_detail as bd')
             ->leftJoin('layanan_cabang as lc', 'bd.layanan_cabang_id', '=', 'lc.layanan_cabang_id')
-            ->leftJoin('layanan as l', 'lc.layanan_id', '=', 'l.layanan_id')
-            ->leftJoin('paket_cabang as pc', 'bd.paket_cabang_id', '=', 'pc.paket_cabang_id')
-            ->leftJoin('paket_layanan as pl', 'pc.paket_id', '=', 'pl.paket_id')
+            ->leftJoin('layanan as l',         'lc.layanan_id',         '=', 'l.layanan_id')
+            ->leftJoin('paket_cabang as pc',   'bd.paket_cabang_id',    '=', 'pc.paket_cabang_id')
+            ->leftJoin('paket_layanan as pl',  'pc.paket_id',           '=', 'pl.paket_id')
             ->where('bd.booking_id', $booking_id)
             ->select(
                 DB::raw('COALESCE(l.nama_layanan, pl.nama_paket) as nama_layanan'),
@@ -555,15 +576,13 @@ class BookingController extends Controller
         ));
     }
 
-    // =====================================================================
     // PROCESS RESCHEDULE — Simpan jadwal baru
-    // =====================================================================
     public function processReschedule(Request $request, $booking_id)
     {
         $request->validate([
             'new_tanggal' => 'required|date|after_or_equal:today',
-            'new_jam' => 'required',
-            'reason' => 'nullable|string|max:500',
+            'new_jam'     => 'required',
+            'reason'      => 'nullable|string|max:500',
         ], [
             'new_tanggal.after_or_equal' => 'Tanggal baru tidak boleh di masa lalu.',
         ]);
@@ -612,37 +631,37 @@ class BookingController extends Controller
 
         try {
             DB::table('booking_reschedule')->insert([
-                'booking_id' => $booking_id,
+                'booking_id'  => $booking_id,
                 'old_tanggal' => $booking->tanggal_booking,
-                'old_jam' => $booking->jam_booking,
+                'old_jam'     => $booking->jam_booking,
                 'new_tanggal' => $request->new_tanggal,
-                'new_jam' => $request->new_jam,
-                'reason' => $request->reason,
-                'created_by' => $user->user_id,
+                'new_jam'     => $request->new_jam,
+                'reason'      => $request->reason,
+                'created_by'  => $user->user_id,
             ]);
 
             DB::table('booking')
                 ->where('booking_id', $booking_id)
                 ->update([
                     'tanggal_booking' => $request->new_tanggal,
-                    'jam_booking' => $request->new_jam,
-                    'status' => 'pending',
+                    'jam_booking'     => $request->new_jam,
+                    'status'          => 'pending',
                 ]);
 
             DB::table('notifikasi')->insert([
-                'user_id' => $user->user_id,
-                'pesan' => "Booking #{$booking_id} berhasil direschedule ke " .
+                'user_id'      => $user->user_id,
+                'pesan'        => "Booking #{$booking_id} berhasil direschedule ke " .
                     \Carbon\Carbon::parse($request->new_tanggal)->isoFormat('D MMM Y') .
                     ' pukul ' . substr($request->new_jam, 0, 5) . ' WIB',
-                'tipe' => 'booking',
-                'status_baca' => 'belum',
+                'tipe'         => 'booking',
+                'status_baca'  => 'belum',
             ]);
 
             DB::table('audit_log')->insert([
-                'user_id' => $user->user_id,
-                'action' => 'RESCHEDULE',
-                'table_name' => 'booking',
-                'record_id' => $booking_id,
+                'user_id'     => $user->user_id,
+                'action'      => 'RESCHEDULE',
+                'table_name'  => 'booking',
+                'record_id'   => $booking_id,
                 'description' => "Booking direschedule dari {$booking->tanggal_booking} {$booking->jam_booking} ke {$request->new_tanggal} {$request->new_jam}",
             ]);
 
@@ -660,9 +679,7 @@ class BookingController extends Controller
         }
     }
 
-    // =====================================================================
     // HELPER — Cek ketersediaan slot
-    // =====================================================================
     private function isSlotAvailable($cabang_id, $tanggal, $jam)
     {
         $totalSpecialists = DB::table('pegawai')
@@ -683,34 +700,12 @@ class BookingController extends Controller
         return $bookedCount < $totalSpecialists;
     }
 
-    // =====================================================================
-    // HELPER — Resolve paket_cabang_id
-    // Bisa handle input yang isinya paket_cabang_id atau paket_id.
-    // =====================================================================
-    private function resolvePaketCabang($value, $cabangId = null)
+    // HELPER — Resolve paket_cabang berdasarkan paket_cabang_id (PK)
+    private function resolvePaketCabang($value)
     {
-        $query = DB::table('paket_cabang')
+        return DB::table('paket_cabang')
             ->where('paket_cabang_id', $value)
-            ->where('status', 'tersedia');
-
-        if ($cabangId) {
-            $query->where('cabang_id', $cabangId);
-        }
-
-        $paketCabang = $query->first();
-
-        if ($paketCabang) {
-            return $paketCabang;
-        }
-
-        $fallbackQuery = DB::table('paket_cabang')
-            ->where('paket_id', $value)
-            ->where('status', 'tersedia');
-
-        if ($cabangId) {
-            $fallbackQuery->where('cabang_id', $cabangId);
-        }
-
-        return $fallbackQuery->first();
+            ->where('status', 'tersedia')
+            ->first();
     }
 }
