@@ -8,8 +8,15 @@ class Cabang extends Model
 {
     protected $table      = 'cabang';
     protected $primaryKey = 'cabang_id';
+    public $timestamps    = false;
 
     protected $fillable = ['nama_cabang', 'alamat', 'status'];
+
+    public function jadwalOperasional()
+    {
+        return $this->hasMany(JadwalOperasional::class, 'cabang_id', 'cabang_id')
+                    ->orderByRaw("FIELD(hari, 'senin','selasa','rabu','kamis','jumat','sabtu','minggu')");
+    }
 
     public function pegawai()
     {

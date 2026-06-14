@@ -20,6 +20,7 @@ use App\Http\Controllers\Owner\ManageServiceController;
 use App\Http\Controllers\Owner\EmployeeController;
 use App\Http\Controllers\Owner\CustomerController;
 use App\Http\Controllers\Owner\OwnerProfileController;
+use App\Http\Controllers\Owner\CabangController;
 
 use App\Http\Controllers\User\ServiceDetailController;
 use App\Http\Controllers\User\SpecialistController;
@@ -357,6 +358,17 @@ Route::middleware(['auth', 'reg.complete', 'role:owner'])->group(function () {
  
     Route::put('/owner/profile/password', [OwnerProfileController::class, 'updatePassword'])
         ->name('owner.profile.password');
+
+    Route::get('/cabang', [CabangController::class, 'index'])
+        ->name('owner.cabang');
+    Route::post('/cabang', [CabangController::class, 'store'])
+        ->name('owner.cabang.store');
+    Route::put('/owner/cabang/{cabang_id}', [CabangController::class, 'update'])
+        ->name('owner.cabang.update');
+    Route::patch('/owner/cabang/{cabang_id}/toggle', [CabangController::class, 'toggleStatus'])
+        ->name('owner.cabang.toggle');
+    Route::delete('/owner/cabang/{cabang_id}', [CabangController::class, 'destroy'])
+        ->name('owner.cabang.destroy');
 });
 
 

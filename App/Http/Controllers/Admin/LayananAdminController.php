@@ -19,8 +19,11 @@ class LayananAdminController extends Controller
     {
         $layanan = DB::table('layanan as l')
             ->join('jenis_layanan as jl', 'l.jenis_layanan_id', '=', 'jl.jenis_layanan_id')
-            ->leftJoin('layanan_cabang as lc', 'l.layanan_id', '=', 'lc.layanan_id')
-            ->leftJoin('cabang as c', 'lc.cabang_id', '=', 'c.cabang_id')
+            ->crossJoin('cabang as c')
+            ->leftJoin('layanan_cabang as lc', function ($join) {
+                $join->on('lc.layanan_id', '=', 'l.layanan_id')
+                    ->on('lc.cabang_id',  '=', 'c.cabang_id');
+            })
             ->select(
                 'l.layanan_id',
                 'l.nama_layanan',
@@ -34,7 +37,7 @@ class LayananAdminController extends Controller
                 'lc.harga',
                 'lc.harga_promo',
                 'lc.status as status_cabang',
-                'lc.cabang_id',
+                'c.cabang_id',
                 'c.nama_cabang'
             )
             ->orderBy('l.nama_layanan')
@@ -107,7 +110,7 @@ class LayananAdminController extends Controller
             }
 
             // Otomatis daftarkan ke semua cabang aktif
-            $cabangList = DB::table('cabang')->where('status', 'BUKA')->pluck('cabang_id');
+            $cabangList = DB::table('cabang')->pluck('cabang_id');
 
             foreach ($cabangList as $cabangId) {
                 LayananCabang::create([
@@ -256,7 +259,7 @@ class LayananAdminController extends Controller
                 ]);
             }
 
-            $cabangList = DB::table('cabang')->where('status', 'BUKA')->pluck('cabang_id');
+            $cabangList = DB::table('cabang')->pluck('cabang_id');
 
             foreach ($cabangList as $cabangId) {
                 PaketCabang::create([
