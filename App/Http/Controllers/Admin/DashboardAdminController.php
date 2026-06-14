@@ -40,47 +40,14 @@ class DashboardAdminController extends Controller
 
     private function getBranches()
     {
-        $branches = DB::table('cabang')
-            ->select(
-                'cabang_id',
-                DB::raw('MIN(nama_cabang) as nama_cabang'),
-                DB::raw('MIN(alamat) as alamat'),
-                DB::raw('MIN(status) as status')
-            )
-            ->whereIn('cabang_id', [1, 2])
-            ->groupBy('cabang_id')
+        return DB::table('cabang')
+            ->select('cabang_id', 'nama_cabang', 'alamat', 'status')
             ->orderBy('cabang_id', 'asc')
             ->get()
             ->map(function ($branch) {
-                $namaCabang = strtolower($branch->nama_cabang ?? '');
-
-                $branch->label = ((int) $branch->cabang_id === 2 || str_contains($namaCabang, 'percut'))
-                    ? 'Cabang Percut'
-                    : 'Cabang Tembung';
-
+                $branch->label = $branch->nama_cabang;
                 return $branch;
             });
-
-        if ($branches->isEmpty()) {
-            $branches = collect([
-                (object) [
-                    'cabang_id' => 1,
-                    'nama_cabang' => 'Salon Muslimah Dina - Tembung',
-                    'alamat' => null,
-                    'status' => 'BUKA',
-                    'label' => 'Cabang Tembung',
-                ],
-                (object) [
-                    'cabang_id' => 2,
-                    'nama_cabang' => 'Salon Muslimah Dina - Percut',
-                    'alamat' => null,
-                    'status' => 'BUKA',
-                    'label' => 'Cabang Percut',
-                ],
-            ]);
-        }
-
-        return $branches;
     }
 
     private function bookingBaseQuery(int $selectedCabangId)
