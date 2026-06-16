@@ -1,8 +1,21 @@
+# Stage 1: Build frontend
+FROM node:22 AS node_builder
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+
+# Stage 2: PHP + Laravel
 FROM php:8.4-cli
 
 WORKDIR /app
 
-# Install package system
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -16,11 +29,16 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy project
 COPY . .
 
-# Install Laravel dependencies
+# Copy built frontend assets
+COPY --from=node_builder /app/public/build ./public/build
+
+# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Expose port
+# Laravel optimizations
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
+
 EXPOSE 8080
 
-# Start Laravel
 CMD php artisan serve --host=0.0.0.0 --port=$PORT
