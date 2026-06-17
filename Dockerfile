@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     libzip-dev \
-    && docker-php-ext-install bcmath
+    && docker-php-ext-install pdo pdo_mysql bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -36,8 +36,8 @@ COPY --from=node_builder /app/public/build ./public/build
 RUN composer install --no-dev --optimize-autoloader
 
 # Laravel optimizations
-RUN php artisan config:cache || true
-RUN php artisan route:cache || true
+RUN php artisan config:clear || true
+RUN php artisan route:clear || true
 
 EXPOSE 8080
 
