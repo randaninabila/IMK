@@ -15,7 +15,6 @@ FROM php:8.4-cli
 
 WORKDIR /app
 
-# Install dependencies
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -23,19 +22,17 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     && docker-php-ext-install pdo pdo_mysql bcmath
 
-# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy project
 COPY . .
 
-# Copy built frontend assets
 COPY --from=node_builder /app/public/build ./public/build
 
-# Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Laravel optimizations
+# 🔥 INI YANG KAMU BUTUHKAN
+RUN php artisan storage:link || true
+
 RUN php artisan config:clear || true
 RUN php artisan route:clear || true
 
