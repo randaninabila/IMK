@@ -12,9 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role'           => \App\Http\Middleware\RoleMiddleware::class,
-            'phone.verified' => \App\Http\Middleware\EnsurePhoneVerified::class,
-            'reg.complete'   => \App\Http\Middleware\EnsureRegistrationComplete::class, // tambah ini
+            'role'           => \app\Http\Middleware\RoleMiddleware::class,
+            'phone.verified' => \app\Http\Middleware\EnsurePhoneVerified::class,
+            'reg.complete'   => \app\Http\Middleware\EnsureRegistrationComplete::class, // tambah ini
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
